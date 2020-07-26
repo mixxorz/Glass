@@ -1,4 +1,4 @@
-Chat2 = LibStub("AceAddon-3.0"):NewAddon("Chat2", "AceConsole-3.0")
+Chat2 = LibStub("AceAddon-3.0"):NewAddon("Chat2", "AceConsole-3.0", "AceHook-3.0")
 
 local AceGUI = LibStub("AceGUI-3.0")
 local lodash = LibStub("lodash.wow")
@@ -27,12 +27,20 @@ function Chat2:OnInitialize()
   translateUp:SetDuration(0.2)
   translateUp:SetSmoothing("OUT")
 
-  self:AddNewLine("Hello, World")
+  self:AddMessage("INITIALIZING CHAT2")
+
+  self:RawHook(_G.ChatFrame4, "AddMessage", function (...)
+    local args = {...}
+    self:AddMessage(unpack(args))
+  end, true)
 end
 
-Chat2:RegisterChatCommand("chat2", "AddNewLine")
+Chat2:RegisterChatCommand("chat2", "AddMessage")
 
-function Chat2:AddNewLine(text)
+function Chat2:AddMessage(frame, text, red, green, blue, messageId, holdTime)
+  print('---AddNewLine---')
+  holdTime = holdTime or 5
+
   local chatLine = CreateFrame("Frame", nil, self.container)
   chatLine:SetHeight(18)
   chatLine:SetWidth(300)
@@ -66,7 +74,7 @@ function Chat2:AddNewLine(text)
   introChatAg:Play()
   self.containerAg:Play()
 
-  C_Timer.After(5, function()
+  C_Timer.After(holdTime, function()
     local outroChatAg = chatLine:CreateAnimationGroup()
     local fadeOut = outroChatAg:CreateAnimation("Alpha")
     fadeOut:SetFromAlpha(1)
@@ -78,7 +86,7 @@ function Chat2:AddNewLine(text)
     outroChatAg:Play()
   end)
 
-  C_Timer.After(10, function()
+  C_Timer.After(holdTime + 5, function()
     print('---Hiding---')
     chatLine:Hide()
   end)
