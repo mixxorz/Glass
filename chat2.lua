@@ -5,13 +5,16 @@ local lodash = LibStub("lodash.wow")
 
 local unpack = unpack
 
-local print, map = lodash.print, lodash.map
+local map = lodash.map
+
+-- Using "print" to debug wil cause a infinite loop
+local print = function() end
 
 function Chat2:OnInitialize()
   self.container = CreateFrame("Frame", "Chat2", UIParent)
   self.container:SetHeight(400)
   self.container:SetWidth(300)
-  self.container:SetPoint("CENTER", UIParent, "CENTER")
+  self.container:SetPoint("LEFT", UIParent, "LEFT", 20, 100)
 
   -- local containerBg = self.container:CreateTexture(nil, "BACKGROUND")
   -- containerBg:SetAllPoints()
@@ -29,7 +32,7 @@ function Chat2:OnInitialize()
 
   self:AddMessage("INITIALIZING CHAT2")
 
-  self:RawHook(_G.ChatFrame4, "AddMessage", function (...)
+  self:RawHook(_G.ChatFrame1, "AddMessage", function (...)
     local args = {...}
     self:AddMessage(unpack(args))
   end, true)
@@ -40,6 +43,9 @@ Chat2:RegisterChatCommand("chat2", "AddMessage")
 function Chat2:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   print('---AddNewLine---')
   holdTime = holdTime or 5
+  red = red or 1
+  green = green or 1
+  blue = blue or 1
 
   local chatLine = CreateFrame("Frame", nil, self.container)
   chatLine:SetHeight(18)
@@ -59,7 +65,7 @@ function Chat2:AddMessage(frame, text, red, green, blue, messageId, holdTime)
 
   local textLayer = chatLine:CreateFontString(nil, "ARTWORK")
   textLayer:SetFont("Fonts\\FRIZQT__.TTF", 12)
-  textLayer:SetTextColor(1, 1, 1, 1)
+  textLayer:SetTextColor(red, green, blue, 1)
   textLayer:SetPoint("LEFT", 3, 0)
   textLayer:SetText(text)
 
