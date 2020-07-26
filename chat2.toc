@@ -1,0 +1,14 @@
+## Interface: 80300
+## Title: Chat2
+## Author: mixxorz
+## Version: 0.0.1
+## SavedVariables: Chat2
+
+libs\LibStub\LibStub.lua
+libs\AceAddon-3.0\AceAddon-3.0.xml
+libs\AceDB-3.0\AceDB-3.0.xml
+libs\AceConfig-3.0\AceConfig-3.0.xml
+libs\AceGUI-3.0\AceGUI-3.0.xml
+libs\lodash.wow\lodash.wow.xml
+
+chat2.lua
