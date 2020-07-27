@@ -13,8 +13,8 @@ local print = function() end
 function Mesmeric:OnInitialize()
   self.container = CreateFrame("Frame", "Mesmeric", UIParent)
   self.container:SetHeight(400)
-  self.container:SetWidth(300)
-  self.container:SetPoint("LEFT", UIParent, "LEFT", 20, 100)
+  self.container:SetWidth(450)
+  self.container:SetPoint("LEFT", UIParent, "LEFT", 20, 200)
 
   self.containerAg = self.container:CreateAnimationGroup()
   local startOffset = self.containerAg:CreateAnimation("Translation")
@@ -35,9 +35,10 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   green = green or 1
   blue = blue or 1
 
+  local padding = 3
+
   local chatLine = CreateFrame("Frame", nil, self.container)
-  chatLine:SetHeight(18)
-  chatLine:SetWidth(300)
+  chatLine:SetWidth(450)
   chatLine:SetPoint("TOPLEFT", self.container, "BOTTOMLEFT")
 
   if self.prevLine then
@@ -54,8 +55,14 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   local textLayer = chatLine:CreateFontString(nil, "ARTWORK")
   textLayer:SetFont("Fonts\\FRIZQT__.TTF", 12)
   textLayer:SetTextColor(red, green, blue, 1)
-  textLayer:SetPoint("LEFT", 3, 0)
+  textLayer:SetPoint("LEFT", padding, 0)
+  textLayer:SetJustifyH("LEFT")
+  textLayer:SetJustifyV("MIDDLE")
+  textLayer:SetSpacing(3)
+  textLayer:SetWidth(450 - padding * 2)
   textLayer:SetText(text)
+
+  chatLine:SetHeight(12 * textLayer:GetNumLines() + 3 * (textLayer:GetNumLines() - 1) + padding * 2)
 
   local introAg = chatLine:CreateAnimationGroup()
 
@@ -77,11 +84,9 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
     fadeOut:SetEndDelay(1)
 
     outroAg:SetScript("OnFinished", function ()
-      print('---Hiding---')
       chatLine:Hide()
     end)
 
-    print('---Start fadeout---')
     outroAg:Play()
   end)
 end
