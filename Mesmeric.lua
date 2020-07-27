@@ -14,7 +14,7 @@ function Mesmeric:OnInitialize()
   self.container = CreateFrame("Frame", "Mesmeric", UIParent)
   self.container:SetHeight(400)
   self.container:SetWidth(450)
-  self.container:SetPoint("LEFT", UIParent, "LEFT", 20, 200)
+  self.container:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260)
 
   self.containerAg = self.container:CreateAnimationGroup()
   local startOffset = self.containerAg:CreateAnimation("Translation")
