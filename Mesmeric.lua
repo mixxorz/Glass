@@ -1,4 +1,4 @@
-Chat2 = LibStub("AceAddon-3.0"):NewAddon("Chat2", "AceConsole-3.0", "AceHook-3.0")
+Mesmeric = LibStub("AceAddon-3.0"):NewAddon("Mesmeric", "AceConsole-3.0", "AceHook-3.0")
 
 local AceGUI = LibStub("AceGUI-3.0")
 local lodash = LibStub("lodash.wow")
@@ -10,15 +10,11 @@ local map = lodash.map
 -- Using "print" to debug wil cause a infinite loop
 local print = function() end
 
-function Chat2:OnInitialize()
-  self.container = CreateFrame("Frame", "Chat2", UIParent)
+function Mesmeric:OnInitialize()
+  self.container = CreateFrame("Frame", "Mesmeric", UIParent)
   self.container:SetHeight(400)
   self.container:SetWidth(300)
   self.container:SetPoint("LEFT", UIParent, "LEFT", 20, 100)
-
-  -- local containerBg = self.container:CreateTexture(nil, "BACKGROUND")
-  -- containerBg:SetAllPoints()
-  -- containerBg:SetColorTexture(0, 1, 0, 0.6)
 
   self.containerAg = self.container:CreateAnimationGroup()
   local startOffset = self.containerAg:CreateAnimation("Translation")
@@ -30,18 +26,10 @@ function Chat2:OnInitialize()
   translateUp:SetDuration(0.2)
   translateUp:SetSmoothing("OUT")
 
-  self:AddMessage("INITIALIZING CHAT2")
-
-  self:RawHook(_G.ChatFrame1, "AddMessage", function (...)
-    local args = {...}
-    self:AddMessage(unpack(args))
-  end, true)
+  self:Hook(_G.ChatFrame1, "AddMessage", true)
 end
 
-Chat2:RegisterChatCommand("chat2", "AddMessage")
-
-function Chat2:AddMessage(frame, text, red, green, blue, messageId, holdTime)
-  print('---AddNewLine---')
+function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   holdTime = holdTime or 5
   red = red or 1
   green = green or 1
@@ -69,31 +57,31 @@ function Chat2:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   textLayer:SetPoint("LEFT", 3, 0)
   textLayer:SetText(text)
 
-  local introChatAg = chatLine:CreateAnimationGroup()
+  local introAg = chatLine:CreateAnimationGroup()
 
-  local fadeIn = introChatAg:CreateAnimation("Alpha")
+  local fadeIn = introAg:CreateAnimation("Alpha")
   fadeIn:SetFromAlpha(0)
   fadeIn:SetToAlpha(1)
   fadeIn:SetDuration(0.2)
   fadeIn:SetSmoothing("OUT")
 
-  introChatAg:Play()
+  introAg:Play()
   self.containerAg:Play()
 
   C_Timer.After(holdTime, function()
-    local outroChatAg = chatLine:CreateAnimationGroup()
-    local fadeOut = outroChatAg:CreateAnimation("Alpha")
+    local outroAg = chatLine:CreateAnimationGroup()
+    local fadeOut = outroAg:CreateAnimation("Alpha")
     fadeOut:SetFromAlpha(1)
     fadeOut:SetToAlpha(0)
     fadeOut:SetDuration(5)
     fadeOut:SetEndDelay(1)
 
-    print('---Start fadeout---')
-    outroChatAg:Play()
-  end)
+    outroAg:SetScript("OnFinished", function ()
+      print('---Hiding---')
+      chatLine:Hide()
+    end)
 
-  C_Timer.After(holdTime + 5, function()
-    print('---Hiding---')
-    chatLine:Hide()
+    print('---Start fadeout---')
+    outroAg:Play()
   end)
 end
