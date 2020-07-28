@@ -1,14 +1,12 @@
 Mesmeric = LibStub("AceAddon-3.0"):NewAddon("Mesmeric", "AceConsole-3.0", "AceHook-3.0")
 
-local AceGUI = LibStub("AceGUI-3.0")
-local lodash = LibStub("lodash.wow")
-
 local unpack = unpack
 
-local map = lodash.map
-
--- Using "print" to debug wil cause a infinite loop
-local print = function() end
+-- Use `message` for print because calling `print` will trigger an infinite loop
+local print = function(...)
+  local args = {...}
+  ViragDevTool_AddData(unpack(args))
+end
 
 function Mesmeric:OnInitialize()
   self.container = CreateFrame("Frame", "Mesmeric", UIParent)
@@ -26,6 +24,8 @@ function Mesmeric:OnInitialize()
   translateUp:SetDuration(0.2)
   translateUp:SetSmoothing("OUT")
 
+  self.chatLinePool = CreateFramePool("Frame", self.container)
+
   self:Hook(_G.ChatFrame1, "AddMessage", true)
 end
 
@@ -37,7 +37,7 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
 
   local padding = 3
 
-  local chatLine = CreateFrame("Frame", nil, self.container)
+  local chatLine = self.chatLinePool:Acquire()
   chatLine:SetWidth(450)
   chatLine:SetPoint("TOPLEFT", self.container, "BOTTOMLEFT")
 
@@ -62,31 +62,36 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   textLayer:SetWidth(450 - padding * 2)
   textLayer:SetText(text)
 
+  -- Adjust height to contain text
   chatLine:SetHeight(12 * textLayer:GetNumLines() + 3 * (textLayer:GetNumLines() - 1) + padding * 2)
 
+  -- Intro animations
   local introAg = chatLine:CreateAnimationGroup()
-
   local fadeIn = introAg:CreateAnimation("Alpha")
   fadeIn:SetFromAlpha(0)
   fadeIn:SetToAlpha(1)
   fadeIn:SetDuration(0.2)
   fadeIn:SetSmoothing("OUT")
 
+  -- Start intor animation
+  chatLine:Show()
   introAg:Play()
   self.containerAg:Play()
 
+  -- Outro animations
+  local outroAg = chatLine:CreateAnimationGroup()
+  local fadeOut = outroAg:CreateAnimation("Alpha")
+  fadeOut:SetFromAlpha(1)
+  fadeOut:SetToAlpha(0)
+  fadeOut:SetDuration(5)
+  fadeOut:SetEndDelay(1)
+
+  outroAg:SetScript("OnFinished", function ()
+    chatLine:Hide()
+  end)
+
+  -- Play outro after hold time
   C_Timer.After(holdTime, function()
-    local outroAg = chatLine:CreateAnimationGroup()
-    local fadeOut = outroAg:CreateAnimation("Alpha")
-    fadeOut:SetFromAlpha(1)
-    fadeOut:SetToAlpha(0)
-    fadeOut:SetDuration(5)
-    fadeOut:SetEndDelay(1)
-
-    outroAg:SetScript("OnFinished", function ()
-      chatLine:Hide()
-    end)
-
     outroAg:Play()
   end)
 end
