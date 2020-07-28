@@ -32,7 +32,7 @@ function Mesmeric:OnInitialize()
   self.startOffset:SetDuration(0)
 
   self.translateUp = self.containerAg:CreateAnimation("Translation")
-  self.translateUp:SetDuration(0.2)
+  self.translateUp:SetDuration(0.3)
   self.translateUp:SetSmoothing("OUT")
 
   self.chatLinePool = CreateFramePool("Frame", self.container)
@@ -51,16 +51,19 @@ function Mesmeric:OnDisable()
 end
 
 function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
-  holdTime = holdTime or 5
+  holdTime = 10
   red = red or 1
   green = green or 1
   blue = blue or 1
 
-  local padding = 3
+  local width = 450
+  local Xpadding = 15
+  local Ypadding = 3
   local lineHeight = 3
+  local opacity = 0.4
 
   local chatLine = self.chatLinePool:Acquire()
-  chatLine:SetWidth(450)
+  chatLine:SetWidth(width)
   chatLine:SetPoint("TOPLEFT", self.container, "BOTTOMLEFT")
 
   if self.prevLine then
@@ -70,22 +73,48 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
 
   self.prevLine = chatLine
 
-  local chatLineBg = chatLine:CreateTexture(nil, "BACKGROUND")
-  chatLineBg:SetAllPoints()
-  chatLineBg:SetColorTexture(0, 0, 0, 0.6)
+  -- Background
+  -- Left: 50 Center:300 Right: 100
+  local chatLineLeftBg = chatLine:CreateTexture(nil, "BACKGROUND")
+  chatLineLeftBg:SetPoint("LEFT")
+  chatLineLeftBg:SetWidth(50)
+  chatLineLeftBg:SetColorTexture(0, 0, 0, opacity)
+  chatLineLeftBg:SetGradientAlpha(
+    "HORIZONTAL",
+    0, 0, 0, 0,
+    0, 0, 0, 1
+  )
+
+  local chatLineCenterBg = chatLine:CreateTexture(nil, "BACKGROUND")
+  chatLineCenterBg:SetPoint("LEFT", 50, 0)
+  chatLineCenterBg:SetWidth(150)
+  chatLineCenterBg:SetColorTexture(0, 0, 0, opacity)
+
+  local chatLineRightBg = chatLine:CreateTexture(nil, "BACKGROUND")
+  chatLineRightBg:SetPoint("RIGHT")
+  chatLineRightBg:SetWidth(250)
+  chatLineRightBg:SetColorTexture(0, 0, 0, opacity)
+  chatLineRightBg:SetGradientAlpha(
+    "HORIZONTAL",
+    0, 0, 0, 1,
+    0, 0, 0, 0
+  )
 
   local textLayer = chatLine:CreateFontString(nil, "ARTWORK", "GameFontNormal")
   textLayer:SetTextColor(red, green, blue, 1)
-  textLayer:SetPoint("LEFT", padding, 0)
+  textLayer:SetPoint("LEFT", Xpadding, 0)
   textLayer:SetJustifyH("LEFT")
   textLayer:SetJustifyV("MIDDLE")
   textLayer:SetSpacing(lineHeight)
-  textLayer:SetWidth(450 - padding * 2)
+  textLayer:SetWidth(width - Xpadding * 2)
   textLayer:SetText(text)
 
   -- Adjust height to contain text
-  local chatLineHeight = (textLayer:GetStringHeight() + padding * 2)
+  local chatLineHeight = (textLayer:GetStringHeight() + Ypadding * 2)
   chatLine:SetHeight(chatLineHeight)
+  chatLineLeftBg:SetHeight(chatLineHeight)
+  chatLineCenterBg:SetHeight(chatLineHeight)
+  chatLineRightBg:SetHeight(chatLineHeight)
   self.startOffset:SetOffset(0, chatLineHeight * -1)
   self.translateUp:SetOffset(0, chatLineHeight)
   print(self.startOffset, "startOffset")
@@ -96,7 +125,7 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   local fadeIn = introAg:CreateAnimation("Alpha")
   fadeIn:SetFromAlpha(0)
   fadeIn:SetToAlpha(1)
-  fadeIn:SetDuration(0.2)
+  fadeIn:SetDuration(1)
   fadeIn:SetSmoothing("OUT")
 
   -- Start intor animation
@@ -109,7 +138,7 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   local fadeOut = outroAg:CreateAnimation("Alpha")
   fadeOut:SetFromAlpha(1)
   fadeOut:SetToAlpha(0)
-  fadeOut:SetDuration(5)
+  fadeOut:SetDuration(0.5)
   fadeOut:SetEndDelay(1)
 
   outroAg:SetScript("OnFinished", function ()
