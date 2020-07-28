@@ -8,6 +8,32 @@ local print = function(...)
   ViragDevTool_AddData(unpack(args))
 end
 
+local DEFAULT_CHAT_FRAMES = {
+  _G.ChatFrame1,
+  _G.ChatFrame2,
+  _G.ChatFrame3,
+  _G.ChatFrame4,
+  _G.ChatFrame5,
+  _G.ChatFrame6,
+  _G.ChatFrame7,
+  _G.ChatFrame8,
+  _G.ChatFrame9,
+  _G.ChatFrame10,
+}
+
+local DEFAULT_CHAT_FRAME_TABS = {
+  _G.ChatFrame1Tab,
+  _G.ChatFrame2Tab,
+  _G.ChatFrame3Tab,
+  _G.ChatFrame4Tab,
+  _G.ChatFrame5Tab,
+  _G.ChatFrame6Tab,
+  _G.ChatFrame7Tab,
+  _G.ChatFrame8Tab,
+  _G.ChatFrame9Tab,
+  _G.ChatFrame10Tab,
+}
+
 function Mesmeric:OnInitialize()
   self.container = CreateFrame("Frame", "Mesmeric", UIParent)
   self.container:SetHeight(400)
@@ -15,18 +41,26 @@ function Mesmeric:OnInitialize()
   self.container:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260)
 
   self.containerAg = self.container:CreateAnimationGroup()
-  local startOffset = self.containerAg:CreateAnimation("Translation")
-  startOffset:SetOffset(0, -18)
-  startOffset:SetDuration(0)
+  self.startOffset = self.containerAg:CreateAnimation("Translation")
+  self.startOffset:SetDuration(0)
 
-  local translateUp = self.containerAg:CreateAnimation("Translation")
-  translateUp:SetOffset(0, 18)
-  translateUp:SetDuration(0.2)
-  translateUp:SetSmoothing("OUT")
+  self.translateUp = self.containerAg:CreateAnimation("Translation")
+  self.translateUp:SetDuration(0.2)
+  self.translateUp:SetSmoothing("OUT")
 
   self.chatLinePool = CreateFramePool("Frame", self.container)
 
+  self.hiddenChatFrames = {}
+end
+
+function Mesmeric:OnEnable()
+  self:HideDefaultChatFrames()
   self:Hook(_G.ChatFrame1, "AddMessage", true)
+end
+
+function Mesmeric:OnDisable()
+  self:ShowDefaultChatFrames()
+  self:Unhook(_G.ChatFrame1, "AddMessage")
 end
 
 function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
@@ -36,6 +70,7 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   blue = blue or 1
 
   local padding = 3
+  local lineHeight = 3
 
   local chatLine = self.chatLinePool:Acquire()
   chatLine:SetWidth(450)
@@ -57,12 +92,17 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   textLayer:SetPoint("LEFT", padding, 0)
   textLayer:SetJustifyH("LEFT")
   textLayer:SetJustifyV("MIDDLE")
-  textLayer:SetSpacing(3)
+  textLayer:SetSpacing(lineHeight)
   textLayer:SetWidth(450 - padding * 2)
   textLayer:SetText(text)
 
   -- Adjust height to contain text
-  chatLine:SetHeight(12 * textLayer:GetNumLines() + 3 * (textLayer:GetNumLines() - 1) + padding * 2)
+  local chatLineHeight = (textLayer:GetStringHeight() + padding * 2)
+  chatLine:SetHeight(chatLineHeight)
+  self.startOffset:SetOffset(0, chatLineHeight * -1)
+  self.translateUp:SetOffset(0, chatLineHeight)
+  print(self.startOffset, "startOffset")
+  print(self.translateUp, "translateUp")
 
   -- Intro animations
   local introAg = chatLine:CreateAnimationGroup()
@@ -94,3 +134,38 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
     outroAg:Play()
   end)
 end
+
+function Mesmeric:HideDefaultChatFrames()
+  for _, frame in ipairs(DEFAULT_CHAT_FRAMES) do
+    if frame:IsVisible() then
+      frame:Hide()
+      table.insert(self.hiddenChatFrames, frame)
+    end
+  end
+
+  for _, frame in ipairs(DEFAULT_CHAT_FRAME_TABS) do
+    if frame:IsVisible() then
+      frame:Hide()
+      table.insert(self.hiddenChatFrames, frame)
+    end
+  end
+end
+
+function Mesmeric:ShowDefaultChatFrames()
+  for _, frame in ipairs(self.hiddenChatFrames) do
+    frame:Show()
+  end
+
+  -- Reset
+  self.hiddenChatFrames = {}
+end
+
+function Mesmeric:ChatHandler(input)
+  if input == "hidedefault" then
+    self:HideDefaultChatFrames()
+  elseif input == "showdefault" then
+    self:ShowDefaultChatFrames()
+  end
+end
+
+Mesmeric:RegisterChatCommand("mesmeric", "ChatHandler")

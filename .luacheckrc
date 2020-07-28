@@ -4,6 +4,7 @@ globals = {
   "CreateFramePool",
   "Mesmeric",
   "UIParent",
+  "ViragDevTool_AddData",
   "message"
 }
 read_globals = {"LibStub"}
