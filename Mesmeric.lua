@@ -8,34 +8,21 @@ local print = function(...)
   ViragDevTool_AddData(unpack(args))
 end
 
-local DEFAULT_CHAT_FRAMES = {
-  _G.ChatFrame1,
-  _G.ChatFrame2,
-  _G.ChatFrame3,
-  _G.ChatFrame4,
-  _G.ChatFrame5,
-  _G.ChatFrame6,
-  _G.ChatFrame7,
-  _G.ChatFrame8,
-  _G.ChatFrame9,
-  _G.ChatFrame10,
-}
-
-local DEFAULT_CHAT_FRAME_TABS = {
-  _G.ChatFrame1Tab,
-  _G.ChatFrame2Tab,
-  _G.ChatFrame3Tab,
-  _G.ChatFrame4Tab,
-  _G.ChatFrame5Tab,
-  _G.ChatFrame6Tab,
-  _G.ChatFrame7Tab,
-  _G.ChatFrame8Tab,
-  _G.ChatFrame9Tab,
-  _G.ChatFrame10Tab,
-}
-
 function Mesmeric:OnInitialize()
+  self.config = {
+    hideDefaultChatFrames = true
+  }
+  self.state = {
+    hiddenChatFrames = {}
+  }
+
   self.container = CreateFrame("Frame", "Mesmeric", UIParent)
+
+  self.timeElapsed = 0
+  self.container:SetScript("OnUpdate", function (frame, elapsed)
+    self:OnUpdate(elapsed)
+  end)
+
   self.container:SetHeight(400)
   self.container:SetWidth(450)
   self.container:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260)
@@ -49,12 +36,12 @@ function Mesmeric:OnInitialize()
   self.translateUp:SetSmoothing("OUT")
 
   self.chatLinePool = CreateFramePool("Frame", self.container)
-
-  self.hiddenChatFrames = {}
 end
 
 function Mesmeric:OnEnable()
-  self:HideDefaultChatFrames()
+  if self.config.hideDefaultChatFrames then
+    self:HideDefaultChatFrames()
+  end
   self:Hook(_G.ChatFrame1, "AddMessage", true)
 end
 
@@ -136,28 +123,42 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
 end
 
 function Mesmeric:HideDefaultChatFrames()
-  for _, frame in ipairs(DEFAULT_CHAT_FRAMES) do
-    if frame:IsVisible() then
-      frame:Hide()
-      table.insert(self.hiddenChatFrames, frame)
-    end
-  end
+  for i=1, NUM_CHAT_WINDOWS do
+    local frame = _G["ChatFrame"..i]
+    local tab = _G["ChatFrame"..i.."Tab"]
 
-  for _, frame in ipairs(DEFAULT_CHAT_FRAME_TABS) do
+    -- Remember the chat frames we hide so we can show them again later if
+    -- necessary
     if frame:IsVisible() then
-      frame:Hide()
-      table.insert(self.hiddenChatFrames, frame)
+      table.insert(self.state.hiddenChatFrames, frame)
     end
+
+    if tab:IsVisible() then
+      table.insert(self.state.hiddenChatFrames, tab)
+    end
+
+    frame:SetScript("OnShow", function(...) frame:Hide() end)
+    tab:SetScript("OnShow", function(...) tab:Hide() end)
+
+    frame:Hide()
+    tab:Hide()
   end
 end
 
 function Mesmeric:ShowDefaultChatFrames()
-  for _, frame in ipairs(self.hiddenChatFrames) do
+  for i=1, NUM_CHAT_WINDOWS do
+    local frame = _G["ChatFrame"..i]
+    local tab = _G["ChatFrame"..i.."Tab"]
+
+    frame:SetScript("OnShow", function(...) frame:Show() end)
+    tab:SetScript("OnShow", function(...) tab:Show() end)
+  end
+
+  for _, frame in ipairs(self.state.hiddenChatFrames) do
     frame:Show()
   end
 
-  -- Reset
-  self.hiddenChatFrames = {}
+  self.state.hiddenChatFrames = {}
 end
 
 function Mesmeric:ChatHandler(input)
@@ -169,3 +170,14 @@ function Mesmeric:ChatHandler(input)
 end
 
 Mesmeric:RegisterChatCommand("mesmeric", "ChatHandler")
+
+function Mesmeric:OnUpdate(elapsed)
+  self.timeElapsed = self.timeElapsed + elapsed
+  while (self.timeElapsed > 0.1) do
+    self.timeElapsed = self.timeElapsed - 0.01
+    self:Draw()
+  end
+end
+
+function Mesmeric:Draw()
+end

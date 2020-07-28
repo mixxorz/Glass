@@ -1,11 +1,14 @@
 globals = {
+  "Mesmeric"
+}
+read_globals = {
   "C_Timer",
   "CreateFrame",
   "CreateFramePool",
-  "Mesmeric",
+  "LibStub",
+  "NUM_CHAT_WINDOWS",
   "UIParent",
   "ViragDevTool_AddData",
   "message"
 }
-read_globals = {"LibStub"}
 ignore = {"212"}
