@@ -6,6 +6,7 @@ read_globals = {
   "CreateFont",
   "CreateFrame",
   "CreateFramePool",
+  "CreateObjectPool",
   "LibStub",
   "NUM_CHAT_WINDOWS",
   "UIParent",

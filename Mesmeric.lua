@@ -2,7 +2,7 @@ Mesmeric = LibStub("AceAddon-3.0"):NewAddon("Mesmeric", "AceConsole-3.0", "AceHo
 
 local lodash = LibStub("lodash.wow")
 
-local reduce = lodash.reduce
+local drop, reduce, take = lodash.drop, lodash.reduce, lodash.take
 local unpack = unpack
 
 -- Use `message` for print because calling `print` will trigger an infinite loop
@@ -54,7 +54,19 @@ function Mesmeric:OnInitialize()
   self.sliderTranslateUp:SetSmoothing("OUT")
 
   -- Pool for the chat message frames
-  self.chatMessageFramePool = CreateFramePool("Frame", self.slider)
+  self.chatMessageFramePool = CreateObjectPool(
+    function () return self:ChatMessagePoolCreator() end,
+    function (_, chatMessage)
+      -- Reset all animations and timers
+      if chatMessage.outroTimer then
+        chatMessage.outroTimer:Cancel()
+      end
+
+      chatMessage.introAg:Stop()
+      chatMessage.outroAg:Stop()
+      chatMessage:Hide()
+    end
+  )
 
   self.chatMessages = {}
   self.incomingChatMessages = {}
@@ -78,19 +90,89 @@ function Mesmeric:AddMessage(...)
   table.insert(self.incomingChatMessages, args)
 end
 
+function Mesmeric:ChatMessagePoolCreator()
+  local width = 450
+  local Xpadding = 15
+  local opacity = 0.4
+  local holdTime = 10
+
+  local chatMessage = CreateFrame("Frame", nil, self.slider)
+  chatMessage:SetWidth(width)
+
+  -- Background
+  -- Left: 50 Center:300 Right: 100
+  chatMessage.chatLineLeftBg = chatMessage:CreateTexture(nil, "BACKGROUND")
+  chatMessage.chatLineLeftBg:SetPoint("LEFT")
+  chatMessage.chatLineLeftBg:SetWidth(50)
+  chatMessage.chatLineLeftBg:SetColorTexture(0, 0, 0, opacity)
+  chatMessage.chatLineLeftBg:SetGradientAlpha(
+    "HORIZONTAL",
+    0, 0, 0, 0,
+    0, 0, 0, 1
+  )
+
+  chatMessage.chatLineCenterBg = chatMessage:CreateTexture(nil, "BACKGROUND")
+  chatMessage.chatLineCenterBg:SetPoint("LEFT", 50, 0)
+  chatMessage.chatLineCenterBg:SetWidth(150)
+  chatMessage.chatLineCenterBg:SetColorTexture(0, 0, 0, opacity)
+
+  chatMessage.chatLineRightBg = chatMessage:CreateTexture(nil, "BACKGROUND")
+  chatMessage.chatLineRightBg:SetPoint("RIGHT")
+  chatMessage.chatLineRightBg:SetWidth(250)
+  chatMessage.chatLineRightBg:SetColorTexture(0, 0, 0, opacity)
+  chatMessage.chatLineRightBg:SetGradientAlpha(
+    "HORIZONTAL",
+    0, 0, 0, 1,
+    0, 0, 0, 0
+  )
+
+  chatMessage.text = chatMessage:CreateFontString(nil, "ARTWORK", "MesmericFont")
+  chatMessage.text:SetPoint("LEFT", Xpadding, 0)
+  chatMessage.text:SetWidth(width - Xpadding * 2)
+
+  -- Intro animations
+  chatMessage.introAg = chatMessage:CreateAnimationGroup()
+  local fadeIn = chatMessage.introAg:CreateAnimation("Alpha")
+  fadeIn:SetFromAlpha(0)
+  fadeIn:SetToAlpha(1)
+  fadeIn:SetDuration(1)
+  fadeIn:SetSmoothing("OUT")
+
+  -- Outro animations
+  chatMessage.outroAg = chatMessage:CreateAnimationGroup()
+  local fadeOut = chatMessage.outroAg:CreateAnimation("Alpha")
+  fadeOut:SetFromAlpha(1)
+  fadeOut:SetToAlpha(0)
+  fadeOut:SetDuration(0.5)
+  fadeOut:SetEndDelay(1)
+
+  -- Hide the frame when the outro animation finishes
+  chatMessage.outroAg:SetScript("OnFinished", function ()
+    chatMessage:Hide()
+  end)
+
+  -- Start intro animation when element is shown
+  chatMessage:SetScript("OnShow", function ()
+    chatMessage.introAg:Play()
+
+    -- Play outro after hold time
+    chatMessage.outroTimer = C_Timer.NewTimer(holdTime, function()
+      chatMessage.outroAg:Play()
+    end)
+  end)
+
+  return chatMessage
+end
+
 function Mesmeric:CreateChatMessageFrame(frame, text, red, green, blue, messageId, holdTime)
   holdTime = 10
   red = red or 1
   green = green or 1
   blue = blue or 1
 
-  local width = 450
-  local Xpadding = 15
   local Ypadding = 3
-  local opacity = 0.4
 
   local chatMessage = self.chatMessageFramePool:Acquire()
-  chatMessage:SetWidth(width)
   chatMessage:SetPoint("BOTTOMLEFT")
 
   -- Attach previous chat message to this one
@@ -101,76 +183,15 @@ function Mesmeric:CreateChatMessageFrame(frame, text, red, green, blue, messageI
 
   self.prevLine = chatMessage
 
-  -- Background
-  -- Left: 50 Center:300 Right: 100
-  local chatLineLeftBg = chatMessage:CreateTexture(nil, "BACKGROUND")
-  chatLineLeftBg:SetPoint("LEFT")
-  chatLineLeftBg:SetWidth(50)
-  chatLineLeftBg:SetColorTexture(0, 0, 0, opacity)
-  chatLineLeftBg:SetGradientAlpha(
-    "HORIZONTAL",
-    0, 0, 0, 0,
-    0, 0, 0, 1
-  )
-
-  local chatLineCenterBg = chatMessage:CreateTexture(nil, "BACKGROUND")
-  chatLineCenterBg:SetPoint("LEFT", 50, 0)
-  chatLineCenterBg:SetWidth(150)
-  chatLineCenterBg:SetColorTexture(0, 0, 0, opacity)
-
-  local chatLineRightBg = chatMessage:CreateTexture(nil, "BACKGROUND")
-  chatLineRightBg:SetPoint("RIGHT")
-  chatLineRightBg:SetWidth(250)
-  chatLineRightBg:SetColorTexture(0, 0, 0, opacity)
-  chatLineRightBg:SetGradientAlpha(
-    "HORIZONTAL",
-    0, 0, 0, 1,
-    0, 0, 0, 0
-  )
-
-  local textLayer = chatMessage:CreateFontString(nil, "ARTWORK", "MesmericFont")
-  textLayer:SetTextColor(red, green, blue, 1)
-  textLayer:SetPoint("LEFT", Xpadding, 0)
-  textLayer:SetWidth(width - Xpadding * 2)
-  textLayer:SetText(text)
+  chatMessage.text:SetTextColor(red, green, blue, 1)
+  chatMessage.text:SetText(text)
 
   -- Adjust height to contain text
-  local chatLineHeight = (textLayer:GetStringHeight() + Ypadding * 2)
+  local chatLineHeight = (chatMessage.text:GetStringHeight() + Ypadding * 2)
   chatMessage:SetHeight(chatLineHeight)
-  chatLineLeftBg:SetHeight(chatLineHeight)
-  chatLineCenterBg:SetHeight(chatLineHeight)
-  chatLineRightBg:SetHeight(chatLineHeight)
-
-  -- Intro animations
-  local introAg = chatMessage:CreateAnimationGroup()
-  local fadeIn = introAg:CreateAnimation("Alpha")
-  fadeIn:SetFromAlpha(0)
-  fadeIn:SetToAlpha(1)
-  fadeIn:SetDuration(1)
-  fadeIn:SetSmoothing("OUT")
-
-  -- Outro animations
-  local outroAg = chatMessage:CreateAnimationGroup()
-  local fadeOut = outroAg:CreateAnimation("Alpha")
-  fadeOut:SetFromAlpha(1)
-  fadeOut:SetToAlpha(0)
-  fadeOut:SetDuration(0.5)
-  fadeOut:SetEndDelay(1)
-
-  -- Hide the frame when the outro animation finishes
-  outroAg:SetScript("OnFinished", function ()
-    chatMessage:Hide()
-  end)
-
-  -- Start intro animation when element is shown
-  chatMessage:SetScript("OnShow", function ()
-    introAg:Play()
-
-    -- Play outro after hold time
-    C_Timer.After(holdTime, function()
-      outroAg:Play()
-    end)
-  end)
+  chatMessage.chatLineLeftBg:SetHeight(chatLineHeight)
+  chatMessage.chatLineCenterBg:SetHeight(chatLineHeight)
+  chatMessage.chatLineRightBg:SetHeight(chatLineHeight)
 
   return chatMessage
 end
@@ -241,11 +262,11 @@ function Mesmeric:Draw()
       table.insert(newChatMessages, self:CreateChatMessageFrame(unpack(message)))
     end
 
+    -- Update slider offsets animation
     local offset = reduce(newChatMessages, function (acc, chatMessage)
       return acc + chatMessage:GetHeight()
     end, 0)
 
-    -- Update slider offsets animation
     self.sliderStartOffset:SetOffset(0, offset * -1)
     self.sliderTranslateUp:SetOffset(0, offset)
 
@@ -256,6 +277,18 @@ function Mesmeric:Draw()
     end
 
     self.sliderAg:Play()
+
+    -- Release old chat messages
+    local chatHistoryLimit = 128
+    if #self.chatMessages > chatHistoryLimit then
+      local overflow = #self.chatMessages - chatHistoryLimit
+      local oldChatMessages = take(self.chatMessages, overflow)
+      self.chatMessages = drop(self.chatMessages, overflow)
+
+      for _, chatMessage in ipairs(oldChatMessages) do
+        self.chatMessageFramePool:Release(chatMessage)
+      end
+    end
 
     -- Reset
     self.incomingChatMessages = {}
