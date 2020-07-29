@@ -16,6 +16,7 @@ function Mesmeric:OnInitialize()
     hiddenChatFrames = {}
   }
 
+  -- Main container
   self.container = CreateFrame("Frame", "Mesmeric", UIParent)
 
   self.timeElapsed = 0
@@ -34,6 +35,15 @@ function Mesmeric:OnInitialize()
   self.translateUp = self.containerAg:CreateAnimation("Translation")
   self.translateUp:SetDuration(0.3)
   self.translateUp:SetSmoothing("OUT")
+
+  -- Main font
+  local font = CreateFont("MesmericFont")
+  font:SetFont("Fonts\\ARIALN.TTF", 14)
+  font:SetShadowColor(0, 0, 0, 1)
+  font:SetShadowOffset(1, -1)
+  font:SetJustifyH("LEFT")
+  font:SetJustifyV("MIDDLE")
+  font:SetSpacing(3)
 
   self.chatLinePool = CreateFramePool("Frame", self.container)
 end
@@ -59,7 +69,6 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   local width = 450
   local Xpadding = 15
   local Ypadding = 3
-  local lineHeight = 3
   local opacity = 0.4
 
   local chatLine = self.chatLinePool:Acquire()
@@ -100,12 +109,9 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
     0, 0, 0, 0
   )
 
-  local textLayer = chatLine:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+  local textLayer = chatLine:CreateFontString(nil, "ARTWORK", "MesmericFont")
   textLayer:SetTextColor(red, green, blue, 1)
   textLayer:SetPoint("LEFT", Xpadding, 0)
-  textLayer:SetJustifyH("LEFT")
-  textLayer:SetJustifyV("MIDDLE")
-  textLayer:SetSpacing(lineHeight)
   textLayer:SetWidth(width - Xpadding * 2)
   textLayer:SetText(text)
 

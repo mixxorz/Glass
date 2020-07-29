@@ -3,6 +3,7 @@ globals = {
 }
 read_globals = {
   "C_Timer",
+  "CreateFont",
   "CreateFrame",
   "CreateFramePool",
   "LibStub",
