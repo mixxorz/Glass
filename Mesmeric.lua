@@ -1,5 +1,8 @@
 Mesmeric = LibStub("AceAddon-3.0"):NewAddon("Mesmeric", "AceConsole-3.0", "AceHook-3.0")
 
+local lodash = LibStub("lodash.wow")
+
+local reduce = lodash.reduce
 local unpack = unpack
 
 -- Use `message` for print because calling `print` will trigger an infinite loop
@@ -17,24 +20,16 @@ function Mesmeric:OnInitialize()
   }
 
   -- Main container
-  self.container = CreateFrame("Frame", "Mesmeric", UIParent)
+  local container = CreateFrame("Frame", "Mesmeric", UIParent)
 
   self.timeElapsed = 0
-  self.container:SetScript("OnUpdate", function (frame, elapsed)
+  container:SetScript("OnUpdate", function (frame, elapsed)
     self:OnUpdate(elapsed)
   end)
 
-  self.container:SetHeight(400)
-  self.container:SetWidth(450)
-  self.container:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260)
-
-  self.containerAg = self.container:CreateAnimationGroup()
-  self.startOffset = self.containerAg:CreateAnimation("Translation")
-  self.startOffset:SetDuration(0)
-
-  self.translateUp = self.containerAg:CreateAnimation("Translation")
-  self.translateUp:SetDuration(0.3)
-  self.translateUp:SetSmoothing("OUT")
+  container:SetHeight(400)
+  container:SetWidth(450)
+  container:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260)
 
   -- Main font
   local font = CreateFont("MesmericFont")
@@ -45,7 +40,14 @@ function Mesmeric:OnInitialize()
   font:SetJustifyV("MIDDLE")
   font:SetSpacing(3)
 
-  self.chatLinePool = CreateFramePool("Frame", self.container)
+  -- Frame that translates up when a new message comes in
+  self.slider = CreateFrame("Frame", nil, container)
+  self.slider:SetAllPoints(container)
+
+  self.chatMessageFramePool = CreateFramePool("Frame", self.slider)
+
+  self.chatMessages = {}
+  self.incomingChatMessages = {}
 end
 
 function Mesmeric:OnEnable()
@@ -60,7 +62,13 @@ function Mesmeric:OnDisable()
   self:Unhook(_G.ChatFrame1, "AddMessage")
 end
 
-function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
+function Mesmeric:AddMessage(...)
+  -- Enqueue messages to be displayed
+  local args = {...}
+  table.insert(self.incomingChatMessages, args)
+end
+
+function Mesmeric:CreateChatMessageFrame(frame, text, red, green, blue, messageId, holdTime)
   holdTime = 10
   red = red or 1
   green = green or 1
@@ -71,20 +79,21 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
   local Ypadding = 3
   local opacity = 0.4
 
-  local chatLine = self.chatLinePool:Acquire()
-  chatLine:SetWidth(width)
-  chatLine:SetPoint("TOPLEFT", self.container, "BOTTOMLEFT")
+  local chatMessage = self.chatMessageFramePool:Acquire()
+  chatMessage:SetWidth(width)
+  chatMessage:SetPoint("BOTTOMLEFT")
 
+  -- Attach previous chat message to this one
   if self.prevLine then
     self.prevLine:ClearAllPoints()
-    self.prevLine:SetPoint("BOTTOMLEFT", chatLine, "TOPLEFT")
+    self.prevLine:SetPoint("BOTTOMLEFT", chatMessage, "TOPLEFT")
   end
 
-  self.prevLine = chatLine
+  self.prevLine = chatMessage
 
   -- Background
   -- Left: 50 Center:300 Right: 100
-  local chatLineLeftBg = chatLine:CreateTexture(nil, "BACKGROUND")
+  local chatLineLeftBg = chatMessage:CreateTexture(nil, "BACKGROUND")
   chatLineLeftBg:SetPoint("LEFT")
   chatLineLeftBg:SetWidth(50)
   chatLineLeftBg:SetColorTexture(0, 0, 0, opacity)
@@ -94,12 +103,12 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
     0, 0, 0, 1
   )
 
-  local chatLineCenterBg = chatLine:CreateTexture(nil, "BACKGROUND")
+  local chatLineCenterBg = chatMessage:CreateTexture(nil, "BACKGROUND")
   chatLineCenterBg:SetPoint("LEFT", 50, 0)
   chatLineCenterBg:SetWidth(150)
   chatLineCenterBg:SetColorTexture(0, 0, 0, opacity)
 
-  local chatLineRightBg = chatLine:CreateTexture(nil, "BACKGROUND")
+  local chatLineRightBg = chatMessage:CreateTexture(nil, "BACKGROUND")
   chatLineRightBg:SetPoint("RIGHT")
   chatLineRightBg:SetWidth(250)
   chatLineRightBg:SetColorTexture(0, 0, 0, opacity)
@@ -109,7 +118,7 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
     0, 0, 0, 0
   )
 
-  local textLayer = chatLine:CreateFontString(nil, "ARTWORK", "MesmericFont")
+  local textLayer = chatMessage:CreateFontString(nil, "ARTWORK", "MesmericFont")
   textLayer:SetTextColor(red, green, blue, 1)
   textLayer:SetPoint("LEFT", Xpadding, 0)
   textLayer:SetWidth(width - Xpadding * 2)
@@ -117,44 +126,43 @@ function Mesmeric:AddMessage(frame, text, red, green, blue, messageId, holdTime)
 
   -- Adjust height to contain text
   local chatLineHeight = (textLayer:GetStringHeight() + Ypadding * 2)
-  chatLine:SetHeight(chatLineHeight)
+  chatMessage:SetHeight(chatLineHeight)
   chatLineLeftBg:SetHeight(chatLineHeight)
   chatLineCenterBg:SetHeight(chatLineHeight)
   chatLineRightBg:SetHeight(chatLineHeight)
-  self.startOffset:SetOffset(0, chatLineHeight * -1)
-  self.translateUp:SetOffset(0, chatLineHeight)
-  print(self.startOffset, "startOffset")
-  print(self.translateUp, "translateUp")
 
   -- Intro animations
-  local introAg = chatLine:CreateAnimationGroup()
+  local introAg = chatMessage:CreateAnimationGroup()
   local fadeIn = introAg:CreateAnimation("Alpha")
   fadeIn:SetFromAlpha(0)
   fadeIn:SetToAlpha(1)
   fadeIn:SetDuration(1)
   fadeIn:SetSmoothing("OUT")
 
-  -- Start intor animation
-  chatLine:Show()
-  introAg:Play()
-  self.containerAg:Play()
-
   -- Outro animations
-  local outroAg = chatLine:CreateAnimationGroup()
+  local outroAg = chatMessage:CreateAnimationGroup()
   local fadeOut = outroAg:CreateAnimation("Alpha")
   fadeOut:SetFromAlpha(1)
   fadeOut:SetToAlpha(0)
   fadeOut:SetDuration(0.5)
   fadeOut:SetEndDelay(1)
 
+  -- Hide the frame when the outro animation finishes
   outroAg:SetScript("OnFinished", function ()
-    chatLine:Hide()
+    chatMessage:Hide()
   end)
 
-  -- Play outro after hold time
-  C_Timer.After(holdTime, function()
-    outroAg:Play()
+  -- Start intro animation when element is shown
+  chatMessage:SetScript("OnShow", function ()
+    introAg:Play()
+
+    -- Play outro after hold time
+    C_Timer.After(holdTime, function()
+      outroAg:Play()
+    end)
   end)
+
+  return chatMessage
 end
 
 function Mesmeric:HideDefaultChatFrames()
@@ -209,10 +217,43 @@ Mesmeric:RegisterChatCommand("mesmeric", "ChatHandler")
 function Mesmeric:OnUpdate(elapsed)
   self.timeElapsed = self.timeElapsed + elapsed
   while (self.timeElapsed > 0.1) do
-    self.timeElapsed = self.timeElapsed - 0.01
+    self.timeElapsed = self.timeElapsed - 0.1
     self:Draw()
   end
 end
 
 function Mesmeric:Draw()
+  if #self.incomingChatMessages > 0 then
+    -- Create new chat message frame for each chat message
+    local newChatMessages = {}
+
+    for _, message in ipairs(self.incomingChatMessages) do
+      table.insert(newChatMessages, self:CreateChatMessageFrame(unpack(message)))
+    end
+
+    local offset = reduce(newChatMessages, function (acc, chatMessage)
+      return acc + chatMessage:GetHeight()
+    end, 0)
+
+    -- Create a new container animation
+    local sliderAg = self.slider:CreateAnimationGroup()
+    local startOffset = sliderAg:CreateAnimation("Translation")
+    startOffset:SetDuration(0)
+    startOffset:SetOffset(0, offset * -1)
+
+    local translateUp = sliderAg:CreateAnimation("Translation")
+    translateUp:SetDuration(0.3)
+    translateUp:SetOffset(0, offset)
+    translateUp:SetSmoothing("OUT")
+
+    -- Display and run everything
+    for _, chatMessageFrame in ipairs(newChatMessages) do
+      chatMessageFrame:Show()
+    end
+
+    sliderAg:Play()
+
+    -- Reset
+    self.incomingChatMessages = {}
+  end
 end
