@@ -44,6 +44,16 @@ function Mesmeric:OnInitialize()
   self.slider = CreateFrame("Frame", nil, container)
   self.slider:SetAllPoints(container)
 
+  -- Initialize slide up animations
+  self.sliderAg = self.slider:CreateAnimationGroup()
+  self.sliderStartOffset = self.sliderAg:CreateAnimation("Translation")
+  self.sliderStartOffset:SetDuration(0)
+
+  self.sliderTranslateUp = self.sliderAg:CreateAnimation("Translation")
+  self.sliderTranslateUp:SetDuration(0.3)
+  self.sliderTranslateUp:SetSmoothing("OUT")
+
+  -- Pool for the chat message frames
   self.chatMessageFramePool = CreateFramePool("Frame", self.slider)
 
   self.chatMessages = {}
@@ -235,23 +245,17 @@ function Mesmeric:Draw()
       return acc + chatMessage:GetHeight()
     end, 0)
 
-    -- Create a new container animation
-    local sliderAg = self.slider:CreateAnimationGroup()
-    local startOffset = sliderAg:CreateAnimation("Translation")
-    startOffset:SetDuration(0)
-    startOffset:SetOffset(0, offset * -1)
-
-    local translateUp = sliderAg:CreateAnimation("Translation")
-    translateUp:SetDuration(0.3)
-    translateUp:SetOffset(0, offset)
-    translateUp:SetSmoothing("OUT")
+    -- Update slider offsets animation
+    self.sliderStartOffset:SetOffset(0, offset * -1)
+    self.sliderTranslateUp:SetOffset(0, offset)
 
     -- Display and run everything
     for _, chatMessageFrame in ipairs(newChatMessages) do
       chatMessageFrame:Show()
+      table.insert(self.chatMessages, chatMessageFrame)
     end
 
-    sliderAg:Play()
+    self.sliderAg:Play()
 
     -- Reset
     self.incomingChatMessages = {}
