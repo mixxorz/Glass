@@ -13,36 +13,81 @@ end
 
 function Mesmeric:OnInitialize()
   self.config = {
-    hideDefaultChatFrames = true
+    hideDefaultChatFrames = true,
+    holdTime = 7
   }
   self.state = {
     hiddenChatFrames = {}
   }
 
   -- Main container
-  local container = CreateFrame("Frame", "Mesmeric", UIParent)
+  self.container = CreateFrame("ScrollFrame", "MesmericFrame", UIParent)
+  self.container.bg = self.container:CreateTexture(nil, "BACKGROUND")
+  self.container.bg:SetAllPoints()
+  self.container.bg:SetColorTexture(0, 1, 0, 0)
 
   self.timeElapsed = 0
-  container:SetScript("OnUpdate", function (frame, elapsed)
+  self.container:SetScript("OnUpdate", function (frame, elapsed)
     self:OnUpdate(elapsed)
   end)
 
-  container:SetHeight(400)
-  container:SetWidth(450)
-  container:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260)
+  self.container:SetHeight(360)
+  self.container:SetWidth(450)
+  self.container:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260 - 60)
 
-  -- Main font
-  local font = CreateFont("MesmericFont")
-  font:SetFont("Fonts\\ARIALN.TTF", 14)
-  font:SetShadowColor(0, 0, 0, 1)
-  font:SetShadowOffset(1, -1)
-  font:SetJustifyH("LEFT")
-  font:SetJustifyV("MIDDLE")
-  font:SetSpacing(3)
+  -- Scrolling
+  self.container:SetScript("OnMouseWheel", function (frame, delta)
+    local currentScrollOffset = self.container:GetVerticalScroll()
+    local scrollRange = self.container:GetVerticalScrollRange()
+
+    -- Adjust scroll
+    if delta < 0 and currentScrollOffset < scrollRange + 60 then
+      self.container:SetVerticalScroll(math.min(currentScrollOffset + 20, scrollRange + 60))
+    elseif delta > 0 and currentScrollOffset > self.container:GetHeight() then
+      self.container:SetVerticalScroll(currentScrollOffset - 20)
+    end
+
+    -- Show hidden chat messages
+    for _, message in ipairs(self.chatMessages) do
+      if not message:IsVisible() then
+        message:Show()
+      end
+    end
+  end)
+
+  -- Don't hide chats when mouse is over
+  self.container:SetScript("OnEnter", function (frame, motion)
+    self.state.mouseOver = true
+
+    for _, message in ipairs(self.chatMessages) do
+      if message.outroTimer then
+        message.outroTimer:Cancel()
+      end
+    end
+  end)
+
+  -- Hide chats when mouse leaves
+  self.container:SetScript("OnLeave", function (frame, motion)
+    self.state.mouseOver = false
+
+    for _, message in ipairs(self.chatMessages) do
+      if message:IsVisible() then
+        message.outroTimer = C_Timer.NewTimer(self.config.holdTime, function()
+          message.outroAg:Play()
+        end)
+      end
+    end
+  end)
 
   -- Frame that translates up when a new message comes in
-  self.slider = CreateFrame("Frame", nil, container)
-  self.slider:SetAllPoints(container)
+  self.slider = CreateFrame("Frame", "MesmericScrollChild", self.container)
+  self.slider:SetHeight(360)
+  self.slider:SetWidth(450)
+  self.container:SetScrollChild(self.slider)
+
+  self.slider.bg = self.slider:CreateTexture(nil, "BACKGROUND")
+  self.slider.bg:SetAllPoints()
+  self.slider.bg:SetColorTexture(0, 0, 1, 0)
 
   -- Initialize slide up animations
   self.sliderAg = self.slider:CreateAnimationGroup()
@@ -52,6 +97,15 @@ function Mesmeric:OnInitialize()
   self.sliderTranslateUp = self.sliderAg:CreateAnimation("Translation")
   self.sliderTranslateUp:SetDuration(0.3)
   self.sliderTranslateUp:SetSmoothing("OUT")
+
+  -- Main font
+  local font = CreateFont("MesmericFont")
+  font:SetFont("Fonts\\ARIALN.TTF", 14)
+  font:SetShadowColor(0, 0, 0, 1)
+  font:SetShadowOffset(1, -1)
+  font:SetJustifyH("LEFT")
+  font:SetJustifyV("MIDDLE")
+  font:SetSpacing(3)
 
   -- Pool for the chat message frames
   self.chatMessageFramePool = CreateObjectPool(
@@ -94,7 +148,6 @@ function Mesmeric:ChatMessagePoolCreator()
   local width = 450
   local Xpadding = 15
   local opacity = 0.4
-  local holdTime = 10
 
   local chatMessage = CreateFrame("Frame", nil, self.slider)
   chatMessage:SetWidth(width)
@@ -156,16 +209,18 @@ function Mesmeric:ChatMessagePoolCreator()
     chatMessage.introAg:Play()
 
     -- Play outro after hold time
-    chatMessage.outroTimer = C_Timer.NewTimer(holdTime, function()
-      chatMessage.outroAg:Play()
-    end)
+    if not self.state.mouseOver then
+      chatMessage.outroTimer = C_Timer.NewTimer(self.config.holdTime, function()
+        chatMessage.outroAg:Play()
+      end)
+    end
   end)
 
   return chatMessage
 end
 
 function Mesmeric:CreateChatMessageFrame(frame, text, red, green, blue, messageId, holdTime)
-  holdTime = 10
+  holdTime = self.config.holdTime
   red = red or 1
   green = green or 1
   blue = blue or 1
@@ -268,10 +323,14 @@ function Mesmeric:Draw()
       return acc + chatMessage:GetHeight()
     end, 0)
 
+    local newHeight = self.slider:GetHeight() + offset
+    self.slider:SetHeight(newHeight)
     self.sliderStartOffset:SetOffset(0, offset * -1)
     self.sliderTranslateUp:SetOffset(0, offset)
 
     -- Display and run everything
+    self.container:SetVerticalScroll(newHeight - self.container:GetHeight() + 60)
+
     for _, chatMessageFrame in ipairs(newChatMessages) do
       chatMessageFrame:Show()
       table.insert(self.chatMessages, chatMessageFrame)
