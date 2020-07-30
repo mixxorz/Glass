@@ -17,7 +17,9 @@ function Mesmeric:OnInitialize()
     holdTime = 7
   }
   self.state = {
-    hiddenChatFrames = {}
+    hiddenChatFrames = {},
+    mouseOver = false,
+    showingTooltip = false
   }
 
   -- Main container
@@ -51,30 +53,6 @@ function Mesmeric:OnInitialize()
     for _, message in ipairs(self.chatMessages) do
       if not message:IsVisible() then
         message:Show()
-      end
-    end
-  end)
-
-  -- Don't hide chats when mouse is over
-  self.container:SetScript("OnEnter", function (frame, motion)
-    self.state.mouseOver = true
-
-    for _, message in ipairs(self.chatMessages) do
-      if message.outroTimer then
-        message.outroTimer:Cancel()
-      end
-    end
-  end)
-
-  -- Hide chats when mouse leaves
-  self.container:SetScript("OnLeave", function (frame, motion)
-    self.state.mouseOver = false
-
-    for _, message in ipairs(self.chatMessages) do
-      if message:IsVisible() then
-        message.outroTimer = C_Timer.NewTimer(self.config.holdTime, function()
-          message.outroAg:Play()
-        end)
       end
     end
   end)
@@ -139,6 +117,30 @@ end
 function Mesmeric:OnDisable()
   self:ShowDefaultChatFrames()
   self:Unhook(_G.ChatFrame1, "AddMessage")
+end
+
+function Mesmeric:OnEnter()
+  -- Don't hide chats when mouse is over
+  self.state.mouseOver = true
+
+  for _, message in ipairs(self.chatMessages) do
+    if message.outroTimer then
+      message.outroTimer:Cancel()
+    end
+  end
+end
+
+function Mesmeric:OnLeave()
+  -- Hide chats when mouse leaves
+  self.state.mouseOver = false
+
+  for _, message in ipairs(self.chatMessages) do
+    if message:IsVisible() then
+      message.outroTimer = C_Timer.NewTimer(self.config.holdTime, function()
+        message.outroAg:Play()
+      end)
+    end
+  end
 end
 
 function Mesmeric:AddMessage(...)
@@ -405,5 +407,14 @@ function Mesmeric:Draw()
 
     -- Reset
     self.incomingChatMessages = {}
+  end
+
+  -- Mouse over tracking
+  if self.state.mouseOver ~= MouseIsOver(self.container) then
+    if not self.state.mouseOver then
+      self:OnEnter()
+    else
+      self:OnLeave()
+    end
   end
 end
