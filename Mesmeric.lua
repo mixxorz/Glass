@@ -191,10 +191,9 @@ function Mesmeric:ChatMessagePoolCreator()
   chatMessage:SetWidth(width)
   chatMessage:SetHyperlinksEnabled(true)
 
-  -- chatMessage:SetScript("OnHyperlinkClick", function (...)
-  --   local args = {...}
-  --   self:OnHyperlinkEnter(unpack(args))
-  -- end)
+  chatMessage:SetScript("OnHyperlinkClick", function (frame, link, text, button)
+    SetItemRef(link, text, button)
+  end)
 
   chatMessage:SetScript("OnHyperlinkEnter", function (...)
     local args = {...}

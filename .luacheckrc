@@ -12,6 +12,7 @@ read_globals = {
   "GameTooltip",
   "LibStub",
   "NUM_CHAT_WINDOWS",
+  "SetItemRef",
   "ShowUIPanel",
   "UIParent",
   "ViragDevTool_AddData",
