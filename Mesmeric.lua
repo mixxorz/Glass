@@ -22,6 +22,10 @@ function Mesmeric:OnInitialize()
 
   -- Main container
   self.container = CreateFrame("ScrollFrame", "MesmericFrame", UIParent)
+  self.container:SetHeight(360)
+  self.container:SetWidth(450)
+  self.container:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260 - 60)
+
   self.container.bg = self.container:CreateTexture(nil, "BACKGROUND")
   self.container.bg:SetAllPoints()
   self.container.bg:SetColorTexture(0, 1, 0, 0)
@@ -30,10 +34,6 @@ function Mesmeric:OnInitialize()
   self.container:SetScript("OnUpdate", function (frame, elapsed)
     self:OnUpdate(elapsed)
   end)
-
-  self.container:SetHeight(360)
-  self.container:SetWidth(450)
-  self.container:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260 - 60)
 
   -- Scrolling
   self.container:SetScript("OnMouseWheel", function (frame, delta)
@@ -78,6 +78,9 @@ function Mesmeric:OnInitialize()
       end
     end
   end)
+
+  -- Mouse clickthrough
+  self.container:EnableMouse(false)
 
   -- Frame that translates up when a new message comes in
   self.slider = CreateFrame("Frame", "MesmericScrollChild", self.container)
@@ -144,6 +147,41 @@ function Mesmeric:AddMessage(...)
   table.insert(self.incomingChatMessages, args)
 end
 
+local linkTypes = {
+  item = true,
+  enchant = true,
+  spell = true,
+  quest = true,
+  achievement = true,
+  currency = true,
+  battlepet = true,
+}
+
+function Mesmeric:OnHyperlinkEnter(f, link, text)
+  local t = string.match(link, "^(.-):")
+
+  if linkTypes[t] then
+    if t == "battlepet" then
+      self.state.showingTooltip = BattlePetTooltip
+      GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
+      BattlePetToolTip_ShowLink(text)
+    else
+      self.state.showingTooltip = GameTooltip
+      ShowUIPanel(GameTooltip)
+      GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
+      GameTooltip:SetHyperlink(link)
+      GameTooltip:Show()
+    end
+  end
+end
+
+function Mesmeric:OnHyperlinkLeave(f, link)
+  if self.state.showingTooltip then
+    self.state.showingTooltip:Hide()
+    self.state.showingTooltip = false
+  end
+end
+
 function Mesmeric:ChatMessagePoolCreator()
   local width = 450
   local Xpadding = 15
@@ -151,6 +189,22 @@ function Mesmeric:ChatMessagePoolCreator()
 
   local chatMessage = CreateFrame("Frame", nil, self.slider)
   chatMessage:SetWidth(width)
+  chatMessage:SetHyperlinksEnabled(true)
+
+  -- chatMessage:SetScript("OnHyperlinkClick", function (...)
+  --   local args = {...}
+  --   self:OnHyperlinkEnter(unpack(args))
+  -- end)
+
+  chatMessage:SetScript("OnHyperlinkEnter", function (...)
+    local args = {...}
+    self:OnHyperlinkEnter(unpack(args))
+  end)
+
+  chatMessage:SetScript("OnHyperlinkLeave", function (...)
+    local args = {...}
+    self:OnHyperlinkLeave(unpack(args))
+  end)
 
   -- Background
   -- Left: 50 Center:300 Right: 100
