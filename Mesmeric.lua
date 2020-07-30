@@ -135,7 +135,7 @@ function Mesmeric:ChatMessagePoolCreator()
   local fadeIn = chatMessage.introAg:CreateAnimation("Alpha")
   fadeIn:SetFromAlpha(0)
   fadeIn:SetToAlpha(1)
-  fadeIn:SetDuration(1)
+  fadeIn:SetDuration(0.6)
   fadeIn:SetSmoothing("OUT")
 
   -- Outro animations
@@ -143,7 +143,7 @@ function Mesmeric:ChatMessagePoolCreator()
   local fadeOut = chatMessage.outroAg:CreateAnimation("Alpha")
   fadeOut:SetFromAlpha(1)
   fadeOut:SetToAlpha(0)
-  fadeOut:SetDuration(0.5)
+  fadeOut:SetDuration(0.6)
   fadeOut:SetEndDelay(1)
 
   -- Hide the frame when the outro animation finishes
