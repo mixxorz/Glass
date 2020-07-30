@@ -254,7 +254,8 @@ function Mesmeric:OnUpdate(elapsed)
 end
 
 function Mesmeric:Draw()
-  if #self.incomingChatMessages > 0 then
+  -- Make sure previous iteration is complete before running again
+  if #self.incomingChatMessages > 0 and not self.sliderAg:IsPlaying() then
     -- Create new chat message frame for each chat message
     local newChatMessages = {}
 
