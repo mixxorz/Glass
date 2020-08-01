@@ -26,7 +26,7 @@ end
 -- Constants
 Constants.DEFAULT_ANCHOR_POINT = {"BOTTOMLEFT", 20, 200}
 Constants.DEFAULT_CHAT_HOLD_TIME = 10
-Constants.DEFAULT_SIZE = {450, 200}
+Constants.DEFAULT_SIZE = {450, 230}
 
 -- Colors
 local function createColor(r, g, b)
@@ -40,5 +40,6 @@ Constants.COLORS = {
 }
 
 -- Modules
-Core:NewModule("SlidingMessageFrame", "AceHook-3.0")
 Core:NewModule("ChatTabs", "AceHook-3.0")
+Core:NewModule("MainContainer")
+Core:NewModule("SlidingMessageFrame", "AceHook-3.0")

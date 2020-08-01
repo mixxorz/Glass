@@ -1,15 +1,15 @@
 local Core, Constants = unpack(select(2, ...))
+local MC = Core:GetModule("MainContainer")
 local SMF = Core:GetModule("SlidingMessageFrame")
 
 -- luacheck: push ignore 113
 local BattlePetToolTip_ShowLink = BattlePetToolTip_ShowLink
 local BattlePetTooltip = BattlePetTooltip
 local C_Timer = C_Timer
-local CreateFont = CreateFont
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
 local GameTooltip = GameTooltip
-local MouseIsOver = MouseIsOver
+local GeneralDockManager = GeneralDockManager
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
 local SetItemRef = SetItemRef
 local ShowUIPanel = ShowUIPanel
@@ -47,8 +47,8 @@ end
 function SlidingMessageFrame:Initialize()
   self.config = {
     holdTime = Constants.DEFAULT_CHAT_HOLD_TIME,
-    height = Constants.DEFAULT_SIZE[2],
-    width = Constants.DEFAULT_SIZE[1],
+    height = MC:GetFrame():GetHeight() - GeneralDockManager:GetHeight() - 5,
+    width = MC:GetFrame():GetWidth(),
     messageOpacity = 0.2,
     overflowHeight = 60
   }
@@ -59,33 +59,31 @@ function SlidingMessageFrame:Initialize()
     messages = {}
   }
 
-  -- Main container
-  self.container = CreateFrame("ScrollFrame", nil, UIParent)
-  self.container:SetHeight(self.config.height + self.config.overflowHeight)
-  self.container:SetWidth(self.config.width)
-  self.container:SetPoint(
-    "BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260 - self.config.overflowHeight
-  )
+  -- Chat scroll frame
+  self.scrollFrame = CreateFrame("ScrollFrame", "MesmericScrollFrame", MC:GetFrame())
+  self.scrollFrame:SetHeight(self.config.height + self.config.overflowHeight)
+  self.scrollFrame:SetWidth(self.config.width)
+  self.scrollFrame:SetPoint("TOPLEFT", GeneralDockManager, "BOTTOMLEFT", 0, -5)
 
-  self.container.bg = self.container:CreateTexture(nil, "BACKGROUND")
-  self.container.bg:SetAllPoints()
-  self.container.bg:SetColorTexture(0, 1, 0, 0)
+  self.scrollFrame.bg = self.scrollFrame:CreateTexture(nil, "BACKGROUND")
+  self.scrollFrame.bg:SetAllPoints()
+  self.scrollFrame.bg:SetColorTexture(0, 1, 0, 0)
 
   self.timeElapsed = 0
-  self.container:SetScript("OnUpdate", function (frame, elapsed)
+  self.scrollFrame:SetScript("OnUpdate", function (frame, elapsed)
     self:OnUpdate(elapsed)
   end)
 
   -- Scrolling
-  self.container:SetScript("OnMouseWheel", function (frame, delta)
-    local currentScrollOffset = self.container:GetVerticalScroll()
-    local scrollRange = self.container:GetVerticalScrollRange()
+  self.scrollFrame:SetScript("OnMouseWheel", function (frame, delta)
+    local currentScrollOffset = self.scrollFrame:GetVerticalScroll()
+    local scrollRange = self.scrollFrame:GetVerticalScrollRange()
 
     -- Adjust scroll
     if delta < 0 and currentScrollOffset < scrollRange + self.config.overflowHeight then
-      self.container:SetVerticalScroll(math.min(currentScrollOffset + 20, scrollRange + self.config.overflowHeight))
-    elseif delta > 0 and currentScrollOffset > self.container:GetHeight() then
-      self.container:SetVerticalScroll(currentScrollOffset - 20)
+      self.scrollFrame:SetVerticalScroll(math.min(currentScrollOffset + 20, scrollRange + self.config.overflowHeight))
+    elseif delta > 0 and currentScrollOffset > self.scrollFrame:GetHeight() then
+      self.scrollFrame:SetVerticalScroll(currentScrollOffset - 20)
     end
 
     -- Show hidden messages
@@ -97,13 +95,13 @@ function SlidingMessageFrame:Initialize()
   end)
 
   -- Mouse clickthrough
-  self.container:EnableMouse(false)
+  self.scrollFrame:EnableMouse(false)
 
   -- ScrollChild
-  self.slider = CreateFrame("Frame", nil, self.container)
+  self.slider = CreateFrame("Frame", nil, self.scrollFrame)
   self.slider:SetHeight(self.config.height + self.config.overflowHeight)
   self.slider:SetWidth(self.config.width)
-  self.container:SetScrollChild(self.slider)
+  self.scrollFrame:SetScrollChild(self.slider)
 
   self.slider.bg = self.slider:CreateTexture(nil, "BACKGROUND")
   self.slider.bg:SetAllPoints()
@@ -117,15 +115,6 @@ function SlidingMessageFrame:Initialize()
   self.sliderTranslateUp = self.sliderAg:CreateAnimation("Translation")
   self.sliderTranslateUp:SetDuration(0.3)
   self.sliderTranslateUp:SetSmoothing("OUT")
-
-  -- Main font
-  local font = CreateFont("MesmericFont")
-  font:SetFont("Fonts\\FRIZQT__.TTF", 12)
-  font:SetShadowColor(0, 0, 0, 1)
-  font:SetShadowOffset(1, -1)
-  font:SetJustifyH("LEFT")
-  font:SetJustifyV("MIDDLE")
-  font:SetSpacing(3)
 
   -- Pool for the message frames
   self.messageFramePool = CreateObjectPool(
@@ -144,11 +133,11 @@ function SlidingMessageFrame:Initialize()
 end
 
 function SlidingMessageFrame:Show()
-  self.container:Show()
+  self.scrollFrame:Show()
 end
 
 function SlidingMessageFrame:Hide()
-  self.container:Hide()
+  self.scrollFrame:Hide()
 end
 
 function SlidingMessageFrame:MessagePoolCreator()
@@ -238,7 +227,9 @@ function SlidingMessageFrame:MessagePoolCreator()
     -- Play outro after hold time
     if not self.state.mouseOver then
       message.outroTimer = C_Timer.NewTimer(self.config.holdTime, function()
-        message.outroAg:Play()
+        if message:IsVisible() then
+          message.outroAg:Play()
+        end
       end)
     end
   end)
@@ -278,7 +269,7 @@ function SlidingMessageFrame:CreateMessageFrame(frame, text, red, green, blue, m
   return message
 end
 
-function SlidingMessageFrame:OnEnter()
+function SlidingMessageFrame:OnEnterContainer()
   -- Don't hide chats when mouse is over
   self.state.mouseOver = true
 
@@ -289,14 +280,16 @@ function SlidingMessageFrame:OnEnter()
   end
 end
 
-function SlidingMessageFrame:OnLeave()
+function SlidingMessageFrame:OnLeaveContainer()
   -- Hide chats when mouse leaves
   self.state.mouseOver = false
 
   for _, message in ipairs(self.state.messages) do
     if message:IsVisible() then
       message.outroTimer = C_Timer.NewTimer(self.config.holdTime, function()
-        message.outroAg:Play()
+        if message:IsVisible() then
+          message.outroAg:Play()
+        end
       end)
     end
   end
@@ -363,7 +356,7 @@ function SlidingMessageFrame:Update()
     self.sliderTranslateUp:SetOffset(0, offset)
 
     -- Display and run everything
-    self.container:SetVerticalScroll(newHeight - self.container:GetHeight() + self.config.overflowHeight)
+    self.scrollFrame:SetVerticalScroll(newHeight - self.scrollFrame:GetHeight() + self.config.overflowHeight)
 
     for _, messageFrame in ipairs(newMessages) do
       messageFrame:Show()
@@ -387,25 +380,23 @@ function SlidingMessageFrame:Update()
     -- Reset
     self.state.incomingMessages = {}
   end
-
-  -- Mouse over tracking
-  if self.state.mouseOver ~= MouseIsOver(self.container) then
-    if not self.state.mouseOver then
-      self:OnEnter()
-    else
-      self:OnLeave()
-    end
-  end
 end
 
 ----
 -- SMF Module
+function SMF:OnInitialize()
+  self.state = {
+    frames = {}
+  }
+end
+
 function SMF:OnEnable()
   -- Replace chat windows with SMFs
   for i=1, NUM_CHAT_WINDOWS do
     local chatFrame = _G["ChatFrame"..i]
 
     local smf = SlidingMessageFrame:Create()
+    table.insert(self.state.frames, smf)
 
     smf:Initialize()
     smf:Hide()
@@ -426,5 +417,17 @@ function SMF:OnEnable()
     end, true)
 
     chatFrame:Hide()
+  end
+end
+
+function SMF:OnEnterContainer()
+  for _, smf in ipairs(self.state.frames) do
+    smf:OnEnterContainer()
+  end
+end
+
+function SMF:OnLeaveContainer()
+  for _, smf in ipairs(self.state.frames) do
+    smf:OnLeaveContainer()
   end
 end

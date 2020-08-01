@@ -15,4 +15,6 @@ libs\lodash.wow\lodash.wow.xml
 Mesmeric\init.lua
 
 # Modules
+Mesmeric\Modules\ChatTabs.lua
+Mesmeric\Modules\MainContainer.lua
 Mesmeric\Modules\SlidingMessageFrame.lua
