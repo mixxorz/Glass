@@ -207,7 +207,7 @@ end
 function Mesmeric:ChatMessagePoolCreator()
   local width = 450
   local Xpadding = 15
-  local opacity = 0.4
+  local opacity = 0.2
 
   local chatMessage = CreateFrame("Frame", nil, self.slider)
   chatMessage:SetWidth(width)
@@ -232,16 +232,11 @@ function Mesmeric:ChatMessagePoolCreator()
   chatMessage.chatLineLeftBg = chatMessage:CreateTexture(nil, "BACKGROUND")
   chatMessage.chatLineLeftBg:SetPoint("LEFT")
   chatMessage.chatLineLeftBg:SetWidth(50)
-  chatMessage.chatLineLeftBg:SetColorTexture(
-    colors.codGray.r,
-    colors.codGray.g,
-    colors.codGray.b,
-    opacity
-  )
+  chatMessage.chatLineLeftBg:SetColorTexture(1, 1, 1, 1)
   chatMessage.chatLineLeftBg:SetGradientAlpha(
     "HORIZONTAL",
-    0, 0, 0, 0,
-    0, 0, 0, 1
+    colors.codGray.r, colors.codGray.g, colors.codGray.b, 0,
+    colors.codGray.r, colors.codGray.g, colors.codGray.b, opacity
   )
 
   chatMessage.chatLineCenterBg = chatMessage:CreateTexture(nil, "BACKGROUND")
@@ -257,16 +252,11 @@ function Mesmeric:ChatMessagePoolCreator()
   chatMessage.chatLineRightBg = chatMessage:CreateTexture(nil, "BACKGROUND")
   chatMessage.chatLineRightBg:SetPoint("RIGHT")
   chatMessage.chatLineRightBg:SetWidth(250)
-  chatMessage.chatLineRightBg:SetColorTexture(
-    colors.codGray.r,
-    colors.codGray.g,
-    colors.codGray.b,
-    opacity
-  )
+  chatMessage.chatLineRightBg:SetColorTexture(1, 1, 1, 1)
   chatMessage.chatLineRightBg:SetGradientAlpha(
     "HORIZONTAL",
-    0, 0, 0, 1,
-    0, 0, 0, 0
+    colors.codGray.r, colors.codGray.g, colors.codGray.b, opacity,
+    colors.codGray.r, colors.codGray.g, colors.codGray.b, 0
   )
 
   chatMessage.text = chatMessage:CreateFontString(nil, "ARTWORK", "MesmericFont")
@@ -361,16 +351,11 @@ function Mesmeric:MountChatTabs()
   self.dock.leftBg:SetPoint("LEFT")
   self.dock.leftBg:SetWidth(50)
   self.dock.leftBg:SetHeight(20)
-  self.dock.leftBg:SetColorTexture(
-    colors.black.r,
-    colors.black.g,
-    colors.black.b,
-    opacity
-  )
+  self.dock.leftBg:SetColorTexture(1, 1, 1, 1)
   self.dock.leftBg:SetGradientAlpha(
     "HORIZONTAL",
-    0, 0, 0, 0,
-    0, 0, 0, 1
+    colors.black.r, colors.black.g, colors.black.b, 0,
+    colors.black.r, colors.black.g, colors.black.b, opacity
   )
 
   self.dock.centerBg = GeneralDockManager:CreateTexture(nil, "BACKGROUND")
@@ -388,16 +373,11 @@ function Mesmeric:MountChatTabs()
   self.dock.rightBg:SetPoint("LEFT", 200, 0)
   self.dock.rightBg:SetWidth(250)
   self.dock.rightBg:SetHeight(20)
-  self.dock.rightBg:SetColorTexture(
-    colors.black.r,
-    colors.black.g,
-    colors.black.b,
-    opacity
-  )
+  self.dock.rightBg:SetColorTexture(1, 1, 1, 1)
   self.dock.rightBg:SetGradientAlpha(
     "HORIZONTAL",
-    0, 0, 0, 1,
-    0, 0, 0, 0
+    colors.black.r, colors.black.g, colors.black.b, opacity,
+    colors.black.r, colors.black.g, colors.black.b, 0
   )
 
   local tabTexs = {
