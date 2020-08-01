@@ -401,6 +401,7 @@ end
 ----
 -- SMF Module
 function SMF:OnEnable()
+  -- Replace chat windows with SMFs
   for i=1, NUM_CHAT_WINDOWS do
     local chatFrame = _G["ChatFrame"..i]
 
@@ -415,10 +416,14 @@ function SMF:OnEnable()
     end, true)
 
     -- Hide the default chat frame and show the sliding message frame instead
-    chatFrame:SetScript("OnShow", function(...)
-      chatFrame:Hide()
+    self:RawHook(chatFrame, "Show", function ()
       smf:Show()
-    end)
+    end, true)
+
+    self:RawHook(chatFrame, "Hide", function (f)
+      self.hooks[chatFrame].Hide(f)
+      smf:Hide()
+    end, true)
 
     chatFrame:Hide()
   end
