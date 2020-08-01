@@ -49,7 +49,7 @@ function SlidingMessageFrame:Initialize()
     holdTime = Constants.DEFAULT_CHAT_HOLD_TIME,
     height = MC:GetFrame():GetHeight() - GeneralDockManager:GetHeight() - 5,
     width = MC:GetFrame():GetWidth(),
-    messageOpacity = 0.2,
+    messageOpacity = 0.4,
     overflowHeight = 60
   }
   self.state = {
@@ -393,30 +393,43 @@ end
 function SMF:OnEnable()
   -- Replace chat windows with SMFs
   for i=1, NUM_CHAT_WINDOWS do
-    local chatFrame = _G["ChatFrame"..i]
+    repeat
+      local chatFrame = _G["ChatFrame"..i]
 
-    local smf = SlidingMessageFrame:Create()
-    table.insert(self.state.frames, smf)
+      chatFrame:SetClampRectInsets(0,0,0,0)
+      chatFrame:SetClampedToScreen(false)
 
-    smf:Initialize()
-    smf:Hide()
+      _G[chatFrame:GetName().."ButtonFrame"]:Hide()
 
-    self:Hook(chatFrame, "AddMessage", function (...)
-      local args = {...}
-      smf:AddMessage(unpack(args))
-    end, true)
+      -- Skip combat log
+      if i == 2 then
+        chatFrame:SetSize(MC:GetFrame():GetWidth(), MC:GetFrame():GetHeight())
+        do break end
+      end
 
-    -- Hide the default chat frame and show the sliding message frame instead
-    self:RawHook(chatFrame, "Show", function ()
-      smf:Show()
-    end, true)
+      local smf = SlidingMessageFrame:Create()
+      self.state.frames[i] = smf
 
-    self:RawHook(chatFrame, "Hide", function (f)
-      self.hooks[chatFrame].Hide(f)
+      smf:Initialize()
       smf:Hide()
-    end, true)
 
-    chatFrame:Hide()
+      self:Hook(chatFrame, "AddMessage", function (...)
+        local args = {...}
+        smf:AddMessage(unpack(args))
+      end, true)
+
+      -- Hide the default chat frame and show the sliding message frame instead
+      self:RawHook(chatFrame, "Show", function ()
+        smf:Show()
+      end, true)
+
+      self:RawHook(chatFrame, "Hide", function (f)
+        self.hooks[chatFrame].Hide(f)
+        smf:Hide()
+      end, true)
+
+      chatFrame:Hide()
+    until true
   end
 end
 
