@@ -2,10 +2,6 @@ local _G = _G
 
 local AceAddon = _G.LibStub("AceAddon-3.0")
 
--- luacheck: push ignore 113
-local ViragDevTool_AddData = ViragDevTool_AddData
--- luacheck: pop
-
 local AddonName, AddonVars = ...
 local Core = AceAddon:NewAddon(AddonName)
 local Constants = { }
@@ -18,9 +14,10 @@ Core.Libs = {
   lodash = _G.LibStub("lodash.wow"),
 }
 
-function Core:Print(...)
-  local args = {...}
-  ViragDevTool_AddData(unpack(args))
+Core.print = function(str, t)
+  if _G.ViragDevTool_AddData then
+    _G.ViragDevTool_AddData(t, str)
+  end
 end
 
 -- Constants
@@ -43,3 +40,4 @@ Constants.COLORS = {
 Core:NewModule("ChatTabs", "AceHook-3.0")
 Core:NewModule("MainContainer")
 Core:NewModule("SlidingMessageFrame", "AceHook-3.0")
+Core:NewModule("EditBox", "AceHook-3.0")

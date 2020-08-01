@@ -213,7 +213,6 @@ function SlidingMessageFrame:MessagePoolCreator()
   fadeOut:SetFromAlpha(1)
   fadeOut:SetToAlpha(0)
   fadeOut:SetDuration(0.6)
-  fadeOut:SetEndDelay(1)
 
   -- Hide the frame when the outro animation finishes
   message.outroAg:SetScript("OnFinished", function ()
@@ -391,6 +390,8 @@ function SMF:OnInitialize()
 end
 
 function SMF:OnEnable()
+  local MCFrame = MC:GetFrame()
+
   -- Replace chat windows with SMFs
   for i=1, NUM_CHAT_WINDOWS do
     repeat
@@ -403,7 +404,7 @@ function SMF:OnEnable()
 
       -- Skip combat log
       if i == 2 then
-        chatFrame:SetSize(MC:GetFrame():GetWidth(), MC:GetFrame():GetHeight())
+        chatFrame:SetSize(MCFrame:GetWidth(), MCFrame:GetHeight())
         do break end
       end
 
