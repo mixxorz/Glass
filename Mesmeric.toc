@@ -11,4 +11,8 @@ libs\AceConfig-3.0\AceConfig-3.0.xml
 libs\AceGUI-3.0\AceGUI-3.0.xml
 libs\lodash.wow\lodash.wow.xml
 
-Mesmeric.lua
+# Mesmeric.lua
+Mesmeric\init.lua
+
+# Modules
+Mesmeric\Modules\SlidingMessageFrame.lua

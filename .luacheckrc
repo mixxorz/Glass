@@ -1,7 +1,7 @@
 globals = {
   "Mesmeric"
 }
-read_globals = {
+old_read_globals = {
   "BattlePetToolTip_ShowLink",
   "BattlePetTooltip",
   "C_Timer",
@@ -20,5 +20,8 @@ read_globals = {
   "UIParent",
   "ViragDevTool_AddData",
   "message"
+}
+read_globas = {
+
 }
 ignore = {"212"}
