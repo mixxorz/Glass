@@ -11,10 +11,23 @@ local print = function(...)
   ViragDevTool_AddData(unpack(args))
 end
 
+local function color(r, g, b)
+  return { r = r / 255, g = g / 255, b = b / 255 }
+end
+
+local colors = {
+  black = color(0, 0, 0),
+  codGray = color(17, 17, 17),
+  apache = color(223, 186, 105)
+}
+
 function Mesmeric:OnInitialize()
   self.config = {
     hideDefaultChatFrames = true,
-    holdTime = 7
+    holdTime = 10,
+    height = 200,
+    width = 450,
+    overflowHeight = 60
   }
   self.state = {
     hiddenChatFrames = {},
@@ -24,9 +37,11 @@ function Mesmeric:OnInitialize()
 
   -- Main container
   self.container = CreateFrame("ScrollFrame", "MesmericFrame", UIParent)
-  self.container:SetHeight(360)
-  self.container:SetWidth(450)
-  self.container:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260 - 60)
+  self.container:SetHeight(self.config.height + self.config.overflowHeight)
+  self.container:SetWidth(self.config.width)
+  self.container:SetPoint(
+    "BOTTOMLEFT", UIParent, "BOTTOMLEFT", 20, 260 - self.config.overflowHeight
+  )
 
   self.container.bg = self.container:CreateTexture(nil, "BACKGROUND")
   self.container.bg:SetAllPoints()
@@ -43,8 +58,8 @@ function Mesmeric:OnInitialize()
     local scrollRange = self.container:GetVerticalScrollRange()
 
     -- Adjust scroll
-    if delta < 0 and currentScrollOffset < scrollRange + 60 then
-      self.container:SetVerticalScroll(math.min(currentScrollOffset + 20, scrollRange + 60))
+    if delta < 0 and currentScrollOffset < scrollRange + self.config.overflowHeight then
+      self.container:SetVerticalScroll(math.min(currentScrollOffset + 20, scrollRange + self.config.overflowHeight))
     elseif delta > 0 and currentScrollOffset > self.container:GetHeight() then
       self.container:SetVerticalScroll(currentScrollOffset - 20)
     end
@@ -60,10 +75,10 @@ function Mesmeric:OnInitialize()
   -- Mouse clickthrough
   self.container:EnableMouse(false)
 
-  -- Frame that translates up when a new message comes in
+  -- ScrollChild
   self.slider = CreateFrame("Frame", "MesmericScrollChild", self.container)
-  self.slider:SetHeight(360)
-  self.slider:SetWidth(450)
+  self.slider:SetHeight(self.config.height + self.config.overflowHeight)
+  self.slider:SetWidth(self.config.width)
   self.container:SetScrollChild(self.slider)
 
   self.slider.bg = self.slider:CreateTexture(nil, "BACKGROUND")
@@ -81,7 +96,7 @@ function Mesmeric:OnInitialize()
 
   -- Main font
   local font = CreateFont("MesmericFont")
-  font:SetFont("Fonts\\ARIALN.TTF", 14)
+  font:SetFont("Fonts\\FRIZQT__.TTF", 12)
   font:SetShadowColor(0, 0, 0, 1)
   font:SetShadowOffset(1, -1)
   font:SetJustifyH("LEFT")
@@ -103,6 +118,7 @@ function Mesmeric:OnInitialize()
     end
   )
 
+  self.dock = {}
   self.chatMessages = {}
   self.incomingChatMessages = {}
 end
@@ -111,11 +127,15 @@ function Mesmeric:OnEnable()
   if self.config.hideDefaultChatFrames then
     self:HideDefaultChatFrames()
   end
+
+  self:MountChatTabs()
+
   self:Hook(_G.ChatFrame1, "AddMessage", true)
 end
 
 function Mesmeric:OnDisable()
   self:ShowDefaultChatFrames()
+  self.UnmountChatTabs()
   self:Unhook(_G.ChatFrame1, "AddMessage")
 end
 
@@ -212,7 +232,12 @@ function Mesmeric:ChatMessagePoolCreator()
   chatMessage.chatLineLeftBg = chatMessage:CreateTexture(nil, "BACKGROUND")
   chatMessage.chatLineLeftBg:SetPoint("LEFT")
   chatMessage.chatLineLeftBg:SetWidth(50)
-  chatMessage.chatLineLeftBg:SetColorTexture(0, 0, 0, opacity)
+  chatMessage.chatLineLeftBg:SetColorTexture(
+    colors.codGray.r,
+    colors.codGray.g,
+    colors.codGray.b,
+    opacity
+  )
   chatMessage.chatLineLeftBg:SetGradientAlpha(
     "HORIZONTAL",
     0, 0, 0, 0,
@@ -222,12 +247,22 @@ function Mesmeric:ChatMessagePoolCreator()
   chatMessage.chatLineCenterBg = chatMessage:CreateTexture(nil, "BACKGROUND")
   chatMessage.chatLineCenterBg:SetPoint("LEFT", 50, 0)
   chatMessage.chatLineCenterBg:SetWidth(150)
-  chatMessage.chatLineCenterBg:SetColorTexture(0, 0, 0, opacity)
+  chatMessage.chatLineCenterBg:SetColorTexture(
+    colors.codGray.r,
+    colors.codGray.g,
+    colors.codGray.b,
+    opacity
+  )
 
   chatMessage.chatLineRightBg = chatMessage:CreateTexture(nil, "BACKGROUND")
   chatMessage.chatLineRightBg:SetPoint("RIGHT")
   chatMessage.chatLineRightBg:SetWidth(250)
-  chatMessage.chatLineRightBg:SetColorTexture(0, 0, 0, opacity)
+  chatMessage.chatLineRightBg:SetColorTexture(
+    colors.codGray.r,
+    colors.codGray.g,
+    colors.codGray.b,
+    opacity
+  )
   chatMessage.chatLineRightBg:SetGradientAlpha(
     "HORIZONTAL",
     0, 0, 0, 1,
@@ -306,10 +341,116 @@ function Mesmeric:CreateChatMessageFrame(frame, text, red, green, blue, messageI
   return chatMessage
 end
 
+function Mesmeric:MountChatTabs()
+  self.state.chatTabsBefore = {
+    point = GeneralDockManager:GetPoint(),
+    size = GeneralDockManager:GetSize()
+  }
+
+  -- ChatTabDock
+  GeneralDockManager:SetPoint("BOTTOMLEFT", self.container, "TOPLEFT", 0, 5)
+  GeneralDockManager:SetSize(self.config.width, 20)
+  GeneralDockManagerScrollFrame:SetHeight(20)
+  GeneralDockManagerScrollFrame:SetPoint("TOPLEFT", _G.ChatFrame2Tab, "TOPRIGHT")
+  GeneralDockManagerScrollFrameChild:SetHeight(20)
+
+  local opacity = 0.4
+  self.dock = {}
+
+  self.dock.leftBg = GeneralDockManager:CreateTexture(nil, "BACKGROUND")
+  self.dock.leftBg:SetPoint("LEFT")
+  self.dock.leftBg:SetWidth(50)
+  self.dock.leftBg:SetHeight(20)
+  self.dock.leftBg:SetColorTexture(
+    colors.black.r,
+    colors.black.g,
+    colors.black.b,
+    opacity
+  )
+  self.dock.leftBg:SetGradientAlpha(
+    "HORIZONTAL",
+    0, 0, 0, 0,
+    0, 0, 0, 1
+  )
+
+  self.dock.centerBg = GeneralDockManager:CreateTexture(nil, "BACKGROUND")
+  self.dock.centerBg:SetPoint("LEFT", 50, 0)
+  self.dock.centerBg:SetWidth(150)
+  self.dock.centerBg:SetHeight(20)
+  self.dock.centerBg:SetColorTexture(
+    colors.black.r,
+    colors.black.g,
+    colors.black.b,
+    opacity
+  )
+
+  self.dock.rightBg = GeneralDockManager:CreateTexture(nil, "BACKGROUND")
+  self.dock.rightBg:SetPoint("LEFT", 200, 0)
+  self.dock.rightBg:SetWidth(250)
+  self.dock.rightBg:SetHeight(20)
+  self.dock.rightBg:SetColorTexture(
+    colors.black.r,
+    colors.black.g,
+    colors.black.b,
+    opacity
+  )
+  self.dock.rightBg:SetGradientAlpha(
+    "HORIZONTAL",
+    0, 0, 0, 1,
+    0, 0, 0, 0
+  )
+
+  local tabTexs = {
+    '',
+    'Selected',
+    'Highlight'
+  }
+
+  -- Customize chat tabs
+  for i=1, NUM_CHAT_WINDOWS do
+    local tab = _G["ChatFrame"..i.."Tab"]
+
+    for _, texName in ipairs(tabTexs) do
+      _G['ChatFrame'..i..'Tab'..texName..'Left']:SetTexture()
+      _G['ChatFrame'..i..'Tab'..texName..'Middle']:SetTexture()
+      _G['ChatFrame'..i..'Tab'..texName..'Right']:SetTexture()
+    end
+
+    tab:SetHeight(20)
+    tab:SetNormalFontObject("MesmericFont")
+    tab.Text:ClearAllPoints()
+    tab.Text:SetPoint("LEFT", 15, 0)
+    tab:SetWidth(tab.Text:GetStringWidth() + 15 * 2)
+
+    self:RawHook(tab, "SetAlpha", function (alpha)
+      self.hooks[tab].SetAlpha(tab, 1)
+    end, true)
+
+    -- Set width dynamically based on text width
+    self:RawHook(tab, "SetWidth", function (_, width)
+      self.hooks[tab].SetWidth(tab, tab:GetTextWidth() + 15 * 2)
+    end, true)
+
+    self:RawHook(tab.Text, "SetTextColor", function (...)
+      self.hooks[tab.Text].SetTextColor(tab.Text, colors.apache.r, colors.apache.g, colors.apache.b)
+    end, true)
+  end
+end
+
+function Mesmeric:UnmountChatTabs()
+  GeneralDockManager:SetPoint(unpack(self.state.chatTabsBefore.point))
+  GeneralDockManager:SetSize(unpack(self.state.chatTabsBefore.size))
+
+  if self.dock then
+    self.dock.leftBg:Hide()
+    self.dock.centerBg:Hide()
+    self.dock.rightBg:Hide()
+  end
+end
+
 function Mesmeric:HideDefaultChatFrames()
   for i=1, NUM_CHAT_WINDOWS do
     local frame = _G["ChatFrame"..i]
-    local tab = _G["ChatFrame"..i.."Tab"]
 
     -- Remember the chat frames we hide so we can show them again later if
     -- necessary
@@ -317,25 +458,16 @@ function Mesmeric:HideDefaultChatFrames()
       table.insert(self.state.hiddenChatFrames, frame)
     end
 
-    if tab:IsVisible() then
-      table.insert(self.state.hiddenChatFrames, tab)
-    end
-
     frame:SetScript("OnShow", function(...) frame:Hide() end)
-    tab:SetScript("OnShow", function(...) tab:Hide() end)
-
     frame:Hide()
-    tab:Hide()
   end
 end
 
 function Mesmeric:ShowDefaultChatFrames()
   for i=1, NUM_CHAT_WINDOWS do
     local frame = _G["ChatFrame"..i]
-    local tab = _G["ChatFrame"..i.."Tab"]
 
     frame:SetScript("OnShow", function(...) frame:Show() end)
-    tab:SetScript("OnShow", function(...) tab:Show() end)
   end
 
   for _, frame in ipairs(self.state.hiddenChatFrames) do
@@ -384,7 +516,7 @@ function Mesmeric:Draw()
     self.sliderTranslateUp:SetOffset(0, offset)
 
     -- Display and run everything
-    self.container:SetVerticalScroll(newHeight - self.container:GetHeight() + 60)
+    self.container:SetVerticalScroll(newHeight - self.container:GetHeight() + self.config.overflowHeight)
 
     for _, chatMessageFrame in ipairs(newChatMessages) do
       chatMessageFrame:Show()
