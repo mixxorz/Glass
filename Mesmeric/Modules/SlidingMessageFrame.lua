@@ -63,7 +63,7 @@ function SlidingMessageFrame:Initialize()
   self.scrollFrame = CreateFrame("ScrollFrame", "MesmericScrollFrame", MC:GetFrame())
   self.scrollFrame:SetHeight(self.config.height + self.config.overflowHeight)
   self.scrollFrame:SetWidth(self.config.width)
-  self.scrollFrame:SetPoint("TOPLEFT", GeneralDockManager, "BOTTOMLEFT", 0, -5)
+  self.scrollFrame:SetPoint("BOTTOMLEFT", 0, self.config.overflowHeight * -1)
 
   self.scrollFrame.bg = self.scrollFrame:CreateTexture(nil, "BACKGROUND")
   self.scrollFrame.bg:SetAllPoints()

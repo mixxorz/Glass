@@ -28,6 +28,9 @@ function CT:OnEnable()
 
   -- ChatTabDock
   GeneralDockManager:SetSize(MC:GetFrame():GetWidth(), 20)
+  GeneralDockManager:ClearAllPoints()
+  GeneralDockManager:SetPoint("TOPLEFT", MC:GetFrame(), "TOPLEFT")
+
   GeneralDockManagerScrollFrame:SetHeight(20)
   GeneralDockManagerScrollFrame:SetPoint("TOPLEFT", _G.ChatFrame2Tab, "TOPRIGHT")
   GeneralDockManagerScrollFrameChild:SetHeight(20)

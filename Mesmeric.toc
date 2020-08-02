@@ -2,7 +2,7 @@
 ## Title: Mesmeric
 ## Author: mixxorz
 ## Version: 0.0.1
-## SavedVariables: Mesmeric
+## SavedVariables: MesmericDB
 
 libs\LibStub\LibStub.lua
 libs\AceAddon-3.0\AceAddon-3.0.xml
@@ -18,4 +18,5 @@ Mesmeric\init.lua
 Mesmeric\Modules\ChatTabs.lua
 Mesmeric\Modules\EditBox.lua
 Mesmeric\Modules\MainContainer.lua
+Mesmeric\Modules\Mover.lua
 Mesmeric\Modules\SlidingMessageFrame.lua

@@ -22,13 +22,17 @@ function EB:OnInitialize()
     self:RawHook(_G["ChatFrame"..i.."EditBoxFocusRight"], "Show", function () end, true)
 
     -- New styling
+    editBox:ClearAllPoints()
     editBox:SetPoint("TOPLEFT", MC:GetFrame(), "BOTTOMLEFT", 8, -5)
+    editBox:SetWidth(MC:GetFrame():GetWidth() - 8 * 2)
     editBox:SetHeight(30)
-    editBox:SetWidth(MC:GetFrame():GetWidth())
     editBox:SetFontObject("MesmericFont")
-
     editBox.header:SetFontObject("MesmericFont")
     editBox.header:SetPoint("LEFT", 8, 0)
+
+    local bg = editBox:CreateTexture(nil, "BACKGROUND")
+    bg:SetColorTexture(Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0.6)
+    bg:SetAllPoints()
 
     self:RawHook(editBox, "SetTextInsets", function ()
       self.hooks[editBox].SetTextInsets(
@@ -37,10 +41,6 @@ function EB:OnInitialize()
         8, 8, 8
       )
     end, true)
-
-    local bg = editBox:CreateTexture(nil, "BACKGROUND")
-    bg:SetColorTexture(Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0.6)
-    bg:SetAllPoints()
 
     -- Animations
     -- Intro animations

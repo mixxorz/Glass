@@ -1,6 +1,7 @@
 local Core, Constants = unpack(select(2, ...))
 local CT = Core:GetModule("ChatTabs")
 local MC = Core:GetModule("MainContainer")
+local M = Core:GetModule("Mover")
 local SMF = Core:GetModule("SlidingMessageFrame")
 
 -- luacheck: push ignore 113
@@ -8,7 +9,6 @@ local ChatFrameChannelButton = ChatFrameChannelButton
 local ChatFrameMenuButton = ChatFrameMenuButton
 local CreateFont = CreateFont
 local CreateFrame = CreateFrame
-local GeneralDockManager = GeneralDockManager
 local MouseIsOver = MouseIsOver
 local QuickJoinToastButton = QuickJoinToastButton
 local UIParent = UIParent
@@ -21,7 +21,7 @@ function MC:OnInitialize()
 
   self.container = CreateFrame("Frame", "MesmericFrame", UIParent)
   self.container:SetSize(unpack(Constants.DEFAULT_SIZE))
-  self.container:SetPoint("TOPLEFT", GeneralDockManager, "BOTTOMLEFT", 0, 20)
+  self.container:SetPoint("TOPLEFT", M:GetMoverFrame())
 
   self.container.bg = self.container:CreateTexture(nil, "BACKGROUND")
   self.container.bg:SetColorTexture(1, 0, 0, 0)
