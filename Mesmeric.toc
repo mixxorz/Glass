@@ -4,6 +4,7 @@
 ## Version: 0.0.1
 ## SavedVariables: MesmericDB
 
+# Libs
 libs\LibStub\LibStub.lua
 libs\AceAddon-3.0\AceAddon-3.0.xml
 libs\AceDB-3.0\AceDB-3.0.xml
@@ -11,10 +12,13 @@ libs\AceConfig-3.0\AceConfig-3.0.xml
 libs\AceGUI-3.0\AceGUI-3.0.xml
 libs\lodash.wow\lodash.wow.xml
 
-# Mesmeric.lua
+# Mesmeric
 Mesmeric\init.lua
+Mesmeric\constants.lua
+Mesmeric\utils.lua
 
 # Modules
+Mesmeric\Modules\Config.lua
 Mesmeric\Modules\ChatTabs.lua
 Mesmeric\Modules\EditBox.lua
 Mesmeric\Modules\MainContainer.lua

@@ -1,4 +1,4 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 local MC = Core:GetModule("MainContainer")
 local SMF = Core:GetModule("SlidingMessageFrame")
 
@@ -18,6 +18,7 @@ local UIParent = UIParent
 
 local lodash = Core.Libs.lodash
 local drop, reduce, take = lodash.drop, lodash.reduce, lodash.take
+local split = Utils.split
 
 local Colors = Constants.COLORS
 
@@ -236,6 +237,72 @@ function SlidingMessageFrame:MessagePoolCreator()
   return message
 end
 
+---
+--Takes a texture escape string and adjusts its yOffset
+local function adjustTextureYOffset(texture)
+  -- Texture has 14 parts
+  -- path, height, width, offsetX, offsetY,
+  -- texWidth, texHeight
+  -- leftTex, topTex, rightTex, bottomText,
+  -- rColor, gColor, bColor
+
+  -- Strip escape characters
+  -- Split into parts
+  local parts = split(strsub(texture, 3, -3))
+
+  if #parts < 5 then
+    -- Pad out ommitted attributes
+    for i=1, 5 do
+      if parts[i] == nil then
+        parts[i] = '0'
+      end
+    end
+  end
+
+  -- Adjust yOffset by -4
+  parts[5] = tostring(tonumber(parts[5]) - 4)
+
+  -- Rejoin into strings
+  local newTex = reduce(parts, function (acc, part)
+    if acc then
+      return acc..":"..part
+    end
+    return part
+  end)
+
+  -- Re-add escape codes
+  return '|T'..newTex..'|t'
+end
+
+---
+-- Gets all inline textures found in the string and adjusts their yOffset
+local function transformTextures(text)
+  local cursor = 1
+  local origLen = strlen(text)
+
+  local parts = {}
+
+  while cursor <= origLen do
+    local mStart, mEnd = strfind(text, '%|T.-%|t', cursor)
+
+    if mStart then
+      table.insert(parts, strsub(text, cursor, mStart - 1))
+      table.insert(parts, adjustTextureYOffset(strsub(text, mStart, mEnd)))
+      cursor = mEnd + 1
+    else
+      -- No more matches
+      table.insert(parts, strsub(text, cursor, origLen))
+      cursor = origLen + 1
+    end
+  end
+
+  local newText = reduce(parts, function (acc, part)
+    return acc..part
+  end, "")
+
+  return newText
+end
+
 function SlidingMessageFrame:CreateMessageFrame(frame, text, red, green, blue, messageId, holdTime)
   holdTime = self.config.holdTime
   red = red or 1
@@ -256,7 +323,7 @@ function SlidingMessageFrame:CreateMessageFrame(frame, text, red, green, blue, m
   self.prevLine = message
 
   message.text:SetTextColor(red, green, blue, 1)
-  message.text:SetText(text)
+  message.text:SetText(transformTextures(text))
 
   -- Adjust height to contain text
   local messageLineHeight = (message.text:GetStringHeight() + Ypadding * 2)
