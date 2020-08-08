@@ -457,21 +457,30 @@ function SMF:OnInitialize()
 end
 
 function SMF:OnEnable()
-  local MCFrame = MC:GetFrame()
+  local containerFrame = MC:GetFrame()
+  local dockHeight = GeneralDockManager:GetHeight() + 5
+  local height = containerFrame:GetHeight() - dockHeight
 
-  -- Replace chat windows with SMFs
+  -- Replace default chat frames with SlidingMessageFrames
   for i=1, NUM_CHAT_WINDOWS do
     repeat
       local chatFrame = _G["ChatFrame"..i]
 
+      _G[chatFrame:GetName().."ButtonFrame"]:Hide()
+
       chatFrame:SetClampRectInsets(0,0,0,0)
       chatFrame:SetClampedToScreen(false)
+      chatFrame:SetResizable(false)
+      chatFrame:SetParent(containerFrame)
+      chatFrame:ClearAllPoints()
+      chatFrame:SetHeight(height - 20)
 
-      _G[chatFrame:GetName().."ButtonFrame"]:Hide()
+      self:RawHook(chatFrame, "SetPoint", function ()
+        self.hooks[chatFrame].SetPoint(chatFrame, "TOPLEFT", containerFrame, "TOPLEFT", 0, -45)
+      end, true)
 
       -- Skip combat log
       if i == 2 then
-        chatFrame:SetSize(MCFrame:GetWidth(), MCFrame:GetHeight())
         do break end
       end
 
