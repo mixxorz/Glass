@@ -2,8 +2,11 @@ local Core, Constants = unpack(select(2, ...))
 local CT = Core:GetModule("ChatTabs")
 local MC = Core:GetModule("MainContainer")
 
+local LSM = Core.Libs.LSM
+
 -- luacheck: push ignore 113
 local C_Timer = C_Timer
+local CreateFont = CreateFont
 local GeneralDockManager = GeneralDockManager
 local GeneralDockManagerScrollFrame = GeneralDockManagerScrollFrame
 local GeneralDockManagerScrollFrameChild = GeneralDockManagerScrollFrameChild
@@ -18,13 +21,23 @@ local tabTexs = {
   'Highlight'
 }
 
-function CT:OnEnable()
+function CT:OnInitialize()
   self.config = {
     holdTime = Constants.DEFAULT_CHAT_HOLD_TIME
   }
   self.state = {
     mouseOver = false
   }
+end
+
+function CT:OnEnable()
+  self.font = CreateFont("MesmericChatTabsFont")
+  self.font:SetFont(LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font), 12)
+  self.font:SetShadowColor(0, 0, 0, 0)
+  self.font:SetShadowOffset(1, -1)
+  self.font:SetJustifyH("LEFT")
+  self.font:SetJustifyV("MIDDLE")
+  self.font:SetSpacing(3)
 
   -- ChatTabDock
   GeneralDockManager:SetSize(MC:GetFrame():GetWidth(), 20)
@@ -82,7 +95,7 @@ function CT:OnEnable()
     end
 
     tab:SetHeight(20)
-    tab:SetNormalFontObject("MesmericFont")
+    tab:SetNormalFontObject("MesmericChatTabsFont")
     tab.Text:ClearAllPoints()
     tab.Text:SetPoint("LEFT", 15, 0)
     tab:SetWidth(tab.Text:GetStringWidth() + 15 * 2)
@@ -163,5 +176,15 @@ function CT:OnLeaveContainer()
 
   if GeneralDockManager:IsVisible() then
     self.outroAg:Play()
+  end
+end
+
+function CT:OnUpdateFont()
+  self.font:SetFont(LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font), 12)
+
+  for i=1, NUM_CHAT_WINDOWS do
+    local tab = _G["ChatFrame"..i.."Tab"]
+
+    tab:SetWidth()  -- Calls hooked function
   end
 end

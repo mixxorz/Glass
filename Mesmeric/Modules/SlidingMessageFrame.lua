@@ -2,10 +2,13 @@ local Core, Constants, Utils = unpack(select(2, ...))
 local MC = Core:GetModule("MainContainer")
 local SMF = Core:GetModule("SlidingMessageFrame")
 
+local LSM = Core.Libs.LSM
+
 -- luacheck: push ignore 113
 local BattlePetToolTip_ShowLink = BattlePetToolTip_ShowLink
 local BattlePetTooltip = BattlePetTooltip
 local C_Timer = C_Timer
+local CreateFont = CreateFont
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
 local GameTooltip = GameTooltip
@@ -196,7 +199,7 @@ function SlidingMessageFrame:MessagePoolCreator()
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0
   )
 
-  message.text = message:CreateFontString(nil, "ARTWORK", "MesmericFont")
+  message.text = message:CreateFontString(nil, "ARTWORK", "MesmericMessageFont")
   message.text:SetPoint("LEFT", Xpadding, 0)
   message.text:SetWidth(self.config.width - Xpadding * 2)
 
@@ -233,6 +236,19 @@ function SlidingMessageFrame:MessagePoolCreator()
       end)
     end
   end)
+
+  -- Methods
+
+  ---
+  -- Update height based on text height
+  function message.UpdateHeight()
+    local Ypadding = message.text:GetLineHeight() * 0.25
+    local messageLineHeight = (message.text:GetStringHeight() + Ypadding * 2)
+    message:SetHeight(messageLineHeight)
+    message.leftBg:SetHeight(messageLineHeight)
+    message.centerBg:SetHeight(messageLineHeight)
+    message.rightBg:SetHeight(messageLineHeight)
+  end
 
   return message
 end
@@ -309,8 +325,6 @@ function SlidingMessageFrame:CreateMessageFrame(frame, text, red, green, blue, m
   green = green or 1
   blue = blue or 1
 
-  local Ypadding = 3
-
   local message = self.messageFramePool:Acquire()
   message:SetPoint("BOTTOMLEFT")
 
@@ -326,11 +340,7 @@ function SlidingMessageFrame:CreateMessageFrame(frame, text, red, green, blue, m
   message.text:SetText(transformTextures(text))
 
   -- Adjust height to contain text
-  local messageLineHeight = (message.text:GetStringHeight() + Ypadding * 2)
-  message:SetHeight(messageLineHeight)
-  message.leftBg:SetHeight(messageLineHeight)
-  message.centerBg:SetHeight(messageLineHeight)
-  message.rightBg:SetHeight(messageLineHeight)
+  message:UpdateHeight()
 
   return message
 end
@@ -448,20 +458,39 @@ function SlidingMessageFrame:Update()
   end
 end
 
+function SlidingMessageFrame:OnUpdateFont()
+  for _, message in ipairs(self.state.messages) do
+    message:UpdateHeight()
+  end
+end
+
 ----
 -- SMF Module
 function SMF:OnInitialize()
   self.state = {
     frames = {}
   }
+
 end
 
 function SMF:OnEnable()
+  -- Message font
+  self.font = CreateFont("MesmericMessageFont")
+  self.font:SetFont(
+    LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
+    Core.db.profile.messageFontSize
+  )
+  self.font:SetShadowColor(0, 0, 0, 1)
+  self.font:SetShadowOffset(1, -1)
+  self.font:SetJustifyH("LEFT")
+  self.font:SetJustifyV("MIDDLE")
+  self.font:SetSpacing(3)
+
+  -- Replace default chat frames with SlidingMessageFrames
   local containerFrame = MC:GetFrame()
   local dockHeight = GeneralDockManager:GetHeight() + 5
   local height = containerFrame:GetHeight() - dockHeight
 
-  -- Replace default chat frames with SlidingMessageFrames
   for i=1, NUM_CHAT_WINDOWS do
     repeat
       local chatFrame = _G["ChatFrame"..i]
@@ -519,5 +548,16 @@ end
 function SMF:OnLeaveContainer()
   for _, smf in ipairs(self.state.frames) do
     smf:OnLeaveContainer()
+  end
+end
+
+function SMF:OnUpdateFont()
+  self.font:SetFont(
+    LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
+    Core.db.profile.messageFontSize
+  )
+
+  for _, frame in ipairs(self.state.frames) do
+    frame:OnUpdateFont()
   end
 end

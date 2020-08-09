@@ -32,15 +32,18 @@ Core:NewModule("EditBox", "AceHook-3.0")
 Core:NewModule("SlidingMessageFrame", "AceHook-3.0")
 
 function Core:OnInitialize()
-  local mesmericDefaults = {
+  local defaults = {
     profile = {
       frameWidth = Constants.DEFAULT_SIZE[1],
       frameHeight = Constants.DEFAULT_SIZE[2],
-      positionAnchor = Constants.DEFAULT_ANCHOR_POINT
+      positionAnchor = Constants.DEFAULT_ANCHOR_POINT,
+      font = "Friz Quadrata TT",
+      messageFontSize = 12,
+      editBoxFontSize = 12
     }
   }
 
-  self.db = self.Libs.AceDB:New("MesmericDB", mesmericDefaults, true)
+  self.db = self.Libs.AceDB:New("MesmericDB", defaults, true)
   self.printBuffer = {}
 end
 
