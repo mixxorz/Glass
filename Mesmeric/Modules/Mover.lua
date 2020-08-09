@@ -15,7 +15,6 @@ function M:OnInitialize()
   }
   self:CreateMoverDialog()
   self:CreateMoverFrame()
-  self:RegisterChatCommand("mesmeric", "OnSlashCommand")
 end
 
 function M:CreateMoverFrame()
@@ -93,12 +92,6 @@ function M:CreateMoverDialog()
     self:Lock()
   end)
   self.moverDialog.lockButton:SetPoint("BOTTOMRIGHT", -14, 14)
-end
-
-function M:OnSlashCommand(input)
-  if input == "lock" then
-    self:Unlock()
-  end
 end
 
 function M:Lock()

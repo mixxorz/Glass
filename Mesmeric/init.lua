@@ -14,7 +14,10 @@ _G[AddonName] = Core
 -- Core
 Core.Libs = {
   AceConfig = _G.LibStub("AceConfig-3.0"),
+  AceConfigDialog = _G.LibStub("AceConfigDialog-3.0"),
+  AceDBOptions = _G.LibStub("AceDBOptions-3.0"),
   AceDB = _G.LibStub("AceDB-3.0"),
+  LSM = _G.LibStub("LibSharedMedia-3.0"),
   lodash = _G.LibStub("lodash.wow")
 }
 
@@ -37,7 +40,7 @@ function Core:OnInitialize()
     }
   }
 
-  self.db = self.Libs.AceDB:New("MesmericDB", mesmericDefaults)
+  self.db = self.Libs.AceDB:New("MesmericDB", mesmericDefaults, true)
   self.printBuffer = {}
 end
 
