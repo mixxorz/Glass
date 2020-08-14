@@ -42,7 +42,8 @@ function Core:OnInitialize()
       editBoxFontSize = 12,
       iconTextureYOffset = 4,
       mouseOverTooltips = true,
-      chatHoldTime = 10
+      chatHoldTime = 10,
+      chatBackgroundOpacity = 0.4,
     }
   }
 

@@ -130,10 +130,32 @@ function C:OnEnable()
                 Core.db.profile.chatHoldTime = input
               end,
             },
-            chatHoldTimeDesc = {
-              order = 120,
+            chatHoldTimeNl = {
+              order = 110,
               type = "description",
-              name = "Seconds before chat messages fade out."
+              name = ""
+            },
+            chatBackgroundOpacity = {
+              order = 120,
+              type = "range",
+              name = "Chat background opacity",
+              min = 0,
+              max = 1,
+              softMin = 0,
+              softMax = 1,
+              step = 0.01,
+              get = function ()
+                return Core.db.profile.chatBackgroundOpacity
+              end,
+              set = function (info, input)
+                Core.db.profile.chatBackgroundOpacity = input
+                SMF:OnUpdateChatBackgroundOpacity()
+              end,
+            },
+            chatBackgroundOpacityDesc = {
+              order = 130,
+              type = "description",
+              name = ""
             }
           }
         },

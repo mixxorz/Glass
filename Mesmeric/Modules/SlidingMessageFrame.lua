@@ -52,7 +52,7 @@ function SlidingMessageFrame:Initialize()
   self.config = {
     height = MC:GetFrame():GetHeight() - GeneralDockManager:GetHeight() - 5,
     width = MC:GetFrame():GetWidth(),
-    messageOpacity = 0.4,
+    messageOpacity = Core.db.profile.chatBackgroundOpacity,
     overflowHeight = 60
   }
   self.state = {
@@ -144,7 +144,6 @@ function SlidingMessageFrame:Hide()
 end
 
 function SlidingMessageFrame:MessagePoolCreator()
-  local opacity = 0.2
   local Xpadding = 15
 
   local message = CreateFrame("Frame", nil, self.slider)
@@ -177,7 +176,7 @@ function SlidingMessageFrame:MessagePoolCreator()
   message.leftBg:SetGradientAlpha(
     "HORIZONTAL",
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0,
-    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, opacity
+    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, self.config.messageOpacity
   )
 
   message.centerBg = message:CreateTexture(nil, "BACKGROUND")
@@ -187,7 +186,7 @@ function SlidingMessageFrame:MessagePoolCreator()
     Colors.codGray.r,
     Colors.codGray.g,
     Colors.codGray.b,
-    opacity
+    self.config.messageOpacity
   )
 
   message.rightBg = message:CreateTexture(nil, "BACKGROUND")
@@ -196,7 +195,7 @@ function SlidingMessageFrame:MessagePoolCreator()
   message.rightBg:SetColorTexture(1, 1, 1, 1)
   message.rightBg:SetGradientAlpha(
     "HORIZONTAL",
-    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, opacity,
+    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, self.config.messageOpacity,
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0
   )
 
@@ -249,6 +248,31 @@ function SlidingMessageFrame:MessagePoolCreator()
     message.leftBg:SetHeight(messageLineHeight)
     message.centerBg:SetHeight(messageLineHeight)
     message.rightBg:SetHeight(messageLineHeight)
+  end
+
+  ---
+  -- Update texture color based on setting
+  function message.UpdateTextures()
+    self.config.messageOpacity = Core.db.profile.chatBackgroundOpacity
+
+    message.leftBg:SetGradientAlpha(
+      "HORIZONTAL",
+      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0,
+      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, self.config.messageOpacity
+    )
+
+    message.centerBg:SetColorTexture(
+      Colors.codGray.r,
+      Colors.codGray.g,
+      Colors.codGray.b,
+      self.config.messageOpacity
+    )
+
+    message.rightBg:SetGradientAlpha(
+      "HORIZONTAL",
+      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, self.config.messageOpacity,
+      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0
+    )
   end
 
   return message
@@ -466,6 +490,12 @@ function SlidingMessageFrame:OnUpdateFont()
   end
 end
 
+function SlidingMessageFrame:OnUpdateChatBackgroundOpacity()
+  for _, message in ipairs(self.state.messages) do
+    message:UpdateTextures()
+  end
+end
+
 ----
 -- SMF Module
 function SMF:OnInitialize()
@@ -561,5 +591,11 @@ function SMF:OnUpdateFont()
 
   for _, frame in ipairs(self.state.frames) do
     frame:OnUpdateFont()
+  end
+end
+
+function SMF:OnUpdateChatBackgroundOpacity()
+  for _, frame in ipairs(self.state.frames) do
+    frame:OnUpdateChatBackgroundOpacity()
   end
 end
