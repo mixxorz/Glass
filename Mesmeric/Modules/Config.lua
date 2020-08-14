@@ -108,6 +108,32 @@ function C:OnEnable()
               order = 80,
               type = "description",
               name = "Check if you want tooltips to appear when hovering over chat links.",
+            },
+            chatHeader = {
+              order = 90,
+              type = "header",
+              name = "Chat"
+            },
+            chatHoldTime = {
+              order = 100,
+              type = "range",
+              name = "Fade out delay",
+              min = 1,
+              max = 100,
+              softMin = 1,
+              softMax = 20,
+              step = 1,
+              get = function ()
+                return Core.db.profile.chatHoldTime
+              end,
+              set = function (info, input)
+                Core.db.profile.chatHoldTime = input
+              end,
+            },
+            chatHoldTimeDesc = {
+              order = 120,
+              type = "description",
+              name = "Seconds before chat messages fade out."
             }
           }
         },

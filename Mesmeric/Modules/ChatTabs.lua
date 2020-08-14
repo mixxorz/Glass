@@ -22,9 +22,6 @@ local tabTexs = {
 }
 
 function CT:OnInitialize()
-  self.config = {
-    holdTime = Constants.DEFAULT_CHAT_HOLD_TIME
-  }
   self.state = {
     mouseOver = false
   }
@@ -138,15 +135,6 @@ function CT:OnEnable()
   -- Start intro animation when element is shown
   GeneralDockManager:SetScript("OnShow", function ()
     self.introAg:Play()
-
-    -- Play outro after hold time
-    if not self.state.mouseOver then
-      self.outroTimer = C_Timer.NewTimer(self.config.holdTime, function()
-        if GeneralDockManager:IsVisible() then
-          self.outroAg:Play()
-        end
-      end)
-    end
   end)
 
   GeneralDockManager:Hide()
@@ -171,7 +159,7 @@ function CT:OnEnterContainer()
 end
 
 function CT:OnLeaveContainer()
-  -- Hide chats when mouse leaves
+  -- Hide chat tab when mouse leaves
   self.state.mouseOver = false
 
   if GeneralDockManager:IsVisible() then

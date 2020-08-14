@@ -50,7 +50,6 @@ end
 
 function SlidingMessageFrame:Initialize()
   self.config = {
-    holdTime = Constants.DEFAULT_CHAT_HOLD_TIME,
     height = MC:GetFrame():GetHeight() - GeneralDockManager:GetHeight() - 5,
     width = MC:GetFrame():GetWidth(),
     messageOpacity = 0.4,
@@ -231,7 +230,7 @@ function SlidingMessageFrame:MessagePoolCreator()
 
     -- Play outro after hold time
     if not self.state.mouseOver then
-      message.outroTimer = C_Timer.NewTimer(self.config.holdTime, function()
+      message.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
         if message:IsVisible() then
           message.outroAg:Play()
         end
@@ -324,7 +323,6 @@ local function transformTextures(text)
 end
 
 function SlidingMessageFrame:CreateMessageFrame(frame, text, red, green, blue, messageId, holdTime)
-  holdTime = self.config.holdTime
   red = red or 1
   green = green or 1
   blue = blue or 1
@@ -366,7 +364,7 @@ function SlidingMessageFrame:OnLeaveContainer()
 
   for _, message in ipairs(self.state.messages) do
     if message:IsVisible() then
-      message.outroTimer = C_Timer.NewTimer(self.config.holdTime, function()
+      message.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
         if message:IsVisible() then
           message.outroAg:Play()
         end

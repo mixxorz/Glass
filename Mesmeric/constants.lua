@@ -12,7 +12,6 @@ Constants.DEFAULT_ANCHOR_POINT = {
   xOfs = 20,
   yOfs = 230
 }
-Constants.DEFAULT_CHAT_HOLD_TIME = 10
 Constants.DEFAULT_SIZE = {450, 230}
 
 -- Colors
