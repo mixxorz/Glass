@@ -15,50 +15,84 @@ function C:OnEnable()
       name = "Mesmeric",
       handler = C,
       type = "group",
-      childGroups = "tab",
       args = {
         general = {
           name = "General",
           type = "group",
           args = {
             fontHeader = {
+              order = 0,
               type = "header",
               name = "Font"
             },
             font = {
-                type = "select",
-                dialogControl = "LSM30_Font",
-                name = "Font",
-                desc = "Font to use throughout Mesmeric",
-                values = LSM:HashTable("font"),
-                get = function()
-                  return Core.db.profile.font
-                end,
-                set = function(info, input)
-                  Core.db.profile.font = input
-                  SMF:OnUpdateFont()
-                  EB:OnUpdateFont()
-                  CT:OnUpdateFont()
-                end,
+              order = 10,
+              type = "select",
+              dialogControl = "LSM30_Font",
+              name = "Font",
+              desc = "Font to use throughout Mesmeric",
+              values = LSM:HashTable("font"),
+              get = function()
+                return Core.db.profile.font
+              end,
+              set = function(info, input)
+                Core.db.profile.font = input
+                SMF:OnUpdateFont()
+                EB:OnUpdateFont()
+                CT:OnUpdateFont()
+              end,
+            },
+            fontNl = {
+              order = 20,
+              type = "description",
+              name = "",
             },
             messageFontSize = {
-                type = "range",
-                name = "Font size",
-                desc = "Controls the size of the message text",
-                min = 1,
-                max = 100,
-                softMin = 6,
-                softMax = 24,
-                step = 1,
-                get = function ()
-                  return Core.db.profile.messageFontSize
-                end,
-                set = function (info, input)
-                  Core.db.profile.messageFontSize = input
-                  SMF:OnUpdateFont()
-                  EB:OnUpdateFont()
-                end,
+              order = 30,
+              type = "range",
+              name = "Font size",
+              desc = "Controls the size of the message text",
+              min = 1,
+              max = 100,
+              softMin = 6,
+              softMax = 24,
+              step = 1,
+              get = function ()
+                return Core.db.profile.messageFontSize
+              end,
+              set = function (info, input)
+                Core.db.profile.messageFontSize = input
+                SMF:OnUpdateFont()
+                EB:OnUpdateFont()
+              end,
             },
+            messageFontSizeNl = {
+              order = 40,
+              type = "description",
+              name = ""
+            },
+            iconTextureYOffset = {
+              order = 50,
+              type = "range",
+              name = "Icon texture Y offset",
+              desc = "Controls the vertical offset of text icons",
+              min = 0,
+              max = 12,
+              softMin = 0,
+              softMax = 12,
+              step = 1,
+              get = function ()
+                return Core.db.profile.iconTextureYOffset
+              end,
+              set = function (info, input)
+                Core.db.profile.iconTextureYOffset = input
+              end,
+            },
+            iconTextureYOffsetDesc = {
+              order = 50,
+              type = "description",
+              name = "This controls the vertical offset of text icons. Adjust this if text icons aren't centered."
+            }
           }
         },
         profile = AceDBOptions:GetOptionsTable(Core.db)

@@ -264,7 +264,9 @@ local function adjustTextureYOffset(texture)
 
   -- Strip escape characters
   -- Split into parts
+  -- TODO use strsplit instead of custom split
   local parts = split(strsub(texture, 3, -3))
+  local yOffset = Core.db.profile.iconTextureYOffset
 
   if #parts < 5 then
     -- Pad out ommitted attributes
@@ -276,7 +278,7 @@ local function adjustTextureYOffset(texture)
   end
 
   -- Adjust yOffset by -4
-  parts[5] = tostring(tonumber(parts[5]) - 4)
+  parts[5] = tostring(tonumber(parts[5]) - yOffset)
 
   -- Rejoin into strings
   local newTex = reduce(parts, function (acc, part)

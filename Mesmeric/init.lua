@@ -39,7 +39,8 @@ function Core:OnInitialize()
       positionAnchor = Constants.DEFAULT_ANCHOR_POINT,
       font = "Friz Quadrata TT",
       messageFontSize = 12,
-      editBoxFontSize = 12
+      editBoxFontSize = 12,
+      iconTextureYOffset = 4
     }
   }
 
