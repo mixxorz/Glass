@@ -42,13 +42,8 @@ function C:OnEnable()
                 CT:OnUpdateFont()
               end,
             },
-            fontNl = {
-              order = 20,
-              type = "description",
-              name = "",
-            },
             messageFontSize = {
-              order = 30,
+              order = 20,
               type = "range",
               name = "Font size",
               desc = "Controls the size of the message text",
@@ -67,12 +62,12 @@ function C:OnEnable()
               end,
             },
             messageFontSizeNl = {
-              order = 40,
+              order = 30,
               type = "description",
               name = ""
             },
             iconTextureYOffset = {
-              order = 50,
+              order = 40,
               type = "range",
               name = "Icon texture Y offset",
               desc = "Controls the vertical offset of text icons",
@@ -92,6 +87,27 @@ function C:OnEnable()
               order = 50,
               type = "description",
               name = "This controls the vertical offset of text icons. Adjust this if text icons aren't centered."
+            },
+            mouseOverHeading = {
+              order = 60,
+              type = "header",
+              name = "Mouse over tooltips"
+            },
+            mouseOverTooltips = {
+              order = 70,
+              type = "toggle",
+              name = "Enable",
+              get = function ()
+                return Core.db.profile.mouseOverTooltips
+              end,
+              set = function (info, input)
+                Core.db.profile.mouseOverTooltips = input
+              end,
+            },
+            mouseOverTooltipsDesc = {
+              order = 80,
+              type = "description",
+              name = "Check if you want tooltips to appear when hovering over chat links.",
             }
           }
         },

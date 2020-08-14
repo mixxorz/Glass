@@ -159,8 +159,10 @@ function SlidingMessageFrame:MessagePoolCreator()
   end)
 
   message:SetScript("OnHyperlinkEnter", function (...)
-    local args = {...}
-    self:OnHyperlinkEnter(unpack(args))
+    if Core.db.profile.mouseOverTooltips then
+      local args = {...}
+      self:OnHyperlinkEnter(unpack(args))
+    end
   end)
 
   message:SetScript("OnHyperlinkLeave", function (...)

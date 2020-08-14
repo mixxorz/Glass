@@ -40,7 +40,8 @@ function Core:OnInitialize()
       font = "Friz Quadrata TT",
       messageFontSize = 12,
       editBoxFontSize = 12,
-      iconTextureYOffset = 4
+      iconTextureYOffset = 4,
+      mouseOverTooltips = true
     }
   }
 
