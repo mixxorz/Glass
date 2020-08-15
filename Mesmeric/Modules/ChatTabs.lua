@@ -5,7 +5,6 @@ local MC = Core:GetModule("MainContainer")
 local LSM = Core.Libs.LSM
 
 -- luacheck: push ignore 113
-local C_Timer = C_Timer
 local CreateFont = CreateFont
 local GeneralDockManager = GeneralDockManager
 local GeneralDockManagerScrollFrame = GeneralDockManagerScrollFrame
@@ -37,7 +36,8 @@ function CT:OnEnable()
   self.font:SetSpacing(3)
 
   -- ChatTabDock
-  GeneralDockManager:SetSize(MC:GetFrame():GetWidth(), 20)
+  GeneralDockManager:SetWidth(MC:GetFrame():GetWidth())
+  GeneralDockManager:SetHeight(20)
   GeneralDockManager:ClearAllPoints()
   GeneralDockManager:SetPoint("TOPLEFT", MC:GetFrame(), "TOPLEFT")
 
@@ -61,7 +61,7 @@ function CT:OnEnable()
 
   dock.centerBg = GeneralDockManager:CreateTexture(nil, "BACKGROUND")
   dock.centerBg:SetPoint("LEFT", 50, 0)
-  dock.centerBg:SetWidth(150)
+  dock.centerBg:SetPoint("RIGHT", -250, 0)
   dock.centerBg:SetHeight(20)
   dock.centerBg:SetColorTexture(
     Colors.black.r,
@@ -71,7 +71,7 @@ function CT:OnEnable()
   )
 
   dock.rightBg = GeneralDockManager:CreateTexture(nil, "BACKGROUND")
-  dock.rightBg:SetPoint("LEFT", 200, 0)
+  dock.rightBg:SetPoint("RIGHT")
   dock.rightBg:SetWidth(250)
   dock.rightBg:SetHeight(20)
   dock.rightBg:SetColorTexture(1, 1, 1, 1)
@@ -169,6 +169,16 @@ end
 
 function CT:OnUpdateFont()
   self.font:SetFont(LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font), 12)
+
+  for i=1, NUM_CHAT_WINDOWS do
+    local tab = _G["ChatFrame"..i.."Tab"]
+
+    tab:SetWidth()  -- Calls hooked function
+  end
+end
+
+function CT:OnUpdateFrame()
+  GeneralDockManager:SetWidth(MC:GetFrame():GetWidth())
 
   for i=1, NUM_CHAT_WINDOWS do
     local tab = _G["ChatFrame"..i.."Tab"]

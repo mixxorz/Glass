@@ -20,7 +20,8 @@ function MC:OnInitialize()
   }
 
   self.container = CreateFrame("Frame", "MesmericFrame", UIParent)
-  self.container:SetSize(unpack(Constants.DEFAULT_SIZE))
+  self.container:SetWidth(Core.db.profile.frameWidth)
+  self.container:SetHeight(Core.db.profile.frameHeight)
   self.container:SetPoint("TOPLEFT", M:GetMoverFrame())
 
   self.container.bg = self.container:CreateTexture(nil, "BACKGROUND")
@@ -78,4 +79,9 @@ function MC:OnUpdate(elapsed)
       end
     end
   end
+end
+
+function MC:OnUpdateFrame()
+  self.container:SetWidth(Core.db.profile.frameWidth)
+  self.container:SetHeight(Core.db.profile.frameHeight)
 end

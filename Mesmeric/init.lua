@@ -34,8 +34,8 @@ Core:NewModule("SlidingMessageFrame", "AceHook-3.0")
 function Core:OnInitialize()
   local defaults = {
     profile = {
-      frameWidth = Constants.DEFAULT_SIZE[1],
-      frameHeight = Constants.DEFAULT_SIZE[2],
+      frameWidth = 450,
+      frameHeight = 230,
       positionAnchor = Constants.DEFAULT_ANCHOR_POINT,
       font = "Friz Quadrata TT",
       messageFontSize = 12,

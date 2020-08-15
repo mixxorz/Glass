@@ -130,3 +130,9 @@ function EB:OnUpdateFont()
     editBox:UpdateFont()
   end
 end
+
+function EB:OnUpdateFrame()
+  for _, editBox in ipairs(self.state.editBoxes) do
+    editBox:SetWidth(MC:GetFrame():GetWidth() - 8 * 2)
+  end
+end

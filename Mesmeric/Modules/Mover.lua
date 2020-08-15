@@ -126,3 +126,8 @@ function M:Unlock()
   self.moverFrame:EnableMouse(true)
   self.moverFrame:SetMovable(true)
 end
+
+function M:OnUpdateFrame()
+  self.moverFrame:SetWidth(Core.db.profile.frameWidth)
+  self.moverFrame:SetHeight(Core.db.profile.frameHeight + 35)
+end

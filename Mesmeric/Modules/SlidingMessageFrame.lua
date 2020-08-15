@@ -53,7 +53,8 @@ function SlidingMessageFrame:Initialize()
     height = MC:GetFrame():GetHeight() - GeneralDockManager:GetHeight() - 5,
     width = MC:GetFrame():GetWidth(),
     messageOpacity = Core.db.profile.chatBackgroundOpacity,
-    overflowHeight = 60
+    overflowHeight = 60,
+    xPadding = 15
   }
   self.state = {
     mouseOver = false,
@@ -144,8 +145,6 @@ function SlidingMessageFrame:Hide()
 end
 
 function SlidingMessageFrame:MessagePoolCreator()
-  local Xpadding = 15
-
   local message = CreateFrame("Frame", nil, self.slider)
   message:SetWidth(self.config.width)
 
@@ -181,7 +180,7 @@ function SlidingMessageFrame:MessagePoolCreator()
 
   message.centerBg = message:CreateTexture(nil, "BACKGROUND")
   message.centerBg:SetPoint("LEFT", 50, 0)
-  message.centerBg:SetWidth(150)
+  message.centerBg:SetPoint("RIGHT", -250, 0)
   message.centerBg:SetColorTexture(
     Colors.codGray.r,
     Colors.codGray.g,
@@ -200,8 +199,8 @@ function SlidingMessageFrame:MessagePoolCreator()
   )
 
   message.text = message:CreateFontString(nil, "ARTWORK", "MesmericMessageFont")
-  message.text:SetPoint("LEFT", Xpadding, 0)
-  message.text:SetWidth(self.config.width - Xpadding * 2)
+  message.text:SetPoint("LEFT", self.config.xPadding, 0)
+  message.text:SetWidth(self.config.width - self.config.xPadding * 2)
 
   -- Intro animations
   message.introAg = message:CreateAnimationGroup()
@@ -241,13 +240,16 @@ function SlidingMessageFrame:MessagePoolCreator()
 
   ---
   -- Update height based on text height
-  function message.UpdateHeight()
+  function message.UpdateFrame()
     local Ypadding = message.text:GetLineHeight() * 0.25
     local messageLineHeight = (message.text:GetStringHeight() + Ypadding * 2)
     message:SetHeight(messageLineHeight)
     message.leftBg:SetHeight(messageLineHeight)
     message.centerBg:SetHeight(messageLineHeight)
     message.rightBg:SetHeight(messageLineHeight)
+
+    message:SetWidth(self.config.width)
+    message.text:SetWidth(self.config.width - self.config.xPadding * 2)
   end
 
   ---
@@ -366,7 +368,7 @@ function SlidingMessageFrame:CreateMessageFrame(frame, text, red, green, blue, m
   message.text:SetText(transformTextures(text))
 
   -- Adjust height to contain text
-  message:UpdateHeight()
+  message:UpdateFrame()
 
   return message
 end
@@ -486,13 +488,28 @@ end
 
 function SlidingMessageFrame:OnUpdateFont()
   for _, message in ipairs(self.state.messages) do
-    message:UpdateHeight()
+    message:UpdateFrame()
   end
 end
 
 function SlidingMessageFrame:OnUpdateChatBackgroundOpacity()
   for _, message in ipairs(self.state.messages) do
     message:UpdateTextures()
+  end
+end
+
+function SlidingMessageFrame:OnUpdateFrame()
+  self.config.height = MC:GetFrame():GetHeight() - GeneralDockManager:GetHeight() - 5
+  self.config.width = MC:GetFrame():GetWidth()
+
+  self.scrollFrame:SetHeight(self.config.height + self.config.overflowHeight)
+  self.scrollFrame:SetWidth(self.config.width)
+
+  self.slider:SetHeight(self.config.height + self.config.overflowHeight)
+  self.slider:SetWidth(self.config.width)
+
+  for _, message in ipairs(self.state.messages) do
+    message:UpdateFrame()
   end
 end
 
@@ -597,5 +614,11 @@ end
 function SMF:OnUpdateChatBackgroundOpacity()
   for _, frame in ipairs(self.state.frames) do
     frame:OnUpdateChatBackgroundOpacity()
+  end
+end
+
+function SMF:OnUpdateFrame()
+  for _, frame in ipairs(self.state.frames) do
+    frame:OnUpdateFrame()
   end
 end

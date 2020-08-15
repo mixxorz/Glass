@@ -3,6 +3,7 @@ local C = Core:GetModule("Config")
 local CT = Core:GetModule("ChatTabs")
 local EB = Core:GetModule("EditBox")
 local M = Core:GetModule("Mover")
+local MC = Core:GetModule("MainContainer")
 local SMF = Core:GetModule("SlidingMessageFrame")
 
 local AceConfig = Core.Libs.AceConfig
@@ -156,11 +157,56 @@ function C:OnEnable()
               order = 130,
               type = "description",
               name = ""
+            },
+            frameHeader = {
+              order = 140,
+              type = "header",
+              name = "Frame"
+            },
+            frameWidth = {
+              order = 150,
+              type = "range",
+              name = "Width",
+              min = 300,
+              max = 9999,
+              softMin = 300,
+              softMax = 800,
+              step = 1,
+              get = function ()
+                return Core.db.profile.frameWidth
+              end,
+              set = function (info, input)
+                Core.db.profile.frameWidth = input
+                M:OnUpdateFrame()
+                MC:OnUpdateFrame()
+                SMF:OnUpdateFrame()
+                EB:OnUpdateFrame()
+                CT:OnUpdateFrame()
+              end
+            },
+            frameHeight = {
+              order = 160,
+              type = "range",
+              name = "Height",
+              min = 1,
+              max = 9999,
+              softMin = 200,
+              softMax = 800,
+              step = 1,
+              get = function ()
+                return Core.db.profile.frameHeight
+              end,
+              set = function (info, input)
+                Core.db.profile.frameHeight = input
+                M:OnUpdateFrame()
+                MC:OnUpdateFrame()
+                SMF:OnUpdateFrame()
+              end
             }
           }
         },
         profile = AceDBOptions:GetOptionsTable(Core.db)
-      },
+      }
   }
 
   AceConfig:RegisterOptionsTable("Mesmeric", options)
