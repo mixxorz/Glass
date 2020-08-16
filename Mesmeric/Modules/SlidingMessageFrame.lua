@@ -144,6 +144,10 @@ function SlidingMessageFrame:Hide()
   self.scrollFrame:Hide()
 end
 
+function SlidingMessageFrame:IsVisible()
+  return self.scrollFrame:IsVisible()
+end
+
 function SlidingMessageFrame:MessagePoolCreator()
   local message = CreateFrame("Frame", nil, self.slider)
   message:SetWidth(self.config.width)

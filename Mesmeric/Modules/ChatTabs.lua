@@ -1,6 +1,7 @@
 local Core, Constants = unpack(select(2, ...))
 local CT = Core:GetModule("ChatTabs")
 local MC = Core:GetModule("MainContainer")
+local SMF = Core:GetModule("SlidingMessageFrame")
 
 local LSM = Core.Libs.LSM
 
@@ -109,6 +110,18 @@ function CT:OnEnable()
     self:RawHook(tab.Text, "SetTextColor", function (...)
       self.hooks[tab.Text].SetTextColor(tab.Text, Colors.apache.r, Colors.apache.g, Colors.apache.b)
     end, true)
+
+    -- Don't highlight when frame is already visible
+    self:RawHook(tab.glow, "Show", function ()
+      if SMF.state.frames[i] and not SMF.state.frames[i]:IsVisible() then
+        self.hooks[tab.glow].Show(tab.glow)
+      end
+    end, true)
+
+    -- Un-highlight when clicked
+    tab:HookScript("OnClick", function ()
+      tab.glow:Hide()
+    end)
   end
 
   -- Intro animations
