@@ -6,11 +6,27 @@ local SMF = Core:GetModule("SlidingMessageFrame")
 local LSM = Core.Libs.LSM
 
 -- luacheck: push ignore 113
+local CHAT_CONFIGURATION = CHAT_CONFIGURATION
+local CLOSE_CHAT_WINDOW = CLOSE_CHAT_WINDOW
+local ChatConfigFrame = ChatConfigFrame
 local CreateFont = CreateFont
+local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME
+local FCF_GetNumActiveChatFrames = FCF_GetNumActiveChatFrames
+local FCF_NewChatWindow = FCF_NewChatWindow
+local FCF_PopInWindow = FCF_PopInWindow
+local FCF_RenameChatWindow_Popup = FCF_RenameChatWindow_Popup
+local FILTERS = FILTERS
 local GeneralDockManager = GeneralDockManager
 local GeneralDockManagerScrollFrame = GeneralDockManagerScrollFrame
 local GeneralDockManagerScrollFrameChild = GeneralDockManagerScrollFrameChild
+local IsCombatLog = IsCombatLog
+local NEW_CHAT_WINDOW = NEW_CHAT_WINDOW
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
+local RENAME_CHAT_WINDOW = RENAME_CHAT_WINDOW
+local ShowUIPanel = ShowUIPanel
+local UIDropDownMenu_AddButton = UIDropDownMenu_AddButton
+local UIDropDownMenu_CreateInfo = UIDropDownMenu_CreateInfo
+local UIDropDownMenu_Initialize = UIDropDownMenu_Initialize
 -- luacheck: pop
 
 local Colors = Constants.COLORS
@@ -84,7 +100,9 @@ function CT:OnEnable()
 
   -- Customize chat tabs
   for i=1, NUM_CHAT_WINDOWS do
+    local chatFrame = _G["ChatFrame"..i]
     local tab = _G["ChatFrame"..i.."Tab"]
+    local dropDown = _G["ChatFrame"..i.."TabDropDown"]
 
     for _, texName in ipairs(tabTexs) do
       _G[tab:GetName()..texName..'Left']:SetTexture()
@@ -122,6 +140,54 @@ function CT:OnEnable()
     tab:HookScript("OnClick", function ()
       tab.glow:Hide()
     end)
+
+    -- Disable dragging
+    tab:RegisterForDrag()
+
+    -- Override context menu
+    UIDropDownMenu_Initialize(dropDown, function ()
+      local info = UIDropDownMenu_CreateInfo()
+      info.text = RENAME_CHAT_WINDOW
+      info.func = FCF_RenameChatWindow_Popup
+      info.notCheckable = 1
+      UIDropDownMenu_AddButton(info)
+
+      -- Create new chat window
+      if chatFrame == DEFAULT_CHAT_FRAME then
+        info = UIDropDownMenu_CreateInfo()
+        info.text = NEW_CHAT_WINDOW
+        info.func = FCF_NewChatWindow
+        info.notCheckable = 1
+        if FCF_GetNumActiveChatFrames() == NUM_CHAT_WINDOWS then
+          info.disabled = 1
+        end
+        UIDropDownMenu_AddButton(info)
+      end
+
+      -- Close chat window
+      if chatFrame ~= DEFAULT_CHAT_FRAME and not IsCombatLog(chatFrame) then
+        info = UIDropDownMenu_CreateInfo()
+        info.text = CLOSE_CHAT_WINDOW
+        info.func = FCF_PopInWindow
+        info.arg1 = chatFrame
+        info.notCheckable = 1
+        UIDropDownMenu_AddButton(info)
+      end
+
+      -- Filter header
+      info = UIDropDownMenu_CreateInfo();
+      info.text = FILTERS;
+      info.isTitle = 1;
+      info.notCheckable = 1;
+      UIDropDownMenu_AddButton(info);
+
+      -- Configure settings
+      info = UIDropDownMenu_CreateInfo();
+      info.text = CHAT_CONFIGURATION;
+      info.func = function() ShowUIPanel(ChatConfigFrame); end;
+      info.notCheckable = 1;
+      UIDropDownMenu_AddButton(info);
+    end, "MENU")
   end
 
   -- Intro animations
