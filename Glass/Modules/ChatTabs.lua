@@ -1,4 +1,4 @@
-local Core, Constants, Utils = unpack(select(2, ...))
+local Core, Constants = unpack(select(2, ...))
 local CT = Core:GetModule("ChatTabs")
 local MC = Core:GetModule("MainContainer")
 local SMF = Core:GetModule("SlidingMessageFrame")

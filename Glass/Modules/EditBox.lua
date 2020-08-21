@@ -1,4 +1,4 @@
-local Core, Constants, Utils = unpack(select(2, ...))
+local Core, Constants = unpack(select(2, ...))
 local EB = Core:GetModule("EditBox")
 local MC = Core:GetModule("MainContainer")
 

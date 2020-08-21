@@ -1,4 +1,4 @@
-local Core, Constants = unpack(select(2, ...))
+local Core = unpack(select(2, ...))
 local CT = Core:GetModule("ChatTabs")
 local MC = Core:GetModule("MainContainer")
 local M = Core:GetModule("Mover")

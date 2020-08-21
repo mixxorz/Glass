@@ -1,4 +1,4 @@
-local Core, _, Utils = unpack(select(2, ...))
+local Core = unpack(select(2, ...))
 local C = Core:GetModule("Config")
 local CT = Core:GetModule("ChatTabs")
 local EB = Core:GetModule("EditBox")
