@@ -11,15 +11,20 @@ local CLOSE_CHAT_WINDOW = CLOSE_CHAT_WINDOW
 local ChatConfigFrame = ChatConfigFrame
 local CreateFont = CreateFont
 local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME
+local FCFDock_GetInsertIndex = FCFDock_GetInsertIndex
+local FCFDock_HideInsertHighlight = FCFDock_HideInsertHighlight
+local FCF_DockFrame = FCF_DockFrame
 local FCF_GetNumActiveChatFrames = FCF_GetNumActiveChatFrames
 local FCF_NewChatWindow = FCF_NewChatWindow
 local FCF_PopInWindow = FCF_PopInWindow
 local FCF_RenameChatWindow_Popup = FCF_RenameChatWindow_Popup
 local FCF_StopAlertFlash = FCF_StopAlertFlash
 local FILTERS = FILTERS
+local GENERAL_CHAT_DOCK = GENERAL_CHAT_DOCK
 local GeneralDockManager = GeneralDockManager
 local GeneralDockManagerScrollFrame = GeneralDockManagerScrollFrame
 local GeneralDockManagerScrollFrameChild = GeneralDockManagerScrollFrameChild
+local GetCursorPosition = GetCursorPosition
 local IsCombatLog = IsCombatLog
 local NEW_CHAT_WINDOW = NEW_CHAT_WINDOW
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
@@ -28,6 +33,7 @@ local ShowUIPanel = ShowUIPanel
 local UIDropDownMenu_AddButton = UIDropDownMenu_AddButton
 local UIDropDownMenu_CreateInfo = UIDropDownMenu_CreateInfo
 local UIDropDownMenu_Initialize = UIDropDownMenu_Initialize
+local UIParent = UIParent
 -- luacheck: pop
 
 local Colors = Constants.COLORS
@@ -142,8 +148,10 @@ function CT:OnEnable()
       FCF_StopAlertFlash(chatFrame)
     end)
 
-    -- Disable dragging
-    tab:RegisterForDrag()
+    -- Disable dragging for General and CombatLog
+    if chatFrame == DEFAULT_CHAT_FRAME or IsCombatLog(chatFrame) then
+      tab:RegisterForDrag()
+    end
 
     -- Override context menu
     UIDropDownMenu_Initialize(dropDown, function ()
@@ -190,6 +198,19 @@ function CT:OnEnable()
       UIDropDownMenu_AddButton(info);
     end, "MENU")
   end
+
+  -- Override drag behaviour
+  -- Disable undocking frames
+  self:RawHook("FCF_StopDragging", function (chatFrame)
+    chatFrame:StopMovingOrSizing();
+    _G[chatFrame:GetName().."Tab"]:UnlockHighlight();
+
+    FCFDock_HideInsertHighlight(GENERAL_CHAT_DOCK);
+
+    local mouseX, mouseY = GetCursorPosition();
+    mouseX, mouseY = mouseX / UIParent:GetScale(), mouseY / UIParent:GetScale();
+    FCF_DockFrame(chatFrame, FCFDock_GetInsertIndex(GENERAL_CHAT_DOCK, chatFrame, mouseX, mouseY), true);
+  end, true)
 
   -- Intro animations
   self.introAg = GeneralDockManager:CreateAnimationGroup()
