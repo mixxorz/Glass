@@ -8,6 +8,8 @@
 
 ## SavedVariables: GlassDB
 
+## X-Curse-Project-ID: 403607
+
 # Libs
 libs\LibStub\LibStub.lua
 libs\AceAddon-3.0\AceAddon-3.0.xml
