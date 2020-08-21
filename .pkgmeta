@@ -1,4 +1,4 @@
-package-as: WeakAuras
+package-as: Glass
 enable-nolib-creation: no
 
 externals:
