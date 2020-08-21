@@ -1,7 +1,11 @@
 ## Interface: 80300
-## Title: Glass
+## Plain Title: Glass
 ## Author: mixxorz
-## Version: 0.0.1
+## Version: 1.0.0-rc1
+
+## Title: |c00DFBA69Glass|r
+## Notes: Immersive and minimalistic chat UI.
+
 ## SavedVariables: GlassDB
 
 # Libs
