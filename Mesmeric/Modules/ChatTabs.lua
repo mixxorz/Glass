@@ -15,6 +15,7 @@ local FCF_GetNumActiveChatFrames = FCF_GetNumActiveChatFrames
 local FCF_NewChatWindow = FCF_NewChatWindow
 local FCF_PopInWindow = FCF_PopInWindow
 local FCF_RenameChatWindow_Popup = FCF_RenameChatWindow_Popup
+local FCF_StopAlertFlash = FCF_StopAlertFlash
 local FILTERS = FILTERS
 local GeneralDockManager = GeneralDockManager
 local GeneralDockManagerScrollFrame = GeneralDockManagerScrollFrame
@@ -138,7 +139,7 @@ function CT:OnEnable()
 
     -- Un-highlight when clicked
     tab:HookScript("OnClick", function ()
-      tab.glow:Hide()
+      FCF_StopAlertFlash(chatFrame)
     end)
 
     -- Disable dragging
