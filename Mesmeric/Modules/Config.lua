@@ -131,6 +131,17 @@ function C:OnEnable()
                 Core.db.profile.chatHoldTime = input
               end,
             },
+            chatShowOnMouseOver = {
+              order = 105,
+              type = "toggle",
+              name = "Show on mouse over",
+              get = function ()
+                return Core.db.profile.chatShowOnMouseOver
+              end,
+              set = function (info, input)
+                Core.db.profile.chatShowOnMouseOver = input
+              end,
+            },
             chatHoldTimeNl = {
               order = 110,
               type = "description",

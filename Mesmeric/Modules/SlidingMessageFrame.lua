@@ -382,6 +382,10 @@ function SlidingMessageFrame:OnEnterContainer()
   self.state.mouseOver = true
 
   for _, message in ipairs(self.state.messages) do
+    if Core.db.profile.chatShowOnMouseOver and not message:IsVisible() then
+      message:Show()
+    end
+
     if message.outroTimer then
       message.outroTimer:Cancel()
     end

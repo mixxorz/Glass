@@ -8,6 +8,7 @@ local LSM = Core.Libs.LSM
 -- luacheck: push ignore 113
 local CHAT_CONFIGURATION = CHAT_CONFIGURATION
 local CLOSE_CHAT_WINDOW = CLOSE_CHAT_WINDOW
+local C_Timer = C_Timer
 local ChatConfigFrame = ChatConfigFrame
 local CreateFont = CreateFont
 local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME
@@ -263,7 +264,16 @@ function CT:OnLeaveContainer()
   -- Hide chat tab when mouse leaves
   self.state.mouseOver = false
 
-  if GeneralDockManager:IsVisible() then
+  if Core.db.profile.chatShowOnMouseOver then
+    -- When chatShowOnMouseOver is on, synchronize the chat tab's fade out with
+    -- the chat
+    self.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
+      if GeneralDockManager:IsVisible() then
+        self.outroAg:Play()
+      end
+    end)
+  else
+    -- Otherwise hide it immediately on mouse leave
     self.outroAg:Play()
   end
 end
