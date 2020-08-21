@@ -19,7 +19,7 @@ function MC:OnInitialize()
     mouseOver = false
   }
 
-  self.container = CreateFrame("Frame", "MesmericFrame", UIParent)
+  self.container = CreateFrame("Frame", "GlassFrame", UIParent)
   self.container:SetWidth(Core.db.profile.frameWidth)
   self.container:SetHeight(Core.db.profile.frameHeight)
   self.container:SetPoint("TOPLEFT", M:GetMoverFrame())
@@ -34,7 +34,7 @@ function MC:OnInitialize()
   end)
 
   -- Main font
-  local font = CreateFont("MesmericFont")
+  local font = CreateFont("GlassFont")
   font:SetFont("Fonts\\FRIZQT__.TTF", 12)
   font:SetShadowColor(0, 0, 0, 1)
   font:SetShadowOffset(1, -1)

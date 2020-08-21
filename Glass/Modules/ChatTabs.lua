@@ -1,4 +1,4 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 local CT = Core:GetModule("ChatTabs")
 local MC = Core:GetModule("MainContainer")
 local SMF = Core:GetModule("SlidingMessageFrame")
@@ -52,7 +52,7 @@ function CT:OnInitialize()
 end
 
 function CT:OnEnable()
-  self.font = CreateFont("MesmericChatTabsFont")
+  self.font = CreateFont("GlassChatTabsFont")
   self.font:SetFont(LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font), 12)
   self.font:SetShadowColor(0, 0, 0, 0)
   self.font:SetShadowOffset(1, -1)
@@ -119,7 +119,7 @@ function CT:OnEnable()
     end
 
     tab:SetHeight(20)
-    tab:SetNormalFontObject("MesmericChatTabsFont")
+    tab:SetNormalFontObject("GlassChatTabsFont")
     tab.Text:ClearAllPoints()
     tab.Text:SetPoint("LEFT", 15, 0)
     tab:SetWidth(tab.Text:GetStringWidth() + 15 * 2)

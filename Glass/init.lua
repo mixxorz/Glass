@@ -48,7 +48,7 @@ function Core:OnInitialize()
     }
   }
 
-  self.db = self.Libs.AceDB:New("MesmericDB", defaults, true)
+  self.db = self.Libs.AceDB:New("GlassDB", defaults, true)
   self.printBuffer = {}
 end
 

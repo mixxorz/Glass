@@ -18,7 +18,7 @@ end
 
 function EB:OnEnable()
   -- Message font
-  self.font = CreateFont("MesmericEditBoxFont")
+  self.font = CreateFont("GlassEditBoxFont")
   self.font:SetFont(
     LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
     Core.db.profile.editBoxFontSize
@@ -52,9 +52,9 @@ function EB:OnEnable()
     -- New styling
     editBox:ClearAllPoints()
     editBox:SetPoint("TOPLEFT", MC:GetFrame(), "BOTTOMLEFT", 8, -5)
-    editBox:SetFontObject("MesmericEditBoxFont")
+    editBox:SetFontObject("GlassEditBoxFont")
     editBox:SetWidth(MC:GetFrame():GetWidth() - 8 * 2)
-    editBox.header:SetFontObject("MesmericEditBoxFont")
+    editBox.header:SetFontObject("GlassEditBoxFont")
     editBox.header:SetPoint("LEFT", 8, 0)
 
     local bg = editBox:CreateTexture(nil, "BACKGROUND")
@@ -87,13 +87,13 @@ function EB:OnEnable()
     fadeOut:SetDuration(0.05)
 
     -- Workaround for editbox being open on login
-    editBox.mesmericInitialized = false
+    editBox.glassInitialized = false
 
     editBox:SetScript("OnShow", function ()
-      if editBox.mesmericInitialized then
+      if editBox.glassInitialized then
         introAg:Play()
       else
-        editBox.mesmericInitialized = true
+        editBox.glassInitialized = true
       end
     end)
 

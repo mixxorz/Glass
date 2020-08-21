@@ -64,7 +64,7 @@ function SlidingMessageFrame:Initialize()
   }
 
   -- Chat scroll frame
-  self.scrollFrame = CreateFrame("ScrollFrame", "MesmericScrollFrame", MC:GetFrame())
+  self.scrollFrame = CreateFrame("ScrollFrame", "GlassScrollFrame", MC:GetFrame())
   self.scrollFrame:SetHeight(self.config.height + self.config.overflowHeight)
   self.scrollFrame:SetWidth(self.config.width)
   self.scrollFrame:SetPoint("BOTTOMLEFT", 0, self.config.overflowHeight * -1)
@@ -202,7 +202,7 @@ function SlidingMessageFrame:MessagePoolCreator()
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0
   )
 
-  message.text = message:CreateFontString(nil, "ARTWORK", "MesmericMessageFont")
+  message.text = message:CreateFontString(nil, "ARTWORK", "GlassMessageFont")
   message.text:SetPoint("LEFT", self.config.xPadding, 0)
   message.text:SetWidth(self.config.width - self.config.xPadding * 2)
 
@@ -532,7 +532,7 @@ end
 
 function SMF:OnEnable()
   -- Message font
-  self.font = CreateFont("MesmericMessageFont")
+  self.font = CreateFont("GlassMessageFont")
   self.font:SetFont(
     LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
     Core.db.profile.messageFontSize

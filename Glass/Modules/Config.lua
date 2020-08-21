@@ -13,7 +13,7 @@ local LSM = Core.Libs.LSM
 
 function C:OnEnable()
   local options = {
-      name = "Mesmeric",
+      name = "Glass",
       handler = C,
       type = "group",
       args = {
@@ -31,7 +31,7 @@ function C:OnEnable()
               type = "select",
               dialogControl = "LSM30_Font",
               name = "Font",
-              desc = "Font to use throughout Mesmeric",
+              desc = "Font to use throughout Glass",
               values = LSM:HashTable("font"),
               get = function()
                 return Core.db.profile.font
@@ -220,9 +220,9 @@ function C:OnEnable()
       }
   }
 
-  AceConfig:RegisterOptionsTable("Mesmeric", options)
+  AceConfig:RegisterOptionsTable("Glass", options)
 
-  self:RegisterChatCommand("mesmeric", "OnSlashCommand")
+  self:RegisterChatCommand("glass", "OnSlashCommand")
 
   Core.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
   Core.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
@@ -233,7 +233,7 @@ function C:OnSlashCommand(input)
   if input == "lock" then
     M:Unlock()
   else
-    AceConfigDialog:Open("Mesmeric")
+    AceConfigDialog:Open("Glass")
   end
 end
 

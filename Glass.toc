@@ -1,8 +1,8 @@
 ## Interface: 80300
-## Title: Mesmeric
+## Title: Glass
 ## Author: mixxorz
 ## Version: 0.0.1
-## SavedVariables: MesmericDB
+## SavedVariables: GlassDB
 
 # Libs
 libs\LibStub\LibStub.lua
@@ -15,15 +15,15 @@ libs\lodash.wow\lodash.wow.xml
 libs\LibSharedMedia-3.0\lib.xml
 libs\AceGUI-3.0-SharedMediaWidgets\widget.xml
 
-# Mesmeric
-Mesmeric\init.lua
-Mesmeric\constants.lua
-Mesmeric\utils.lua
+# Glass
+Glass\init.lua
+Glass\constants.lua
+Glass\utils.lua
 
 # Modules
-Mesmeric\Modules\Config.lua
-Mesmeric\Modules\ChatTabs.lua
-Mesmeric\Modules\EditBox.lua
-Mesmeric\Modules\MainContainer.lua
-Mesmeric\Modules\Mover.lua
-Mesmeric\Modules\SlidingMessageFrame.lua
+Glass\Modules\Config.lua
+Glass\Modules\ChatTabs.lua
+Glass\Modules\EditBox.lua
+Glass\Modules\MainContainer.lua
+Glass\Modules\Mover.lua
+Glass\Modules\SlidingMessageFrame.lua

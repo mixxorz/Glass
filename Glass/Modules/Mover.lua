@@ -20,7 +20,7 @@ end
 function M:CreateMoverFrame()
   local pos = Core.db.profile.positionAnchor
 
-  self.moverFrame = CreateFrame("Frame", "MesmericMoverFrame", UIParent)
+  self.moverFrame = CreateFrame("Frame", "GlassMoverFrame", UIParent)
   self.moverFrame:SetPoint(pos.point, pos.relativeTo, pos.relativePoint, pos.xOfs, pos.yOfs)
   self.moverFrame:SetWidth(Core.db.profile.frameWidth)
   self.moverFrame:SetHeight(Core.db.profile.frameHeight + 35)
@@ -42,7 +42,7 @@ end
 
 function M:CreateMoverDialog()
   self.moverDialog = CreateFrame(
-    "Frame", "MesmericMoverDialog", UIParent,
+    "Frame", "GlassMoverDialog", UIParent,
     BackdropTemplateMixin and "BackdropTemplate" or nil
   )
 
@@ -76,7 +76,7 @@ function M:CreateMoverDialog()
   self.moverDialog.title = self.moverDialog:CreateFontString("ARTWORK")
   self.moverDialog.title:SetFontObject("GameFontNormal")
   self.moverDialog.title:SetPoint("TOP", self.moverDialog.header, "TOP", 0, -14)
-  self.moverDialog.title:SetText("Mesmeric")
+  self.moverDialog.title:SetText("Glass")
 
   self.moverDialog.desc = self.moverDialog:CreateFontString("ARTWORK")
   self.moverDialog.desc:SetFontObject("GameFontHighlight")
