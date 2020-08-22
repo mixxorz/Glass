@@ -8,7 +8,7 @@ local LSM = Core.Libs.LSM
 -- luacheck: push ignore 113
 local CHAT_CONFIGURATION = CHAT_CONFIGURATION
 local CLOSE_CHAT_WINDOW = CLOSE_CHAT_WINDOW
-local UNLOCK_WINDOW = UNLOCK_WINDOW 
+local UNLOCK_WINDOW = UNLOCK_WINDOW
 local C_Timer = C_Timer
 local ChatConfigFrame = ChatConfigFrame
 local CreateFont = CreateFont
