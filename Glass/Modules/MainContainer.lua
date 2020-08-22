@@ -5,6 +5,7 @@ local M = Core:GetModule("Mover")
 local SMF = Core:GetModule("SlidingMessageFrame")
 
 -- luacheck: push ignore 113
+local ChatAlertFrame = ChatAlertFrame
 local ChatFrameChannelButton = ChatFrameChannelButton
 local ChatFrameMenuButton = ChatFrameMenuButton
 local CreateFont = CreateFont
@@ -32,6 +33,9 @@ function MC:OnInitialize()
   self.container:SetScript("OnUpdate", function (_, elapsed)
     self:OnUpdate(elapsed)
   end)
+
+  ChatAlertFrame:ClearAllPoints()
+  ChatAlertFrame:SetPoint("BOTTOMLEFT", self.container, "TOPLEFT", 15, 10)
 
   -- Main font
   local font = CreateFont("GlassFont")
