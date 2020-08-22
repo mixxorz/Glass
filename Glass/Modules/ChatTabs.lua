@@ -197,6 +197,16 @@ function CT:OnEnable()
       info.func = function() ShowUIPanel(ChatConfigFrame); end;
       info.notCheckable = 1;
       UIDropDownMenu_AddButton(info);
+
+      -- lock
+      info = UIDropDownMenu_CreateInfo();
+      info.text = "Unlock"
+      info.notCheckable = 1;
+      info.func = function() 
+        local M = Core:GetModule("Mover")
+        M:Unlock() 
+      end;
+      UIDropDownMenu_AddButton(info)
     end, "MENU")
   end
 
