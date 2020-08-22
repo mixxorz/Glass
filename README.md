@@ -27,6 +27,7 @@ You may also download the latest release on [GitHub](https://github.com/mixxorz/
 ## Customization
 
 Type `/glass` to open the settings window.
+Type `/glass lock` to unlock the chat frame.
 
 Not everyone likes the same look. Glass tries to accommodate your own
 preferences by giving you options to change the:
@@ -41,6 +42,7 @@ characters.
 
 ## Addon compatibility
 
+* ElvUI - Yes, but disable the Chat module
 * Prat 3.0 - Yes, but disable the EditBox module
 
 ## Issues and suggestions
