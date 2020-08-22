@@ -1,4 +1,4 @@
-local Core, Constants, Utils = unpack(select(2, ...))
+local Core, Constants = unpack(select(2, ...))
 local MC = Core:GetModule("MainContainer")
 local SMF = Core:GetModule("SlidingMessageFrame")
 
@@ -17,11 +17,11 @@ local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
 local SetItemRef = SetItemRef
 local ShowUIPanel = ShowUIPanel
 local UIParent = UIParent
+local split = strsplit
 -- luacheck: pop
 
 local lodash = Core.Libs.lodash
 local drop, reduce, take = lodash.drop, lodash.reduce, lodash.take
-local split = Utils.split
 
 local Colors = Constants.COLORS
 
@@ -295,15 +295,19 @@ local function adjustTextureYOffset(texture)
 
   -- Strip escape characters
   -- Split into parts
-  -- TODO use strsplit instead of custom split
-  local parts = split(strsub(texture, 3, -3))
+  local parts = {split(':', strsub(texture, 3, -3))}
   local yOffset = Core.db.profile.iconTextureYOffset
 
   if #parts < 5 then
     -- Pad out ommitted attributes
     for i=1, 5 do
       if parts[i] == nil then
-        parts[i] = '0'
+        if i == 3 then
+          -- If width is not specified, the width should equal the height
+          parts[i] = parts[2]
+        else
+          parts[i] = '0'
+        end
       end
     end
   end
