@@ -1,5 +1,5 @@
 # Changelog
 
-## 1.0.0-rc1 (2020-08-21)
+## 1.0.0-rc2 (2020-08-22)
 
 * Initial release
