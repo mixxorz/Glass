@@ -1,6 +1,7 @@
 local Core, Constants = unpack(select(2, ...))
 local MC = Core:GetModule("MainContainer")
 local SMF = Core:GetModule("SlidingMessageFrame")
+local TP = Core:GetModule("TextProcessing")
 
 local LSM = Core.Libs.LSM
 
@@ -17,7 +18,6 @@ local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
 local SetItemRef = SetItemRef
 local ShowUIPanel = ShowUIPanel
 local UIParent = UIParent
-local split = strsplit
 -- luacheck: pop
 
 local lodash = Core.Libs.lodash
@@ -284,78 +284,6 @@ function SlidingMessageFrame:MessagePoolCreator()
   return message
 end
 
----
---Takes a texture escape string and adjusts its yOffset
-local function adjustTextureYOffset(texture)
-  -- Texture has 14 parts
-  -- path, height, width, offsetX, offsetY,
-  -- texWidth, texHeight
-  -- leftTex, topTex, rightTex, bottomText,
-  -- rColor, gColor, bColor
-
-  -- Strip escape characters
-  -- Split into parts
-  local parts = {split(':', strsub(texture, 3, -3))}
-  local yOffset = Core.db.profile.iconTextureYOffset
-
-  if #parts < 5 then
-    -- Pad out ommitted attributes
-    for i=1, 5 do
-      if parts[i] == nil then
-        if i == 3 then
-          -- If width is not specified, the width should equal the height
-          parts[i] = parts[2]
-        else
-          parts[i] = '0'
-        end
-      end
-    end
-  end
-
-  -- Adjust yOffset by -4
-  parts[5] = tostring(tonumber(parts[5]) - yOffset)
-
-  -- Rejoin into strings
-  local newTex = reduce(parts, function (acc, part)
-    if acc then
-      return acc..":"..part
-    end
-    return part
-  end)
-
-  -- Re-add escape codes
-  return '|T'..newTex..'|t'
-end
-
----
--- Gets all inline textures found in the string and adjusts their yOffset
-local function transformTextures(text)
-  local cursor = 1
-  local origLen = strlen(text)
-
-  local parts = {}
-
-  while cursor <= origLen do
-    local mStart, mEnd = strfind(text, '%|T.-%|t', cursor)
-
-    if mStart then
-      table.insert(parts, strsub(text, cursor, mStart - 1))
-      table.insert(parts, adjustTextureYOffset(strsub(text, mStart, mEnd)))
-      cursor = mEnd + 1
-    else
-      -- No more matches
-      table.insert(parts, strsub(text, cursor, origLen))
-      cursor = origLen + 1
-    end
-  end
-
-  local newText = reduce(parts, function (acc, part)
-    return acc..part
-  end, "")
-
-  return newText
-end
-
 function SlidingMessageFrame:CreateMessageFrame(frame, text, red, green, blue, messageId, holdTime)
   red = red or 1
   green = green or 1
@@ -373,7 +301,7 @@ function SlidingMessageFrame:CreateMessageFrame(frame, text, red, green, blue, m
   self.prevLine = message
 
   message.text:SetTextColor(red, green, blue, 1)
-  message.text:SetText(transformTextures(text))
+  message.text:SetText(TP:ProcessText(text))
 
   -- Adjust height to contain text
   message:UpdateFrame()

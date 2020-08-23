@@ -30,6 +30,7 @@ Core:NewModule("ChatTabs", "AceHook-3.0")
 Core:NewModule("Config", "AceConsole-3.0")
 Core:NewModule("EditBox", "AceHook-3.0")
 Core:NewModule("SlidingMessageFrame", "AceHook-3.0")
+Core:NewModule("TextProcessing")
 
 function Core:OnInitialize()
   local defaults = {
