@@ -36,3 +36,4 @@ Glass\Modules\EditBox.lua
 Glass\Modules\MainContainer.lua
 Glass\Modules\Mover.lua
 Glass\Modules\SlidingMessageFrame.lua
+Glass\Modules\TextProcessing.lua
