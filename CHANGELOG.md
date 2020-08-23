@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add "Unlock Window" option to context menu
+* Add support for Prat timestamps
 
 ## 1.0.1 (2020-08-22)
 
