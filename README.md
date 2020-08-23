@@ -24,10 +24,12 @@ Glass is available on [CurseForge](https://www.curseforge.com/wow/addons/glass)
 
 You may also download the latest release on [GitHub](https://github.com/mixxorz/Glass/releases)
 
-## Customization
+## Commands
 
-Type `/glass` to open the settings window.
-Type `/glass lock` to unlock the chat frame.
+* `/glass` - open the settings window
+* `/glass lock` - unlock the chat frame
+
+## Customization
 
 Not everyone likes the same look. Glass tries to accommodate your own
 preferences by giving you options to change the:
@@ -42,8 +44,12 @@ characters.
 
 ## Addon compatibility
 
-* ElvUI - Yes, but disable the Chat module
-* Prat 3.0 - Yes, but disable the EditBox module
+* ElvUI
+  * Yes, but disable the Chat module
+* Prat 3.0
+  * Yes, but disable the EditBox module
+  * Prat timestamps are supported. If you want to disable timestamps, you'll
+      need to set the Timestamps module on Prat to "Don't load".
 
 ## Issues and suggestions
 
