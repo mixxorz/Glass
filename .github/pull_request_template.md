@@ -8,3 +8,9 @@ E.g. why something was refactored along the way, any known issues that we're liv
 
 **Screenshots**
 If there are UI changes, please include screenshots
+
+**Dev checklist**
+- [ ] Feature works with other addons enabled
+- [ ] Feature works with all other addons disabled
+- [ ] README updated (if necessary)
+- [ ] CHANGELOG updated
