@@ -69,6 +69,9 @@ function SlidingMessageFrame:Initialize()
   self.scrollFrame:SetWidth(self.config.width)
   self.scrollFrame:SetPoint("BOTTOMLEFT", 0, self.config.overflowHeight * -1)
 
+  -- Set initial scroll position
+  self.scrollFrame:SetVerticalScroll(self.config.overflowHeight)
+
   self.scrollFrame.bg = self.scrollFrame:CreateTexture(nil, "BACKGROUND")
   self.scrollFrame.bg:SetAllPoints()
   self.scrollFrame.bg:SetColorTexture(0, 1, 0, 0)
@@ -113,9 +116,6 @@ function SlidingMessageFrame:Initialize()
 
   -- Initialize slide up animations
   self.sliderAg = self.slider:CreateAnimationGroup()
-  self.sliderStartOffset = self.sliderAg:CreateAnimation("Translation")
-  self.sliderStartOffset:SetDuration(0)
-
   self.sliderTranslateUp = self.sliderAg:CreateAnimation("Translation")
   self.sliderTranslateUp:SetDuration(0.3)
   self.sliderTranslateUp:SetSmoothing("OUT")
@@ -396,18 +396,18 @@ function SlidingMessageFrame:Update()
 
     local newHeight = self.slider:GetHeight() + offset
     self.slider:SetHeight(newHeight)
-    self.sliderStartOffset:SetOffset(0, offset * -1)
     self.sliderTranslateUp:SetOffset(0, offset)
 
     -- Display and run everything
-    self.scrollFrame:SetVerticalScroll(newHeight - self.scrollFrame:GetHeight() + self.config.overflowHeight)
+    self.sliderAg:SetScript("OnFinished", function ()
+      self.scrollFrame:SetVerticalScroll(newHeight - self.scrollFrame:GetHeight() + self.config.overflowHeight)
+    end)
+    self.sliderAg:Play()
 
     for _, messageFrame in ipairs(newMessages) do
       messageFrame:Show()
       table.insert(self.state.messages, messageFrame)
     end
-
-    self.sliderAg:Play()
 
     -- Release old messages
     local historyLimit = 128
