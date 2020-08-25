@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.1 (2020-08-26)
 
 * Fix text processing pipeline (#70)
 * Fix jittery animations (#71)
