@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Fix jittery animations (#71)
+
 ## 1.1.0 (2020-08-24)
 
 * Add "Unlock Window" option to context menu - SammyJames
