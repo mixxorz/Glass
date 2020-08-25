@@ -85,7 +85,8 @@ function TP:ProcessText(text)
 
   for _, processor in ipairs(TEXT_PROCESSORS) do
     -- Prevent failing processors from bringing down the whole pipeline
-    local retOk, retVal = pcall(processor, text)
+    local retOk, retVal = pcall(processor, result)
+
     if retOk then
       result = retVal
     end
