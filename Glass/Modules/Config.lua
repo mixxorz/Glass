@@ -4,7 +4,8 @@ local CT = Core:GetModule("ChatTabs")
 local EB = Core:GetModule("EditBox")
 local M = Core:GetModule("Mover")
 local MC = Core:GetModule("MainContainer")
-local SMF = Core:GetModule("SlidingMessageFrame")
+local Fonts = Core:GetModule("Fonts")
+local UIManager = Core:GetModule("UIManager")
 
 local AceConfig = Core.Libs.AceConfig
 local AceConfigDialog = Core.Libs.AceConfigDialog
@@ -38,7 +39,8 @@ function C:OnEnable()
               end,
               set = function(info, input)
                 Core.db.profile.font = input
-                SMF:OnUpdateFont()
+                Fonts:OnRefreshConfig("font")
+                UIManager:OnUpdateFont()
                 EB:OnUpdateFont()
                 CT:OnUpdateFont()
               end,
@@ -58,7 +60,8 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.messageFontSize = input
-                SMF:OnUpdateFont()
+                Fonts:OnRefreshConfig("messageFontSize")
+                UIManager:OnUpdateFont()
                 EB:OnUpdateFont()
               end,
             },
@@ -161,7 +164,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.chatBackgroundOpacity = input
-                SMF:OnUpdateChatBackgroundOpacity()
+                UIManager:OnUpdateChatBackgroundOpacity()
               end,
             },
             chatBackgroundOpacityDesc = {
@@ -190,7 +193,7 @@ function C:OnEnable()
                 Core.db.profile.frameWidth = input
                 M:OnUpdateFrame()
                 MC:OnUpdateFrame()
-                SMF:OnUpdateFrame()
+                UIManager:OnUpdateFrame()
                 EB:OnUpdateFrame()
                 CT:OnUpdateFrame()
               end
@@ -211,7 +214,7 @@ function C:OnEnable()
                 Core.db.profile.frameHeight = input
                 M:OnUpdateFrame()
                 MC:OnUpdateFrame()
-                SMF:OnUpdateFrame()
+                UIManager:OnUpdateFrame()
               end
             }
           }
@@ -238,6 +241,6 @@ function C:OnSlashCommand(input)
 end
 
 function C:RefreshConfig()
-  SMF:OnUpdateFont()
+  UIManager:OnUpdateFont()
   EB:OnUpdateFont()
 end

@@ -11,6 +11,7 @@ AddonVars[2] = Constants
 AddonVars[3] = Utils
 _G[AddonName] = Core
 
+
 -- Core
 Core.Libs = {
   AceConfig = _G.LibStub("AceConfig-3.0"),
@@ -20,6 +21,7 @@ Core.Libs = {
   LSM = _G.LibStub("LibSharedMedia-3.0"),
   lodash = _G.LibStub("lodash.wow")
 }
+Core.Components = {}
 
 -- Modules
 -- These need to be initialized first
@@ -29,8 +31,9 @@ Core:NewModule("MainContainer", "AceHook-3.0")
 Core:NewModule("ChatTabs", "AceHook-3.0")
 Core:NewModule("Config", "AceConsole-3.0")
 Core:NewModule("EditBox", "AceHook-3.0")
-Core:NewModule("SlidingMessageFrame", "AceHook-3.0")
+Core:NewModule("Fonts")
 Core:NewModule("TextProcessing")
+Core:NewModule("UIManager", "AceHook-3.0")
 
 function Core:OnInitialize()
   local defaults = {

@@ -2,7 +2,7 @@ local Core, Constants = unpack(select(2, ...))
 local CT = Core:GetModule("ChatTabs")
 local M = Core:GetModule("Mover");
 local MC = Core:GetModule("MainContainer")
-local SMF = Core:GetModule("SlidingMessageFrame")
+local UIManager = Core:GetModule("UIManager")
 
 local LSM = Core.Libs.LSM
 
@@ -141,7 +141,7 @@ function CT:OnEnable()
 
     -- Don't highlight when frame is already visible
     self:RawHook(tab.glow, "Show", function ()
-      if SMF.state.frames[i] and not SMF.state.frames[i]:IsVisible() then
+      if UIManager.state.frames[i] and not UIManager.state.frames[i]:IsVisible() then
         self.hooks[tab.glow].Show(tab.glow)
       end
     end, true)
