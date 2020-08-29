@@ -23,3 +23,18 @@ Constants.COLORS = {
   codGray = createColor(17, 17, 17),
   apache = createColor(223, 186, 105)
 }
+
+-- Events
+Constants.EVENTS = {
+  LOCK_MOVER = "Glass/LOCK_MOVER",
+  UNLOCK_MOVER = "Glass/UNLOCK_MOVER",
+}
+
+Constants.ACTIONS = {
+  LockMover = function ()
+    return Constants.EVENTS.LOCK_MOVER
+  end,
+  UnlockMover = function ()
+    return Constants.EVENTS.UNLOCK_MOVER
+  end,
+}

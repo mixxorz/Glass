@@ -1,10 +1,11 @@
 local Core, Constants = unpack(select(2, ...))
 local CT = Core:GetModule("ChatTabs")
-local M = Core:GetModule("Mover");
 local MC = Core:GetModule("MainContainer")
 local UIManager = Core:GetModule("UIManager")
 
 local LSM = Core.Libs.LSM
+
+local UnlockMover = Constants.ACTIONS.UnlockMover
 
 -- luacheck: push ignore 113
 local CHAT_CONFIGURATION = CHAT_CONFIGURATION
@@ -166,7 +167,7 @@ function CT:OnEnable()
         info.text = UNLOCK_WINDOW;
         info.notCheckable = 1;
         info.func = function()
-          M:Unlock();
+          Core:SendMessage(UnlockMover())
         end;
         UIDropDownMenu_AddButton(info);
 

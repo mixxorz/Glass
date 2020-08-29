@@ -3,7 +3,7 @@ local _G = _G
 local AceAddon = _G.LibStub("AceAddon-3.0")
 
 local AddonName, AddonVars = ...
-local Core = AceAddon:NewAddon(AddonName)
+local Core = AceAddon:NewAddon(AddonName, "AceEvent-3.0")
 local Constants = {}
 local Utils = {}
 AddonVars[1] = Core

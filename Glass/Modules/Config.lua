@@ -1,4 +1,4 @@
-local Core = unpack(select(2, ...))
+local Core, Constants = unpack(select(2, ...))
 local C = Core:GetModule("Config")
 local CT = Core:GetModule("ChatTabs")
 local EB = Core:GetModule("EditBox")
@@ -11,6 +11,8 @@ local AceConfig = Core.Libs.AceConfig
 local AceConfigDialog = Core.Libs.AceConfigDialog
 local AceDBOptions = Core.Libs.AceDBOptions
 local LSM = Core.Libs.LSM
+
+local UnlockMover = Constants.ACTIONS.UnlockMover
 
 function C:OnEnable()
   local options = {
@@ -234,7 +236,7 @@ end
 
 function C:OnSlashCommand(input)
   if input == "lock" then
-    M:Unlock()
+    Core:SendMessage(UnlockMover())
   else
     AceConfigDialog:Open("Glass")
   end

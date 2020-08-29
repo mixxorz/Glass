@@ -48,7 +48,6 @@ function UIManager:OnEnable()
       local smf = CreateSlidingMessageFrame("Glass"..chatFrame:GetName(), containerFrame)
       self.state.frames[i] = smf
 
-      smf:Init()
       smf:Hide()
 
       self:Hook(chatFrame, "AddMessage", function (...)

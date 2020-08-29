@@ -431,5 +431,7 @@ end
 
 Core.Components.CreateSlidingMessageFrame = function (name, parent)
   local frame = CreateFrame("ScrollFrame", name, parent)
-  return Mixin(frame, SlidingMessageFrameMixin)
+  local object = Mixin(frame, SlidingMessageFrameMixin)
+  object:Init()
+  return object
 end

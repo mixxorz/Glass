@@ -1,100 +1,32 @@
-local Core = unpack(select(2, ...))
-local M = Core:GetModule("Mover")
+local Core, Constants = unpack(select(2, ...))
+local Mover = Core:GetModule("Mover")
+
+local LOCK_MOVER = Constants.EVENTS.LOCK_MOVER
+local UNLOCK_MOVER = Constants.EVENTS.UNLOCK_MOVER
+
+local CreateMoverFrame = Core.Components.CreateMoverFrame
+local CreateMoverDialog = Core.Components.CreateMoverDialog
 
 -- luacheck: push ignore 113
-local BackdropTemplateMixin = BackdropTemplateMixin
-local CreateFrame = CreateFrame
-local PlaySound = PlaySound
-local SOUNDKIT = SOUNDKIT
 local UIParent = UIParent
 -- luacheck: pop
 
-function M:OnInitialize()
+function Mover:OnInitialize()
   self.state = {
     locked = true
   }
-  self:CreateMoverDialog()
-  self:CreateMoverFrame()
+  self.moverFrame = CreateMoverFrame("GlassMoverFrame", UIParent)
+  self.moverDialog = CreateMoverDialog("GlassMoverDialog", UIParent)
+
+  Core:RegisterMessage(LOCK_MOVER, function () self:Lock() end)
+  Core:RegisterMessage(UNLOCK_MOVER, function () self:Unlock() end)
 end
 
-function M:CreateMoverFrame()
-  local pos = Core.db.profile.positionAnchor
-
-  self.moverFrame = CreateFrame("Frame", "GlassMoverFrame", UIParent)
-  self.moverFrame:SetPoint(pos.point, pos.relativeTo, pos.relativePoint, pos.xOfs, pos.yOfs)
-  self.moverFrame:SetWidth(Core.db.profile.frameWidth)
-  self.moverFrame:SetHeight(Core.db.profile.frameHeight + 35)
-
-  self.moverFrame.bg = self.moverFrame:CreateTexture(nil, "BACKGROUND")
-  self.moverFrame.bg:SetColorTexture(0, 1, 0, 0.5)
-  self.moverFrame.bg:SetAllPoints()
-
-  self.moverFrame:Hide()
-
-  self.moverFrame:RegisterForDrag("LeftButton")
-  self.moverFrame:SetScript("OnDragStart", self.moverFrame.StartMoving)
-  self.moverFrame:SetScript("OnDragStop", self.moverFrame.StopMovingOrSizing)
-end
-
-function M:GetMoverFrame()
+function Mover:GetMoverFrame()
   return self.moverFrame
 end
 
-function M:CreateMoverDialog()
-  self.moverDialog = CreateFrame(
-    "Frame", "GlassMoverDialog", UIParent,
-    BackdropTemplateMixin and "BackdropTemplate" or nil
-  )
-
-  self.moverDialog:SetFrameStrata("DIALOG")
-  self.moverDialog:SetToplevel(true)
-  self.moverDialog:EnableMouse(true)
-  self.moverDialog:SetMovable(true)
-  self.moverDialog:SetClampedToScreen(true)
-  self.moverDialog:SetWidth(360)
-  self.moverDialog:SetHeight(110)
-  self.moverDialog:SetBackdrop{
-    bgFile="Interface\\DialogFrame\\UI-DialogBox-Background" ,
-    edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
-    tile = true,
-    insets = {left = 11, right = 12, top = 12, bottom = 11},
-    tileSize = 32,
-    edgeSize = 32,
-  }
-  self.moverDialog:SetPoint("TOP", 0, -50)
-  self.moverDialog:Hide()
-
-  self.moverDialog:SetScript("OnShow", function() PlaySound(SOUNDKIT.IG_MAINMENU_OPTION) end)
-  self.moverDialog:SetScript("OnHide", function() PlaySound(SOUNDKIT.GS_TITLE_OPTION_EXIT) end)
-
-  self.moverDialog.header = self.moverDialog:CreateTexture(nil, "ARTWORK")
-  self.moverDialog.header:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
-  self.moverDialog.header:SetWidth(256)
-  self.moverDialog.header:SetHeight(64)
-  self.moverDialog.header:SetPoint("TOP", 0, 12)
-
-  self.moverDialog.title = self.moverDialog:CreateFontString("ARTWORK")
-  self.moverDialog.title:SetFontObject("GameFontNormal")
-  self.moverDialog.title:SetPoint("TOP", self.moverDialog.header, "TOP", 0, -14)
-  self.moverDialog.title:SetText("Glass")
-
-  self.moverDialog.desc = self.moverDialog:CreateFontString("ARTWORK")
-  self.moverDialog.desc:SetFontObject("GameFontHighlight")
-  self.moverDialog.desc:SetJustifyV("TOP")
-  self.moverDialog.desc:SetJustifyH("LEFT")
-  self.moverDialog.desc:SetPoint("TOPLEFT", 18, -32)
-  self.moverDialog.desc:SetPoint("BOTTOMRIGHT", -18, 48)
-  self.moverDialog.desc:SetText("Chat frame unlocked. You can now drag the chat frame to reposition it.")
-
-  self.moverDialog.lockButton = CreateFrame("Button", nil, self.moverDialog, "OptionsButtonTemplate")
-  self.moverDialog.lockButton:SetText("Lock")
-  self.moverDialog.lockButton:SetScript("OnClick", function()
-    self:Lock()
-  end)
-  self.moverDialog.lockButton:SetPoint("BOTTOMRIGHT", -14, 14)
-end
-
-function M:Lock()
+function Mover:Lock()
   self.state.locked = true
   self.moverDialog:Hide()
   self.moverFrame:Hide()
@@ -113,7 +45,7 @@ function M:Lock()
   }
 end
 
-function M:Unlock()
+function Mover:Unlock()
   if not self.state.locked then
     -- Already unlocked
     return
@@ -127,7 +59,7 @@ function M:Unlock()
   self.moverFrame:SetMovable(true)
 end
 
-function M:OnUpdateFrame()
+function Mover:OnUpdateFrame()
   self.moverFrame:SetWidth(Core.db.profile.frameWidth)
   self.moverFrame:SetHeight(Core.db.profile.frameHeight + 35)
 end
