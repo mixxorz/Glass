@@ -30,11 +30,14 @@ Glass\init.lua
 Glass\constants.lua
 Glass\utils.lua
 
+# Frames
+Glass\Frames\SlidingMessageFrame.lua
+
 # Modules
 Glass\Modules\Config.lua
 Glass\Modules\ChatTabs.lua
 Glass\Modules\EditBox.lua
+Glass\Modules\FrameController.lua
 Glass\Modules\MainContainer.lua
 Glass\Modules\Mover.lua
-Glass\Modules\SlidingMessageFrame.lua
 Glass\Modules\TextProcessing.lua

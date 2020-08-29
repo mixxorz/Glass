@@ -1,20 +1,15 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 local MC = Core:GetModule("MainContainer")
-local SMF = Core:GetModule("SlidingMessageFrame")
 local TP = Core:GetModule("TextProcessing")
-
-local LSM = Core.Libs.LSM
 
 -- luacheck: push ignore 113
 local BattlePetToolTip_ShowLink = BattlePetToolTip_ShowLink
 local BattlePetTooltip = BattlePetTooltip
 local C_Timer = C_Timer
-local CreateFont = CreateFont
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
 local GameTooltip = GameTooltip
 local GeneralDockManager = GeneralDockManager
-local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
 local SetItemRef = SetItemRef
 local ShowUIPanel = ShowUIPanel
 local UIParent = UIParent
@@ -64,7 +59,7 @@ function SlidingMessageFrame:Initialize()
   }
 
   -- Chat scroll frame
-  self.scrollFrame = CreateFrame("ScrollFrame", "GlassScrollFrame", MC:GetFrame())
+  self.scrollFrame = CreateFrame("ScrollFrame", nil, MC:GetFrame())
   self.scrollFrame:SetHeight(self.config.height + self.config.overflowHeight)
   self.scrollFrame:SetWidth(self.config.width)
   self.scrollFrame:SetPoint("BOTTOMLEFT", 0, self.config.overflowHeight * -1)
@@ -83,6 +78,7 @@ function SlidingMessageFrame:Initialize()
 
   -- Scrolling
   self.scrollFrame:SetScript("OnMouseWheel", function (frame, delta)
+    Utils.print('Is scrolling', self)
     local currentScrollOffset = self.scrollFrame:GetVerticalScroll()
     local scrollRange = self.scrollFrame:GetVerticalScrollRange()
 
@@ -453,112 +449,23 @@ function SlidingMessageFrame:OnUpdateFrame()
   end
 end
 
-----
--- SMF Module
-function SMF:OnInitialize()
-  self.state = {
-    frames = {}
-  }
-
-end
-
-function SMF:OnEnable()
-  -- Message font
-  self.font = CreateFont("GlassMessageFont")
-  self.font:SetFont(
-    LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
-    Core.db.profile.messageFontSize
-  )
-  self.font:SetShadowColor(0, 0, 0, 1)
-  self.font:SetShadowOffset(1, -1)
-  self.font:SetJustifyH("LEFT")
-  self.font:SetJustifyV("MIDDLE")
-  self.font:SetSpacing(3)
-
-  -- Replace default chat frames with SlidingMessageFrames
-  local containerFrame = MC:GetFrame()
-  local dockHeight = GeneralDockManager:GetHeight() + 5
-  local height = containerFrame:GetHeight() - dockHeight
-
-  for i=1, NUM_CHAT_WINDOWS do
-    repeat
-      local chatFrame = _G["ChatFrame"..i]
-
-      _G[chatFrame:GetName().."ButtonFrame"]:Hide()
-
-      chatFrame:SetClampRectInsets(0,0,0,0)
-      chatFrame:SetClampedToScreen(false)
-      chatFrame:SetResizable(false)
-      chatFrame:SetParent(containerFrame)
-      chatFrame:ClearAllPoints()
-      chatFrame:SetHeight(height - 20)
-
-      self:RawHook(chatFrame, "SetPoint", function ()
-        self.hooks[chatFrame].SetPoint(chatFrame, "TOPLEFT", containerFrame, "TOPLEFT", 0, -45)
-      end, true)
-
-      -- Skip combat log
-      if i == 2 then
-        do break end
-      end
-
+local function CreateSlidingMessageFramePool()
+  return CreateObjectPool(
+    function ()
       local smf = SlidingMessageFrame:Create()
-      self.state.frames[i] = smf
-
       smf:Initialize()
+      Utils.print('Creating...', smf)
+      return smf
+    end,
+    function (_, smf)
+      Utils.print('Releasing...', smf)
       smf:Hide()
-
-      self:Hook(chatFrame, "AddMessage", function (...)
-        local args = {...}
-        smf:AddMessage(unpack(args))
-      end, true)
-
-      -- Hide the default chat frame and show the sliding message frame instead
-      self:RawHook(chatFrame, "Show", function ()
-        smf:Show()
-      end, true)
-
-      self:RawHook(chatFrame, "Hide", function (f)
-        self.hooks[chatFrame].Hide(f)
-        smf:Hide()
-      end, true)
-
-      chatFrame:Hide()
-    until true
-  end
-end
-
-function SMF:OnEnterContainer()
-  for _, smf in ipairs(self.state.frames) do
-    smf:OnEnterContainer()
-  end
-end
-
-function SMF:OnLeaveContainer()
-  for _, smf in ipairs(self.state.frames) do
-    smf:OnLeaveContainer()
-  end
-end
-
-function SMF:OnUpdateFont()
-  self.font:SetFont(
-    LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
-    Core.db.profile.messageFontSize
+      smf.messageFramePool:ReleaseAll()
+      smf:Initialize()
+    end
   )
-
-  for _, frame in ipairs(self.state.frames) do
-    frame:OnUpdateFont()
-  end
 end
 
-function SMF:OnUpdateChatBackgroundOpacity()
-  for _, frame in ipairs(self.state.frames) do
-    frame:OnUpdateChatBackgroundOpacity()
-  end
-end
-
-function SMF:OnUpdateFrame()
-  for _, frame in ipairs(self.state.frames) do
-    frame:OnUpdateFrame()
-  end
-end
+-- Export
+Core.Components.SlidingMessageFrame = SlidingMessageFrame
+Core.Components.CreateSlidingMessageFramePool = CreateSlidingMessageFramePool

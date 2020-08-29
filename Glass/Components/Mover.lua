@@ -1,5 +1,4 @@
 local Core = unpack(select(2, ...))
-local M = Core:GetModule("Mover")
 
 -- luacheck: push ignore 113
 local BackdropTemplateMixin = BackdropTemplateMixin
@@ -9,7 +8,24 @@ local SOUNDKIT = SOUNDKIT
 local UIParent = UIParent
 -- luacheck: pop
 
-function M:OnInitialize()
+local Mover = {}
+
+----
+-- Mover
+--
+-- Handles frame repositioning
+function Mover:Create()
+  local o = {
+    state = {
+      mouseOver = false
+    }
+  }
+
+  setmetatable(o, self)
+  self.__index = self
+  return o
+end
+function Mover:OnInitialize()
   self.state = {
     locked = true
   }
@@ -17,7 +33,7 @@ function M:OnInitialize()
   self:CreateMoverFrame()
 end
 
-function M:CreateMoverFrame()
+function Mover:CreateMoverFrame()
   local pos = Core.db.profile.positionAnchor
 
   self.moverFrame = CreateFrame("Frame", "GlassMoverFrame", UIParent)
@@ -36,11 +52,11 @@ function M:CreateMoverFrame()
   self.moverFrame:SetScript("OnDragStop", self.moverFrame.StopMovingOrSizing)
 end
 
-function M:GetMoverFrame()
+function Mover:GetMoverFrame()
   return self.moverFrame
 end
 
-function M:CreateMoverDialog()
+function Mover:CreateMoverDialog()
   self.moverDialog = CreateFrame(
     "Frame", "GlassMoverDialog", UIParent,
     BackdropTemplateMixin and "BackdropTemplate" or nil
@@ -94,7 +110,7 @@ function M:CreateMoverDialog()
   self.moverDialog.lockButton:SetPoint("BOTTOMRIGHT", -14, 14)
 end
 
-function M:Lock()
+function Mover:Lock()
   self.state.locked = true
   self.moverDialog:Hide()
   self.moverFrame:Hide()
@@ -113,7 +129,7 @@ function M:Lock()
   }
 end
 
-function M:Unlock()
+function Mover:Unlock()
   if not self.state.locked then
     -- Already unlocked
     return
@@ -127,7 +143,9 @@ function M:Unlock()
   self.moverFrame:SetMovable(true)
 end
 
-function M:OnUpdateFrame()
+function Mover:OnUpdateFrame()
   self.moverFrame:SetWidth(Core.db.profile.frameWidth)
   self.moverFrame:SetHeight(Core.db.profile.frameHeight + 35)
 end
+
+Core.Components.Mover = Mover

@@ -2,9 +2,9 @@ local Core = unpack(select(2, ...))
 local C = Core:GetModule("Config")
 local CT = Core:GetModule("ChatTabs")
 local EB = Core:GetModule("EditBox")
+local FC = Core:GetModule("FrameController")
 local M = Core:GetModule("Mover")
 local MC = Core:GetModule("MainContainer")
-local SMF = Core:GetModule("SlidingMessageFrame")
 
 local AceConfig = Core.Libs.AceConfig
 local AceConfigDialog = Core.Libs.AceConfigDialog
@@ -38,7 +38,7 @@ function C:OnEnable()
               end,
               set = function(info, input)
                 Core.db.profile.font = input
-                SMF:OnUpdateFont()
+                FC:OnUpdateFont()
                 EB:OnUpdateFont()
                 CT:OnUpdateFont()
               end,
@@ -58,7 +58,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.messageFontSize = input
-                SMF:OnUpdateFont()
+                FC:OnUpdateFont()
                 EB:OnUpdateFont()
               end,
             },
@@ -161,7 +161,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.chatBackgroundOpacity = input
-                SMF:OnUpdateChatBackgroundOpacity()
+                FC:OnUpdateChatBackgroundOpacity()
               end,
             },
             chatBackgroundOpacityDesc = {
@@ -190,7 +190,7 @@ function C:OnEnable()
                 Core.db.profile.frameWidth = input
                 M:OnUpdateFrame()
                 MC:OnUpdateFrame()
-                SMF:OnUpdateFrame()
+                FC:OnUpdateFrame()
                 EB:OnUpdateFrame()
                 CT:OnUpdateFrame()
               end
@@ -211,7 +211,7 @@ function C:OnEnable()
                 Core.db.profile.frameHeight = input
                 M:OnUpdateFrame()
                 MC:OnUpdateFrame()
-                SMF:OnUpdateFrame()
+                FC:OnUpdateFrame()
               end
             }
           }
@@ -238,6 +238,6 @@ function C:OnSlashCommand(input)
 end
 
 function C:RefreshConfig()
-  SMF:OnUpdateFont()
+  FC:OnUpdateFont()
   EB:OnUpdateFont()
 end

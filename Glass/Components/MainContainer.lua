@@ -1,8 +1,8 @@
 local Core = unpack(select(2, ...))
 local CT = Core:GetModule("ChatTabs")
-local MC = Core:GetModule("MainContainer")
+local FC = Core:GetModule("FrameController")
 local M = Core:GetModule("Mover")
-local SMF = Core:GetModule("SlidingMessageFrame")
+local MC = Core:GetModule("MainContainer")
 
 -- luacheck: push ignore 113
 local BNToastFrame = BNToastFrame
@@ -67,13 +67,13 @@ end
 function MC:OnEnter()
   self.state.mouseOver = true
   CT:OnEnterContainer()
-  SMF:OnEnterContainer()
+  FC:OnEnterContainer()
 end
 
 function MC:OnLeave()
   self.state.mouseOver = false
   CT:OnLeaveContainer()
-  SMF:OnLeaveContainer()
+  FC:OnLeaveContainer()
 end
 
 function MC:OnUpdate(elapsed)

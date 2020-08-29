@@ -3,7 +3,7 @@ local _G = _G
 local AceAddon = _G.LibStub("AceAddon-3.0")
 
 local AddonName, AddonVars = ...
-local Core = AceAddon:NewAddon(AddonName)
+local Core = AceAddon:NewAddon(AddonName, "AceEvent-3.0")
 local Constants = {}
 local Utils = {}
 AddonVars[1] = Core
@@ -20,6 +20,7 @@ Core.Libs = {
   LSM = _G.LibStub("LibSharedMedia-3.0"),
   lodash = _G.LibStub("lodash.wow")
 }
+Core.Components = {}
 
 -- Modules
 -- These need to be initialized first
@@ -29,7 +30,7 @@ Core:NewModule("MainContainer", "AceHook-3.0")
 Core:NewModule("ChatTabs", "AceHook-3.0")
 Core:NewModule("Config", "AceConsole-3.0")
 Core:NewModule("EditBox", "AceHook-3.0")
-Core:NewModule("SlidingMessageFrame", "AceHook-3.0")
+Core:NewModule("UIManager", "AceHook-3.0")
 Core:NewModule("TextProcessing")
 
 function Core:OnInitialize()

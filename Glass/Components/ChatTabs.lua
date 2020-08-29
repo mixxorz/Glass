@@ -1,13 +1,12 @@
 local Core, Constants = unpack(select(2, ...))
-local CT = Core:GetModule("ChatTabs")
-local M = Core:GetModule("Mover");
+local M = Core:GetModule("Mover")
 local MC = Core:GetModule("MainContainer")
-local SMF = Core:GetModule("SlidingMessageFrame")
 
 local LSM = Core.Libs.LSM
 
 -- luacheck: push ignore 113
 local CHAT_CONFIGURATION = CHAT_CONFIGURATION
+local CLOSE_CHAT_WHISPER_WINDOW = CLOSE_CHAT_WHISPER_WINDOW
 local CLOSE_CHAT_WINDOW = CLOSE_CHAT_WINDOW
 local C_Timer = C_Timer
 local ChatConfigFrame = ChatConfigFrame
@@ -46,6 +45,17 @@ local tabTexs = {
   'Selected',
   'Highlight'
 }
+
+----
+-- ChatTabs
+--
+-- Custom frame for displaying pretty sliding messages
+function ChatTabs:Create()
+  local o = {}
+  setmetatable(o, self)
+  self.__index = self
+  return o
+end
 
 function CT:OnInitialize()
   self.state = {
@@ -108,122 +118,17 @@ function CT:OnEnable()
     Colors.black.r, Colors.black.g, Colors.black.b, 0
   )
 
-  -- Customize chat tabs
-  for i=1, NUM_CHAT_WINDOWS do
-    local chatFrame = _G["ChatFrame"..i]
-    local tab = _G["ChatFrame"..i.."Tab"]
-    local dropDown = _G["ChatFrame"..i.."TabDropDown"]
-
-    for _, texName in ipairs(tabTexs) do
-      _G[tab:GetName()..texName..'Left']:SetTexture()
-      _G[tab:GetName()..texName..'Middle']:SetTexture()
-      _G[tab:GetName()..texName..'Right']:SetTexture()
-    end
-
-    tab:SetHeight(20)
-    tab:SetNormalFontObject("GlassChatTabsFont")
-    tab.Text:ClearAllPoints()
-    tab.Text:SetPoint("LEFT", 15, 0)
-    tab:SetWidth(tab.Text:GetStringWidth() + 15 * 2)
-
-    self:RawHook(tab, "SetAlpha", function (alpha)
-      self.hooks[tab].SetAlpha(tab, 1)
-    end, true)
-
-    -- Set width dynamically based on text width
-    self:RawHook(tab, "SetWidth", function (_, width)
-      self.hooks[tab].SetWidth(tab, tab:GetTextWidth() + 15 * 2)
-    end, true)
-
-    self:RawHook(tab.Text, "SetTextColor", function (...)
-      self.hooks[tab.Text].SetTextColor(tab.Text, Colors.apache.r, Colors.apache.g, Colors.apache.b)
-    end, true)
-
-    -- Don't highlight when frame is already visible
-    self:RawHook(tab.glow, "Show", function ()
-      if SMF.state.frames[i] and not SMF.state.frames[i]:IsVisible() then
-        self.hooks[tab.glow].Show(tab.glow)
-      end
-    end, true)
-
-    -- Un-highlight when clicked
-    tab:HookScript("OnClick", function ()
-      FCF_StopAlertFlash(chatFrame)
-    end)
-
-    -- Disable dragging for General and CombatLog
-    if chatFrame == DEFAULT_CHAT_FRAME or IsCombatLog(chatFrame) then
-      tab:RegisterForDrag()
-    end
-
-    -- Override context menu
-    UIDropDownMenu_Initialize(dropDown, function ()
-      local info = UIDropDownMenu_CreateInfo()
-
-      if chatFrame == DEFAULT_CHAT_FRAME then
-        -- Unlock chat window
-        info = UIDropDownMenu_CreateInfo();
-        info.text = UNLOCK_WINDOW;
-        info.notCheckable = 1;
-        info.func = function()
-          M:Unlock();
-        end;
-        UIDropDownMenu_AddButton(info);
-
-        -- Create new chat window
-        info = UIDropDownMenu_CreateInfo()
-        info.text = NEW_CHAT_WINDOW
-        info.func = FCF_NewChatWindow
-        info.notCheckable = 1
-        if FCF_GetNumActiveChatFrames() == NUM_CHAT_WINDOWS then
-          info.disabled = 1
-        end
-        UIDropDownMenu_AddButton(info)
-      end
-
-      -- Rename window
-      info.text = RENAME_CHAT_WINDOW
-      info.func = FCF_RenameChatWindow_Popup
-      info.notCheckable = 1
-      UIDropDownMenu_AddButton(info)
-
-      -- Close chat window
-      if chatFrame ~= DEFAULT_CHAT_FRAME and not IsCombatLog(chatFrame) then
-        info = UIDropDownMenu_CreateInfo()
-        info.text = CLOSE_CHAT_WINDOW
-        info.func = FCF_PopInWindow
-        info.arg1 = chatFrame
-        info.notCheckable = 1
-        UIDropDownMenu_AddButton(info)
-      end
-
-      -- Filter header
-      info = UIDropDownMenu_CreateInfo();
-      info.text = FILTERS;
-      info.isTitle = 1;
-      info.notCheckable = 1;
-      UIDropDownMenu_AddButton(info);
-
-      -- Configure settings
-      info = UIDropDownMenu_CreateInfo();
-      info.text = CHAT_CONFIGURATION;
-      info.func = function() ShowUIPanel(ChatConfigFrame); end;
-      info.notCheckable = 1;
-      UIDropDownMenu_AddButton(info);
-    end, "MENU")
-  end
-
   -- Override drag behaviour
   -- Disable undocking frames
   self:RawHook("FCF_StopDragging", function (chatFrame)
-    chatFrame:StopMovingOrSizing();
-    _G[chatFrame:GetName().."Tab"]:UnlockHighlight();
+    chatFrame:StopMovingOrSizing()
+    _G[chatFrame:GetName().."Tab"]:UnlockHighlight()
 
-    FCFDock_HideInsertHighlight(GENERAL_CHAT_DOCK);
+    FCFDock_HideInsertHighlight(GENERAL_CHAT_DOCK)
 
-    local mouseX, mouseY = GetCursorPosition();
-    mouseX, mouseY = mouseX / UIParent:GetScale(), mouseY / UIParent:GetScale();
-    FCF_DockFrame(chatFrame, FCFDock_GetInsertIndex(GENERAL_CHAT_DOCK, chatFrame, mouseX, mouseY), true);
+    local mouseX, mouseY = GetCursorPosition()
+    mouseX, mouseY = mouseX / UIParent:GetScale(), mouseY / UIParent:GetScale()
+    FCF_DockFrame(chatFrame, FCFDock_GetInsertIndex(GENERAL_CHAT_DOCK, chatFrame, mouseX, mouseY), true)
   end, true)
 
   -- Intro animations
@@ -253,6 +158,138 @@ function CT:OnEnable()
   end)
 
   GeneralDockManager:Hide()
+end
+
+function CT:InitializeTab(chatFrame, smf, closeWindow)
+  local tab = _G[chatFrame:GetName().."Tab"]
+  local dropDown = _G[chatFrame:GetName().."TabDropDown"]
+
+  for _, texName in ipairs(tabTexs) do
+    _G[tab:GetName()..texName..'Left']:SetTexture()
+    _G[tab:GetName()..texName..'Middle']:SetTexture()
+    _G[tab:GetName()..texName..'Right']:SetTexture()
+  end
+
+  tab:SetHeight(20)
+  tab:SetNormalFontObject("GlassChatTabsFont")
+  tab.Text:ClearAllPoints()
+  tab.Text:SetPoint("LEFT", 15, 0)
+  tab:SetWidth(tab.Text:GetStringWidth() + 15 * 2)
+
+  self:RawHook(tab, "SetAlpha", function (alpha)
+    self.hooks[tab].SetAlpha(tab, 1)
+  end, true)
+
+  -- Set width dynamically based on text width
+  self:RawHook(tab, "SetWidth", function (_, width)
+    self.hooks[tab].SetWidth(tab, tab:GetTextWidth() + 15 * 2)
+  end, true)
+
+  self:RawHook(tab.Text, "SetTextColor", function (...)
+    -- Temporary chat frames (e.g. popout whisper) control their own colors
+    if chatFrame.isTemporary then
+      local args = {...}
+      self.hooks[tab.Text].SetTextColor(unpack(args))
+    else
+      self.hooks[tab.Text].SetTextColor(tab.Text, Colors.apache.r, Colors.apache.g, Colors.apache.b)
+    end
+  end, true)
+
+  -- Don't highlight when frame is already visible
+  self:RawHook(tab.glow, "Show", function ()
+    if smf == chatFrame and smf:IsVisible() then
+      self.hooks[tab.glow].Show(tab.glow)
+    end
+  end, true)
+
+  -- Un-highlight when clicked
+  tab:HookScript("OnClick", function ()
+    FCF_StopAlertFlash(chatFrame)
+  end)
+
+  -- Disable dragging for General and CombatLog
+  if chatFrame == DEFAULT_CHAT_FRAME or IsCombatLog(chatFrame) then
+    tab:RegisterForDrag()
+  end
+
+  -- Override context menu
+  UIDropDownMenu_Initialize(dropDown, function ()
+    local info = UIDropDownMenu_CreateInfo()
+
+    if chatFrame == DEFAULT_CHAT_FRAME then
+      -- Unlock chat window
+      info = UIDropDownMenu_CreateInfo()
+      info.text = UNLOCK_WINDOW
+      info.notCheckable = 1
+      info.func = function()
+        M:Unlock()
+      end
+      UIDropDownMenu_AddButton(info)
+
+      -- Create new chat window
+      info = UIDropDownMenu_CreateInfo()
+      info.text = NEW_CHAT_WINDOW
+      info.func = FCF_NewChatWindow
+      info.notCheckable = 1
+      if FCF_GetNumActiveChatFrames() == NUM_CHAT_WINDOWS then
+        info.disabled = 1
+      end
+      UIDropDownMenu_AddButton(info)
+    end
+
+    -- Rename window
+    info.text = RENAME_CHAT_WINDOW
+    info.func = FCF_RenameChatWindow_Popup
+    info.notCheckable = 1
+    UIDropDownMenu_AddButton(info)
+
+    -- Close chat window
+    if chatFrame ~= DEFAULT_CHAT_FRAME and not IsCombatLog(chatFrame) then
+      if not chatFrame.isTemporary then
+        info = UIDropDownMenu_CreateInfo()
+        info.text = CLOSE_CHAT_WINDOW
+        info.func = closeWindow
+        info.notCheckable = 1
+        UIDropDownMenu_AddButton(info)
+      else
+        if (chatFrame.chatType == "WHISPER" or chatFrame.chatType == "BN_WHISPER" ) then
+          info = UIDropDownMenu_CreateInfo()
+          info.text = CLOSE_CHAT_WHISPER_WINDOW
+          info.func = closeWindow
+          info.notCheckable = 1
+          UIDropDownMenu_AddButton(info)
+        else
+          info = UIDropDownMenu_CreateInfo()
+          info.text = CLOSE_CHAT_WINDOW
+          info.func = closeWindow
+          info.notCheckable = 1
+          UIDropDownMenu_AddButton(info)
+        end
+      end
+    end
+
+    -- Filter header
+    info = UIDropDownMenu_CreateInfo()
+    info.text = FILTERS
+    info.isTitle = 1
+    info.notCheckable = 1
+    UIDropDownMenu_AddButton(info)
+
+    -- Configure settings
+    info = UIDropDownMenu_CreateInfo()
+    info.text = CHAT_CONFIGURATION
+    info.func = function() ShowUIPanel(ChatConfigFrame) end
+    info.notCheckable = 1
+    UIDropDownMenu_AddButton(info)
+  end, "MENU")
+end
+
+function CT:UnloadTab(chatFrame)
+  local tab = _G[chatFrame:GetName().."Tab"]
+  self:Unhook(tab, "SetAlpha")
+  self:Unhook(tab, "SetWidth")
+  self:Unhook(tab.Text, "SetTextColor")
+  self:Unhook(tab.glow, "Show")
 end
 
 function CT:OnEnterContainer()
