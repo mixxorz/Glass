@@ -6,6 +6,8 @@ local UnlockMover = Constants.ACTIONS.UnlockMover
 
 local Colors = Constants.COLORS
 
+local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
+
 -- luacheck: push ignore 113
 local CHAT_CONFIGURATION = CHAT_CONFIGURATION
 local CLOSE_CHAT_WINDOW = CLOSE_CHAT_WINDOW
@@ -48,11 +50,11 @@ function ChatTabMixin:Init(slidingMessageFrame)
     _G[self:GetName()..texName..'Right']:SetTexture()
   end
 
-  self:SetHeight(20)
+  self:SetHeight(Constants.DOCK_HEIGHT)
   self:SetNormalFontObject("GlassChatDockFont")
   self.Text:ClearAllPoints()
-  self.Text:SetPoint("LEFT", 15, 0)
-  self:SetWidth(self.Text:GetStringWidth() + 15 * 2)
+  self.Text:SetPoint("LEFT", Constants.TEXT_XPADDING, 0)
+  self:SetWidth(self.Text:GetStringWidth() + Constants.TEXT_XPADDING * 2)
 
   self:RawHook(self, "SetAlpha", function (alpha)
     self.hooks[self].SetAlpha(self, 1)
@@ -60,7 +62,7 @@ function ChatTabMixin:Init(slidingMessageFrame)
 
   -- Set width dynamically based on text width
   self:RawHook(self, "SetWidth", function (_, width)
-    self.hooks[self].SetWidth(self, self:GetTextWidth() + 15 * 2)
+    self.hooks[self].SetWidth(self, self:GetTextWidth() + Constants.TEXT_XPADDING * 2)
   end, true)
 
   self:RawHook(self.Text, "SetTextColor", function (...)
@@ -139,6 +141,13 @@ function ChatTabMixin:Init(slidingMessageFrame)
     info.notCheckable = 1
     UIDropDownMenu_AddButton(info)
   end, "MENU")
+
+  -- Listeners
+  Core:Subscribe(UPDATE_CONFIG, function (key)
+    if key == "frameWidth" or key == "frameHeight" or key == "font" or key == "messageFontSize" then
+      self:SetWidth()
+    end
+  end)
 end
 
 function ChatTabMixin:OnUpdateConfig()

@@ -1,4 +1,4 @@
-local Core, Constants = unpack(select(2, ...))
+local Core = unpack(select(2, ...))
 local UIManager = Core:GetModule("UIManager")
 
 local CreateChatDock = Core.Components.CreateChatDock
@@ -8,10 +8,6 @@ local CreateMainContainerFrame = Core.Components.CreateMainContainerFrame
 local CreateMoverDialog = Core.Components.CreateMoverDialog
 local CreateMoverFrame = Core.Components.CreateMoverFrame
 local CreateSlidingMessageFrame = Core.Components.CreateSlidingMessageFrame
-
-local MOUSE_ENTER = Constants.EVENTS.MOUSE_ENTER
-local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
-local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 -- luacheck: push ignore 113
 local BNToastFrame = BNToastFrame
@@ -72,39 +68,4 @@ function UIManager:OnEnable()
   QuickJoinToastButton:Hide()
   ChatFrameChannelButton:Hide()
   ChatFrameMenuButton:Hide()
-
-  -- Listeners
-  Core:Subscribe(MOUSE_ENTER, function ()
-    for _, smf in ipairs(self.state.frames) do
-      smf:OnEnterContainer()
-    end
-  end)
-
-  Core:Subscribe(MOUSE_LEAVE, function ()
-    for _, smf in ipairs(self.state.frames) do
-      smf:OnLeaveContainer()
-    end
-  end)
-
-  Core:Subscribe(UPDATE_CONFIG, function (key)
-    if key == "frameWidth" or key == "frameHeight" then
-      for i, smf in ipairs(self.state.frames) do
-        smf:OnUpdateFrame()
-        self.state.tabs[i]:OnUpdateConfig()
-      end
-    end
-
-    if key == "font" or key == "messageFontSize" then
-      for i, smf in ipairs(self.state.frames) do
-        smf:OnUpdateFont()
-        self.state.tabs[i]:OnUpdateConfig()
-      end
-    end
-
-    if key == "chatBackgroundOpacity" then
-      for _, smf in ipairs(self.state.frames) do
-        smf:OnUpdateChatBackgroundOpacity()
-      end
-    end
-  end)
 end

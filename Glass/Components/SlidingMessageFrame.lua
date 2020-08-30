@@ -8,6 +8,10 @@ local drop, reduce, take = lodash.drop, lodash.reduce, lodash.take
 
 local Colors = Constants.COLORS
 
+local MOUSE_ENTER = Constants.EVENTS.MOUSE_ENTER
+local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
+local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
+
 -- luacheck: push ignore 113
 local BattlePetToolTip_ShowLink = BattlePetToolTip_ShowLink
 local BattlePetTooltip = BattlePetTooltip
@@ -43,7 +47,6 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     width = Core.db.profile.frameWidth,
     messageOpacity = Core.db.profile.chatBackgroundOpacity,
     overflowHeight = 60,
-    xPadding = 15
   }
   self.state = {
     mouseOver = false,
@@ -163,6 +166,64 @@ function SlidingMessageFrameMixin:Init(chatFrame)
   end, true)
 
   chatFrame:Hide()
+
+  -- Listeners
+  Core:Subscribe(MOUSE_ENTER, function ()
+    -- Don't hide chats when mouse is over
+    self.state.mouseOver = true
+
+    for _, message in ipairs(self.state.messages) do
+      if Core.db.profile.chatShowOnMouseOver and not message:IsVisible() then
+        message:Show()
+      end
+
+      if message.outroTimer then
+        message.outroTimer:Cancel()
+      end
+    end
+  end)
+
+  Core:Subscribe(MOUSE_LEAVE, function ()
+    -- Hide chats when mouse leaves
+    self.state.mouseOver = false
+
+    for _, message in ipairs(self.state.messages) do
+      if message:IsVisible() then
+        message.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
+          if message:IsVisible() then
+            message.outroAg:Play()
+          end
+        end)
+      end
+    end
+  end)
+
+  Core:Subscribe(UPDATE_CONFIG, function (key)
+    if self.state.isCombatLog == false then
+      if key == "frameWidth" or key == "frameHeight" then
+        self.config.height = Core.db.profile.frameHeight - Constants.DOCK_HEIGHT - 5
+        self.config.width = Core.db.profile.frameWidth
+
+        self:SetHeight(self.config.height + self.config.overflowHeight)
+        self:SetWidth(self.config.width)
+
+        self.slider:SetHeight(self.config.height + self.config.overflowHeight)
+        self.slider:SetWidth(self.config.width)
+      end
+
+      if key == "font" or key == "messageFontSize" or key == "frameWidth" or key == "frameHeight" then
+        for _, message in ipairs(self.state.messages) do
+            message:UpdateFrame()
+        end
+      end
+
+      if key == "chatBackgroundOpacity" then
+        for _, message in ipairs(self.state.messages) do
+          message:UpdateTextures()
+        end
+      end
+    end
+  end)
 end
 
 function SlidingMessageFrameMixin:MessagePoolCreator()
@@ -220,8 +281,8 @@ function SlidingMessageFrameMixin:MessagePoolCreator()
   )
 
   message.text = message:CreateFontString(nil, "ARTWORK", "GlassMessageFont")
-  message.text:SetPoint("LEFT", self.config.xPadding, 0)
-  message.text:SetWidth(self.config.width - self.config.xPadding * 2)
+  message.text:SetPoint("LEFT", Constants.TEXT_XPADDING, 0)
+  message.text:SetWidth(self.config.width - Constants.TEXT_XPADDING * 2)
 
   -- Intro animations
   message.introAg = message:CreateAnimationGroup()
@@ -270,7 +331,7 @@ function SlidingMessageFrameMixin:MessagePoolCreator()
     message.rightBg:SetHeight(messageLineHeight)
 
     message:SetWidth(self.config.width)
-    message.text:SetWidth(self.config.width - self.config.xPadding * 2)
+    message.text:SetWidth(self.config.width - Constants.TEXT_XPADDING * 2)
   end
 
   ---
@@ -324,36 +385,6 @@ function SlidingMessageFrameMixin:CreateMessageFrame(frame, text, red, green, bl
   message:UpdateFrame()
 
   return message
-end
-
-function SlidingMessageFrameMixin:OnEnterContainer()
-  -- Don't hide chats when mouse is over
-  self.state.mouseOver = true
-
-  for _, message in ipairs(self.state.messages) do
-    if Core.db.profile.chatShowOnMouseOver and not message:IsVisible() then
-      message:Show()
-    end
-
-    if message.outroTimer then
-      message.outroTimer:Cancel()
-    end
-  end
-end
-
-function SlidingMessageFrameMixin:OnLeaveContainer()
-  -- Hide chats when mouse leaves
-  self.state.mouseOver = false
-
-  for _, message in ipairs(self.state.messages) do
-    if message:IsVisible() then
-      message.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
-        if message:IsVisible() then
-          message.outroAg:Play()
-        end
-      end)
-    end
-  end
 end
 
 function SlidingMessageFrameMixin:OnHyperlinkEnter(f, link, text)
@@ -440,35 +471,6 @@ function SlidingMessageFrameMixin:Update()
 
     -- Reset
     self.state.incomingMessages = {}
-  end
-end
-
-function SlidingMessageFrameMixin:OnUpdateFont()
-  for _, message in ipairs(self.state.messages) do
-    message:UpdateFrame()
-  end
-end
-
-function SlidingMessageFrameMixin:OnUpdateChatBackgroundOpacity()
-  for _, message in ipairs(self.state.messages) do
-    message:UpdateTextures()
-  end
-end
-
-function SlidingMessageFrameMixin:OnUpdateFrame()
-  if self.state.isCombatLog == false then
-    self.config.height = Core.db.profile.frameHeight - Constants.DOCK_HEIGHT - 5
-    self.config.width = Core.db.profile.frameWidth
-
-    self:SetHeight(self.config.height + self.config.overflowHeight)
-    self:SetWidth(self.config.width)
-
-    self.slider:SetHeight(self.config.height + self.config.overflowHeight)
-    self.slider:SetWidth(self.config.width)
-
-    for _, message in ipairs(self.state.messages) do
-      message:UpdateFrame()
-    end
   end
 end
 

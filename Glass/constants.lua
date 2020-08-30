@@ -14,6 +14,7 @@ Constants.DEFAULT_ANCHOR_POINT = {
 }
 
 Constants.DOCK_HEIGHT = 20
+Constants.TEXT_XPADDING = 15
 
 -- Colors
 local function createColor(r, g, b)
