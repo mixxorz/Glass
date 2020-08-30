@@ -11,7 +11,9 @@ local CreateFont = CreateFont
 
 function Fonts:OnInitialize()
   self.fonts = {}
+end
 
+function Fonts:OnEnable()
   -- GlassMessageFont
   self.fonts.GlassMessageFont = CreateFont("GlassMessageFont")
   self.fonts.GlassMessageFont:SetFont(
