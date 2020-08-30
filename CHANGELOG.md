@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Major rearchitecture (#79)
+
 ## 1.1.1 (2020-08-26)
 
 * Fix text processing pipeline (#70)

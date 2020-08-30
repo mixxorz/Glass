@@ -1,15 +1,16 @@
-local Core = unpack(select(2, ...))
+local Core, Constants = unpack(select(2, ...))
 local C = Core:GetModule("Config")
-local CT = Core:GetModule("ChatTabs")
-local EB = Core:GetModule("EditBox")
-local M = Core:GetModule("Mover")
-local MC = Core:GetModule("MainContainer")
-local SMF = Core:GetModule("SlidingMessageFrame")
 
 local AceConfig = Core.Libs.AceConfig
 local AceConfigDialog = Core.Libs.AceConfigDialog
 local AceDBOptions = Core.Libs.AceDBOptions
 local LSM = Core.Libs.LSM
+
+local RefreshConfig = Constants.ACTIONS.RefreshConfig
+local UnlockMover = Constants.ACTIONS.UnlockMover
+local UpdateConfig = Constants.ACTIONS.UpdateConfig
+
+local SAVE_FRAME_POSITION = Constants.EVENTS.SAVE_FRAME_POSITION
 
 function C:OnEnable()
   local options = {
@@ -38,9 +39,7 @@ function C:OnEnable()
               end,
               set = function(info, input)
                 Core.db.profile.font = input
-                SMF:OnUpdateFont()
-                EB:OnUpdateFont()
-                CT:OnUpdateFont()
+                Core:Dispatch(UpdateConfig("font"))
               end,
             },
             messageFontSize = {
@@ -58,8 +57,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.messageFontSize = input
-                SMF:OnUpdateFont()
-                EB:OnUpdateFont()
+                Core:Dispatch(UpdateConfig("messageFontSize"))
               end,
             },
             messageFontSizeNl = {
@@ -81,6 +79,7 @@ function C:OnEnable()
                 return Core.db.profile.iconTextureYOffset
               end,
               set = function (info, input)
+                -- TODO: Update messages dynamically
                 Core.db.profile.iconTextureYOffset = input
               end,
             },
@@ -161,7 +160,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.chatBackgroundOpacity = input
-                SMF:OnUpdateChatBackgroundOpacity()
+                Core:Dispatch(UpdateConfig("chatBackgroundOpacity"))
               end,
             },
             chatBackgroundOpacityDesc = {
@@ -188,11 +187,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.frameWidth = input
-                M:OnUpdateFrame()
-                MC:OnUpdateFrame()
-                SMF:OnUpdateFrame()
-                EB:OnUpdateFrame()
-                CT:OnUpdateFrame()
+                Core:Dispatch(UpdateConfig("frameWidth"))
               end
             },
             frameHeight = {
@@ -209,9 +204,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.frameHeight = input
-                M:OnUpdateFrame()
-                MC:OnUpdateFrame()
-                SMF:OnUpdateFrame()
+                Core:Dispatch(UpdateConfig("frameHeight"))
               end
             }
           }
@@ -227,17 +220,27 @@ function C:OnEnable()
   Core.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
   Core.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
   Core.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
+
+  Core:Subscribe(SAVE_FRAME_POSITION, function (position)
+    Core.db.profile.positionAnchor = position
+  end)
 end
 
 function C:OnSlashCommand(input)
   if input == "lock" then
-    M:Unlock()
+    Core:Dispatch(UnlockMover())
   else
     AceConfigDialog:Open("Glass")
   end
 end
 
 function C:RefreshConfig()
-  SMF:OnUpdateFont()
-  EB:OnUpdateFont()
+  Core:Dispatch(UpdateConfig("chatBackgroundOpacity"))
+  Core:Dispatch(UpdateConfig("font"))
+  Core:Dispatch(UpdateConfig("frameHeight"))
+  Core:Dispatch(UpdateConfig("frameWidth"))
+  Core:Dispatch(UpdateConfig("messageFontSize"))
+
+  -- For things that don't update using the config frame e.g. frame position
+  Core:Dispatch(RefreshConfig())
 end

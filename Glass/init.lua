@@ -11,26 +11,25 @@ AddonVars[2] = Constants
 AddonVars[3] = Utils
 _G[AddonName] = Core
 
+
 -- Core
 Core.Libs = {
   AceConfig = _G.LibStub("AceConfig-3.0"),
   AceConfigDialog = _G.LibStub("AceConfigDialog-3.0"),
   AceDBOptions = _G.LibStub("AceDBOptions-3.0"),
   AceDB = _G.LibStub("AceDB-3.0"),
+  AceHook = _G.LibStub("AceHook-3.0"),
   LSM = _G.LibStub("LibSharedMedia-3.0"),
   lodash = _G.LibStub("lodash.wow")
 }
+Core.Components = {}
 
 -- Modules
--- These need to be initialized first
-Core:NewModule("Mover", "AceConsole-3.0")
-Core:NewModule("MainContainer", "AceHook-3.0")
-
-Core:NewModule("ChatTabs", "AceHook-3.0")
 Core:NewModule("Config", "AceConsole-3.0")
-Core:NewModule("EditBox", "AceHook-3.0")
-Core:NewModule("SlidingMessageFrame", "AceHook-3.0")
+Core:NewModule("Fonts")
+Core:NewModule("Hyperlinks")
 Core:NewModule("TextProcessing")
+Core:NewModule("UIManager", "AceHook-3.0")
 
 function Core:OnInitialize()
   local defaults = {
@@ -49,6 +48,8 @@ function Core:OnInitialize()
     }
   }
 
+  self.listeners = {}
+
   self.db = self.Libs.AceDB:New("GlassDB", defaults, true)
   self.printBuffer = {}
 end
@@ -59,4 +60,29 @@ function Core:OnEnable()
     Utils.print(unpack(item))
   end
   self.printBuffer = {}
+end
+
+function Core:Subscribe(messageType, listener)
+  if self.listeners[messageType] == nil then
+    self.listeners[messageType] = {}
+  end
+
+  local listeners = self.listeners[messageType]
+  local index = #listeners + 1
+  listeners[index] = listener
+
+  return function ()
+    self.Libs.lodash.remove(listeners, function (val) return val == listener end)
+  end
+end
+
+function Core:Dispatch(messageType, payload)
+  --@debug@--
+  Utils.print('E: '..messageType, payload)
+  --@end-debug@--
+
+  local listeners = self.listeners[messageType] or {}
+  for _, listener in ipairs(listeners) do
+    listener(payload)
+  end
 end
