@@ -167,7 +167,7 @@ function CT:OnEnable()
         info.text = UNLOCK_WINDOW;
         info.notCheckable = 1;
         info.func = function()
-          Core:SendMessage(UnlockMover())
+          Core:Dispatch(UnlockMover())
         end;
         UIDropDownMenu_AddButton(info);
 

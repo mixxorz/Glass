@@ -18,8 +18,8 @@ function Mover:OnInitialize()
   self.moverFrame = CreateMoverFrame("GlassMoverFrame", UIParent)
   self.moverDialog = CreateMoverDialog("GlassMoverDialog", UIParent)
 
-  Core:RegisterMessage(LOCK_MOVER, function () self:Lock() end)
-  Core:RegisterMessage(UNLOCK_MOVER, function () self:Unlock() end)
+  Core:Subscribe(LOCK_MOVER, function () self:Lock() end)
+  Core:Subscribe(UNLOCK_MOVER, function () self:Unlock() end)
 end
 
 function Mover:GetMoverFrame()

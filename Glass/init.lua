@@ -3,7 +3,7 @@ local _G = _G
 local AceAddon = _G.LibStub("AceAddon-3.0")
 
 local AddonName, AddonVars = ...
-local Core = AceAddon:NewAddon(AddonName, "AceEvent-3.0")
+local Core = AceAddon:NewAddon(AddonName)
 local Constants = {}
 local Utils = {}
 AddonVars[1] = Core
@@ -52,6 +52,8 @@ function Core:OnInitialize()
     }
   }
 
+  self.listeners = {}
+
   self.db = self.Libs.AceDB:New("GlassDB", defaults, true)
   self.printBuffer = {}
 end
@@ -62,4 +64,28 @@ function Core:OnEnable()
     Utils.print(unpack(item))
   end
   self.printBuffer = {}
+end
+
+function Core:Subscribe(messageType, listener)
+  if self.listeners[messageType] == nil then
+    self.listeners[messageType] = {}
+  end
+
+  local listeners = self.listeners[messageType]
+  local index = #listeners + 1
+  listeners[index] = listener
+
+  return function ()
+    self.Libs.lodash.remove(listeners, function (val) return val == listener end)
+  end
+end
+
+function Core:Dispatch(messageType, payload)
+  --@debug@--
+  Utils.print('E: '..messageType, payload)
+  --@end-debug@--
+
+  for _, listener in ipairs(self.listeners[messageType]) do
+    listener(messageType, payload)
+  end
 end

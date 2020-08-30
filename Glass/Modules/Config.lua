@@ -236,7 +236,7 @@ end
 
 function C:OnSlashCommand(input)
   if input == "lock" then
-    Core:SendMessage(UnlockMover())
+    Core:Dispatch(UnlockMover())
   else
     AceConfigDialog:Open("Glass")
   end

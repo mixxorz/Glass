@@ -56,7 +56,7 @@ function MoverDialogMixin:Init()
   self.lockButton = CreateFrame("Button", nil, self, "OptionsButtonTemplate")
   self.lockButton:SetText("Lock")
   self.lockButton:SetScript("OnClick", function()
-    Core:SendMessage(LockMover())
+    Core:Dispatch(LockMover())
   end)
   self.lockButton:SetPoint("BOTTOMRIGHT", -14, 14)
 end
