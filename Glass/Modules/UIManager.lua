@@ -7,7 +7,7 @@ local CreateEditBox = Core.Components.CreateEditBox
 local CreateMainContainerFrame = Core.Components.CreateMainContainerFrame
 local CreateMoverDialog = Core.Components.CreateMoverDialog
 local CreateMoverFrame = Core.Components.CreateMoverFrame
-local CreateSlidingMessageFrame = Core.Components.CreateSlidingMessageFrame
+local CreateSlidingMessageFramePool = Core.Components.CreateSlidingMessageFramePool
 
 -- luacheck: push ignore 113
 local BNToastFrame = BNToastFrame
@@ -24,7 +24,9 @@ local UIParent = UIParent
 function UIManager:OnInitialize()
   self.state = {
     frames = {},
-    tabs = {}
+    tabs = {},
+    temporaryFrames = {},
+    temporaryTabs = {}
   }
 end
 
@@ -41,11 +43,12 @@ function UIManager:OnEnable()
   self.dock = CreateChatDock(self.container)
 
   -- SlidingMessageFrames
+  self.slidingMessageFramePool = CreateSlidingMessageFramePool(self.container)
+
   for i=1, NUM_CHAT_WINDOWS do
     local chatFrame = _G["ChatFrame"..i]
-    local smf = CreateSlidingMessageFrame(
-      "Glass"..chatFrame:GetName(), self.container, chatFrame
-    )
+    local smf = self.slidingMessageFramePool:Acquire()
+    smf:Init(chatFrame)
 
     self.state.frames[i] = smf
     self.state.tabs[i] = CreateChatTab(smf)
@@ -68,4 +71,24 @@ function UIManager:OnEnable()
   QuickJoinToastButton:Hide()
   ChatFrameChannelButton:Hide()
   ChatFrameMenuButton:Hide()
+
+  -- Handle temporary chat frames (whisper popout, pet battle)
+  self:RawHook("FCF_OpenTemporaryWindow", function (...)
+    local chatFrame = self.hooks["FCF_OpenTemporaryWindow"](...)
+    local smf = self.slidingMessageFramePool:Acquire()
+    smf:Init(chatFrame)
+
+    self.state.temporaryFrames[chatFrame:GetName()] = smf
+    self.state.temporaryTabs[chatFrame:GetName()] = CreateChatTab(smf)
+    return chatFrame
+  end, true)
+
+  -- Close window
+  self:RawHook("FCF_Close", function (chatFrame)
+    self.hooks["FCF_Close"](chatFrame)
+
+    local smf = self.state.temporaryFrames[chatFrame:GetName()]
+    self.slidingMessageFramePool:Release(smf)
+    self.state.temporaryTabs[chatFrame:GetName()] = nil
+  end, true)
 end

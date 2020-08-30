@@ -56,30 +56,40 @@ function ChatTabMixin:Init(slidingMessageFrame)
   self.Text:SetPoint("LEFT", Constants.TEXT_XPADDING, 0)
   self:SetWidth(self.Text:GetStringWidth() + Constants.TEXT_XPADDING * 2)
 
-  self:RawHook(self, "SetAlpha", function (alpha)
-    self.hooks[self].SetAlpha(self, 1)
-  end, true)
+  if not self:IsHooked(self, "SetAlpha") then
+    self:RawHook(self, "SetAlpha", function (alpha)
+      self.hooks[self].SetAlpha(self, 1)
+    end, true)
+  end
 
   -- Set width dynamically based on text width
-  self:RawHook(self, "SetWidth", function (_, width)
-    self.hooks[self].SetWidth(self, self:GetTextWidth() + Constants.TEXT_XPADDING * 2)
-  end, true)
+  if not self:IsHooked(self, "SetWidth") then
+    self:RawHook(self, "SetWidth", function (_, width)
+      self.hooks[self].SetWidth(self, self:GetTextWidth() + Constants.TEXT_XPADDING * 2)
+    end, true)
+  end
 
-  self:RawHook(self.Text, "SetTextColor", function (...)
-    self.hooks[self.Text].SetTextColor(self.Text, Colors.apache.r, Colors.apache.g, Colors.apache.b)
-  end, true)
+  if not self:IsHooked(self.Text, "SetTextColor") then
+    self:RawHook(self.Text, "SetTextColor", function (...)
+      self.hooks[self.Text].SetTextColor(self.Text, Colors.apache.r, Colors.apache.g, Colors.apache.b)
+    end, true)
+  end
 
   -- Don't highlight when frame is already visible
-  self:RawHook(self.glow, "Show", function ()
-    if not slidingMessageFrame:IsVisible() then
-      self.hooks[self.glow].Show(self.glow)
-    end
-  end, true)
+  if not self:IsHooked(self.glow, "Show") then
+    self:RawHook(self.glow, "Show", function ()
+      if not slidingMessageFrame:IsVisible() then
+        self.hooks[self.glow].Show(self.glow)
+      end
+    end, true)
+  end
 
   -- Un-highlight when clicked
-  self:HookScript(self, "OnClick", function ()
-    FCF_StopAlertFlash(self.chatFrame)
-  end)
+  if not self:IsHooked(self, "OnClick") then
+    self:HookScript(self, "OnClick", function ()
+      FCF_StopAlertFlash(self.chatFrame)
+    end)
+  end
 
   -- Disable dragging for General and CombatLog
   if self.chatFrame == DEFAULT_CHAT_FRAME or IsCombatLog(self.chatFrame) then
