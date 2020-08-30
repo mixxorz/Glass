@@ -25,9 +25,9 @@ Core.Libs = {
 Core.Components = {}
 
 -- Modules
--- These need to be initialized first
 Core:NewModule("Config", "AceConsole-3.0")
 Core:NewModule("Fonts")
+Core:NewModule("Hyperlinks")
 Core:NewModule("TextProcessing")
 Core:NewModule("UIManager", "AceHook-3.0")
 

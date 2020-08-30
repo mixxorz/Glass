@@ -29,6 +29,9 @@ Constants.COLORS = {
 
 -- Events
 Constants.EVENTS = {
+  HYPERLINK_CLICK = "Glass/HYPERLINK_CLICK",
+  HYPERLINK_ENTER = "Glass/HYPERLINK_ENTER",
+  HYPERLINK_LEAVE = "Glass/HYPERLINK_LEAVE",
   LOCK_MOVER = "Glass/LOCK_MOVER",
   MOUSE_ENTER = "Glass/MOUSE_ENTER",
   MOUSE_LEAVE = "Glass/MOUSE_LEAVE",
@@ -39,6 +42,15 @@ Constants.EVENTS = {
 }
 
 Constants.ACTIONS = {
+  HyperlinkClick = function (payload)
+    return Constants.EVENTS.HYPERLINK_CLICK, payload
+  end,
+  HyperlinkEnter = function (payload)
+    return Constants.EVENTS.HYPERLINK_ENTER, payload
+  end,
+  HyperlinkLeave = function (link)
+    return Constants.EVENTS.HYPERLINK_LEAVE, link
+  end,
   LockMover = function ()
     return Constants.EVENTS.LOCK_MOVER
   end,
