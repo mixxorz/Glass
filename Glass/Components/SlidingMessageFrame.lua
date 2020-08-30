@@ -179,6 +179,8 @@ function SlidingMessageFrameMixin:Init(chatFrame)
 
         self.slider:SetHeight(self.config.height + self.config.overflowHeight)
         self.slider:SetWidth(self.config.width)
+
+        self:SetVerticalScroll(self.slider:GetHeight() - self:GetHeight() + self.config.overflowHeight)
       end
 
       if key == "font" or key == "messageFontSize" or key == "frameWidth" or key == "frameHeight" then

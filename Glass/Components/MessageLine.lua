@@ -16,12 +16,7 @@ local Mixin = Mixin
 local MessageLineMixin = {}
 
 function MessageLineMixin:Init()
-  self.config = {
-    width = Core.db.profile.frameWidth,
-    messageOpacity = Core.db.profile.chatBackgroundOpacity,
-  }
-
-  self:SetWidth(self.config.width)
+  self:SetWidth(Core.db.profile.frameWidth)
 
   -- Gradient background
   self.leftBg = self:CreateTexture(nil, "BACKGROUND")
@@ -31,7 +26,7 @@ function MessageLineMixin:Init()
   self.leftBg:SetGradientAlpha(
     "HORIZONTAL",
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0,
-    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, self.config.messageOpacity
+    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, Core.db.profile.chatBackgroundOpacity
   )
 
   self.centerBg = self:CreateTexture(nil, "BACKGROUND")
@@ -41,7 +36,7 @@ function MessageLineMixin:Init()
     Colors.codGray.r,
     Colors.codGray.g,
     Colors.codGray.b,
-    self.config.messageOpacity
+    Core.db.profile.chatBackgroundOpacity
   )
 
   self.rightBg = self:CreateTexture(nil, "BACKGROUND")
@@ -50,13 +45,13 @@ function MessageLineMixin:Init()
   self.rightBg:SetColorTexture(1, 1, 1, 1)
   self.rightBg:SetGradientAlpha(
     "HORIZONTAL",
-    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, self.config.messageOpacity,
+    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, Core.db.profile.chatBackgroundOpacity,
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0
   )
 
   self.text = self:CreateFontString(nil, "ARTWORK", "GlassMessageFont")
   self.text:SetPoint("LEFT", Constants.TEXT_XPADDING, 0)
-  self.text:SetWidth(self.config.width - Constants.TEXT_XPADDING * 2)
+  self.text:SetWidth(Core.db.profile.frameWidth - Constants.TEXT_XPADDING * 2)
 
   -- Intro animations
   self.introAg = self:CreateAnimationGroup()
@@ -120,31 +115,31 @@ function MessageLineMixin:UpdateFrame()
   self.centerBg:SetHeight(messageLineHeight)
   self.rightBg:SetHeight(messageLineHeight)
 
-  self:SetWidth(self.config.width)
-  self.text:SetWidth(self.config.width - Constants.TEXT_XPADDING * 2)
+  self:SetWidth(Core.db.profile.frameWidth)
+  self.text:SetWidth(Core.db.profile.frameWidth - Constants.TEXT_XPADDING * 2)
 end
 
 ---
 -- Update texture color based on setting
 function MessageLineMixin:UpdateTextures()
-  self.config.messageOpacity = Core.db.profile.chatBackgroundOpacity
+  Core.db.profile.chatBackgroundOpacity = Core.db.profile.chatBackgroundOpacity
 
   self.leftBg:SetGradientAlpha(
     "HORIZONTAL",
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0,
-    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, self.config.messageOpacity
+    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, Core.db.profile.chatBackgroundOpacity
   )
 
   self.centerBg:SetColorTexture(
     Colors.codGray.r,
     Colors.codGray.g,
     Colors.codGray.b,
-    self.config.messageOpacity
+    Core.db.profile.chatBackgroundOpacity
   )
 
   self.rightBg:SetGradientAlpha(
     "HORIZONTAL",
-    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, self.config.messageOpacity,
+    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, Core.db.profile.chatBackgroundOpacity,
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0
   )
 end
