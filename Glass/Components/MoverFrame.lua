@@ -15,10 +15,11 @@ local Mixin = Mixin
 -- luacheck: pop
 
 function MoverFrameMixin:Init()
+  local editBoxMargin = 35
   local pos = Core.db.profile.positionAnchor
   self:SetPoint(pos.point, pos.relativeTo, pos.relativePoint, pos.xOfs, pos.yOfs)
   self:SetWidth(Core.db.profile.frameWidth)
-  self:SetHeight(Core.db.profile.frameHeight + 35)
+  self:SetHeight(Core.db.profile.frameHeight + editBoxMargin)
 
   self.bg = self:CreateTexture(nil, "BACKGROUND")
   self.bg:SetColorTexture(0, 1, 0, 0.5)
@@ -59,7 +60,7 @@ function MoverFrameMixin:Init()
     end
 
     if (key == "frameHeight") then
-      self:SetHeight(Core.db.profile.frameHeight + 35)
+      self:SetHeight(Core.db.profile.frameHeight + editBoxMargin)
     end
   end)
 

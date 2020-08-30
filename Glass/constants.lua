@@ -13,6 +13,8 @@ Constants.DEFAULT_ANCHOR_POINT = {
   yOfs = 230
 }
 
+Constants.DOCK_HEIGHT = 20
+
 -- Colors
 local function createColor(r, g, b)
   return {r = r / 255, g = g / 255, b = b / 255}

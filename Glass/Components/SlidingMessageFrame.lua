@@ -15,7 +15,6 @@ local C_Timer = C_Timer
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
 local GameTooltip = GameTooltip
-local GeneralDockManager = GeneralDockManager
 local Mixin = Mixin
 local SetItemRef = SetItemRef
 local ShowUIPanel = ShowUIPanel
@@ -40,7 +39,7 @@ local SlidingMessageFrameMixin = {}
 
 function SlidingMessageFrameMixin:Init(chatFrame)
   self.config = {
-    height = Core.db.profile.frameHeight - GeneralDockManager:GetHeight() - 5,
+    height = Core.db.profile.frameHeight - Constants.DOCK_HEIGHT - 5,
     width = Core.db.profile.frameWidth,
     messageOpacity = Core.db.profile.chatBackgroundOpacity,
     overflowHeight = 60,
@@ -458,7 +457,7 @@ end
 
 function SlidingMessageFrameMixin:OnUpdateFrame()
   if self.state.isCombatLog == false then
-    self.config.height = Core.db.profile.frameHeight - GeneralDockManager:GetHeight() - 5
+    self.config.height = Core.db.profile.frameHeight - Constants.DOCK_HEIGHT - 5
     self.config.width = Core.db.profile.frameWidth
 
     self:SetHeight(self.config.height + self.config.overflowHeight)

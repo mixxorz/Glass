@@ -16,8 +16,6 @@ local FCFDock_HideInsertHighlight = FCFDock_HideInsertHighlight
 local FCF_DockFrame = FCF_DockFrame
 local GENERAL_CHAT_DOCK = GENERAL_CHAT_DOCK
 local GeneralDockManager = GeneralDockManager
-local GeneralDockManagerScrollFrame = GeneralDockManagerScrollFrame
-local GeneralDockManagerScrollFrameChild = GeneralDockManagerScrollFrameChild
 local GetCursorPosition = GetCursorPosition
 local UIParent = UIParent
 -- luacheck: pop
@@ -30,20 +28,20 @@ function ChatDockMixin:Init(parent)
   }
 
   self:SetWidth(Core.db.profile.frameWidth)
-  self:SetHeight(20)
+  self:SetHeight(Constants.DOCK_HEIGHT)
   self:ClearAllPoints()
   self:SetPoint("TOPLEFT", parent, "TOPLEFT")
 
-  GeneralDockManagerScrollFrame:SetHeight(20)
-  GeneralDockManagerScrollFrame:SetPoint("TOPLEFT", _G.ChatFrame2Tab, "TOPRIGHT")
-  GeneralDockManagerScrollFrameChild:SetHeight(20)
+  self.scrollFrame:SetHeight(Constants.DOCK_HEIGHT)
+  self.scrollFrame:SetPoint("TOPLEFT", _G.ChatFrame2Tab, "TOPRIGHT")
+  self.scrollFrame.child:SetHeight(Constants.DOCK_HEIGHT)
 
   local opacity = 0.4
 
   self.leftBg = self:CreateTexture(nil, "BACKGROUND")
   self.leftBg:SetPoint("LEFT")
   self.leftBg:SetWidth(50)
-  self.leftBg:SetHeight(20)
+  self.leftBg:SetHeight(Constants.DOCK_HEIGHT)
   self.leftBg:SetColorTexture(1, 1, 1, 1)
   self.leftBg:SetGradientAlpha(
     "HORIZONTAL",
@@ -54,7 +52,7 @@ function ChatDockMixin:Init(parent)
   self.centerBg = self:CreateTexture(nil, "BACKGROUND")
   self.centerBg:SetPoint("LEFT", 50, 0)
   self.centerBg:SetPoint("RIGHT", -250, 0)
-  self.centerBg:SetHeight(20)
+  self.centerBg:SetHeight(Constants.DOCK_HEIGHT)
   self.centerBg:SetColorTexture(
     Colors.black.r,
     Colors.black.g,
@@ -65,7 +63,7 @@ function ChatDockMixin:Init(parent)
   self.rightBg = self:CreateTexture(nil, "BACKGROUND")
   self.rightBg:SetPoint("RIGHT")
   self.rightBg:SetWidth(250)
-  self.rightBg:SetHeight(20)
+  self.rightBg:SetHeight(Constants.DOCK_HEIGHT)
   self.rightBg:SetColorTexture(1, 1, 1, 1)
   self.rightBg:SetGradientAlpha(
     "HORIZONTAL",
