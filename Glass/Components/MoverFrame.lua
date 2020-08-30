@@ -3,6 +3,7 @@ local Core, Constants, Utils = unpack(select(2, ...))
 local SaveFramePosition = Constants.ACTIONS.SaveFramePosition
 
 local LOCK_MOVER = Constants.EVENTS.LOCK_MOVER
+local REFRESH_CONFIG = Constants.EVENTS.REFRESH_CONFIG
 local UNLOCK_MOVER = Constants.EVENTS.UNLOCK_MOVER
 local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
@@ -60,6 +61,11 @@ function MoverFrameMixin:Init()
     if (key == "frameHeight") then
       self:SetHeight(Core.db.profile.frameHeight + 35)
     end
+  end)
+
+  Core:Subscribe(REFRESH_CONFIG, function ()
+    pos = Core.db.profile.positionAnchor
+    self:SetPoint(pos.point, pos.relativeTo, pos.relativePoint, pos.xOfs, pos.yOfs)
   end)
 end
 

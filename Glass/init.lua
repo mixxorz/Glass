@@ -81,7 +81,8 @@ function Core:Dispatch(messageType, payload)
   Utils.print('E: '..messageType, payload)
   --@end-debug@--
 
-  for _, listener in ipairs(self.listeners[messageType]) do
+  local listeners = self.listeners[messageType] or {}
+  for _, listener in ipairs(listeners) do
     listener(payload)
   end
 end

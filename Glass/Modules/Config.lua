@@ -1,16 +1,16 @@
-local Core, Constants, Utils = unpack(select(2, ...))
+local Core, Constants = unpack(select(2, ...))
 local C = Core:GetModule("Config")
-local UIManager = Core:GetModule("UIManager")
 
 local AceConfig = Core.Libs.AceConfig
 local AceConfigDialog = Core.Libs.AceConfigDialog
 local AceDBOptions = Core.Libs.AceDBOptions
 local LSM = Core.Libs.LSM
 
+local RefreshConfig = Constants.ACTIONS.RefreshConfig
 local UnlockMover = Constants.ACTIONS.UnlockMover
+local UpdateConfig = Constants.ACTIONS.UpdateConfig
 
 local SAVE_FRAME_POSITION = Constants.EVENTS.SAVE_FRAME_POSITION
-local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 function C:OnEnable()
   local options = {
@@ -39,7 +39,7 @@ function C:OnEnable()
               end,
               set = function(info, input)
                 Core.db.profile.font = input
-                Core:Dispatch(UPDATE_CONFIG, "font")
+                Core:Dispatch(UpdateConfig("font"))
               end,
             },
             messageFontSize = {
@@ -57,7 +57,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.messageFontSize = input
-                Core:Dispatch(UPDATE_CONFIG, "messageFontSize")
+                Core:Dispatch(UpdateConfig("messageFontSize"))
               end,
             },
             messageFontSizeNl = {
@@ -160,7 +160,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.chatBackgroundOpacity = input
-                Core:Dispatch(UPDATE_CONFIG, "chatBackgroundOpacity")
+                Core:Dispatch(UpdateConfig("chatBackgroundOpacity"))
               end,
             },
             chatBackgroundOpacityDesc = {
@@ -187,7 +187,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.frameWidth = input
-                Core:Dispatch(UPDATE_CONFIG, "frameWidth")
+                Core:Dispatch(UpdateConfig("frameWidth"))
               end
             },
             frameHeight = {
@@ -204,7 +204,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.frameHeight = input
-                Core:Dispatch(UPDATE_CONFIG, "frameHeight")
+                Core:Dispatch(UpdateConfig("frameHeight"))
               end
             }
           }
@@ -235,5 +235,12 @@ function C:OnSlashCommand(input)
 end
 
 function C:RefreshConfig()
-  UIManager:OnUpdateFont()
+  Core:Dispatch(UpdateConfig("chatBackgroundOpacity"))
+  Core:Dispatch(UpdateConfig("font"))
+  Core:Dispatch(UpdateConfig("frameHeight"))
+  Core:Dispatch(UpdateConfig("frameWidth"))
+  Core:Dispatch(UpdateConfig("messageFontSize"))
+
+  -- For things that don't update using the config frame e.g. frame position
+  Core:Dispatch(RefreshConfig())
 end
