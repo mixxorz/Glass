@@ -2,6 +2,9 @@ local Core, Constants = unpack(select(2, ...))
 
 local LockMover = Constants.ACTIONS.LockMover
 
+local LOCK_MOVER = Constants.EVENTS.LOCK_MOVER
+local UNLOCK_MOVER = Constants.EVENTS.UNLOCK_MOVER
+
 local MoverDialogMixin = {}
 
 -- luacheck: push ignore 113
@@ -59,6 +62,14 @@ function MoverDialogMixin:Init()
     Core:Dispatch(LockMover())
   end)
   self.lockButton:SetPoint("BOTTOMRIGHT", -14, 14)
+
+  Core:Subscribe(LOCK_MOVER, function ()
+    self:Hide()
+  end)
+
+  Core:Subscribe(UNLOCK_MOVER, function ()
+    self:Show()
+  end)
 end
 
 Core.Components.CreateMoverDialog = function (name, parent)

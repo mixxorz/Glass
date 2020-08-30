@@ -2,9 +2,6 @@ local Core, Constants = unpack(select(2, ...))
 local C = Core:GetModule("Config")
 local CT = Core:GetModule("ChatTabs")
 local EB = Core:GetModule("EditBox")
-local M = Core:GetModule("Mover")
-local MC = Core:GetModule("MainContainer")
-local Fonts = Core:GetModule("Fonts")
 local UIManager = Core:GetModule("UIManager")
 
 local AceConfig = Core.Libs.AceConfig
@@ -13,6 +10,9 @@ local AceDBOptions = Core.Libs.AceDBOptions
 local LSM = Core.Libs.LSM
 
 local UnlockMover = Constants.ACTIONS.UnlockMover
+
+local SAVE_FRAME_POSITION = Constants.EVENTS.SAVE_FRAME_POSITION
+local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 function C:OnEnable()
   local options = {
@@ -41,8 +41,7 @@ function C:OnEnable()
               end,
               set = function(info, input)
                 Core.db.profile.font = input
-                Fonts:OnRefreshConfig("font")
-                UIManager:OnUpdateFont()
+                Core:Dispatch(UPDATE_CONFIG, "font")
                 EB:OnUpdateFont()
                 CT:OnUpdateFont()
               end,
@@ -62,8 +61,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.messageFontSize = input
-                Fonts:OnRefreshConfig("messageFontSize")
-                UIManager:OnUpdateFont()
+                Core:Dispatch(UPDATE_CONFIG, "messageFontSize")
                 EB:OnUpdateFont()
               end,
             },
@@ -86,6 +84,7 @@ function C:OnEnable()
                 return Core.db.profile.iconTextureYOffset
               end,
               set = function (info, input)
+                -- TODO: Update messages dynamically
                 Core.db.profile.iconTextureYOffset = input
               end,
             },
@@ -166,7 +165,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.chatBackgroundOpacity = input
-                UIManager:OnUpdateChatBackgroundOpacity()
+                Core:Dispatch(UPDATE_CONFIG, "chatBackgroundOpacity")
               end,
             },
             chatBackgroundOpacityDesc = {
@@ -193,9 +192,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.frameWidth = input
-                M:OnUpdateFrame()
-                MC:OnUpdateFrame()
-                UIManager:OnUpdateFrame()
+                Core:Dispatch(UPDATE_CONFIG, "frameWidth")
                 EB:OnUpdateFrame()
                 CT:OnUpdateFrame()
               end
@@ -214,9 +211,7 @@ function C:OnEnable()
               end,
               set = function (info, input)
                 Core.db.profile.frameHeight = input
-                M:OnUpdateFrame()
-                MC:OnUpdateFrame()
-                UIManager:OnUpdateFrame()
+                Core:Dispatch(UPDATE_CONFIG, "frameHeight")
               end
             }
           }
@@ -232,6 +227,17 @@ function C:OnEnable()
   Core.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
   Core.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
   Core.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
+
+  Core:Subscribe(SAVE_FRAME_POSITION, function (position)
+    local point, relativeTo, relativePoint, xOfs, yOfs = unpack(position)
+    Core.db.profile.positionAnchor = {
+      point = point,
+      relativeTo = relativeTo,
+      relativePoint = relativePoint,
+      xOfs = xOfs,
+      yOfs = yOfs
+    }
+  end)
 end
 
 function C:OnSlashCommand(input)

@@ -26,7 +26,6 @@ Core.Components = {}
 -- Modules
 -- These need to be initialized first
 Core:NewModule("Mover", "AceConsole-3.0")
-Core:NewModule("MainContainer", "AceHook-3.0")
 
 Core:NewModule("ChatTabs", "AceHook-3.0")
 Core:NewModule("Config", "AceConsole-3.0")

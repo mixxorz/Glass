@@ -1,4 +1,10 @@
-local Core = unpack(select(2, ...))
+local Core, Constants = unpack(select(2, ...))
+
+local SaveFramePosition = Constants.ACTIONS.SaveFramePosition
+
+local LOCK_MOVER = Constants.EVENTS.LOCK_MOVER
+local UNLOCK_MOVER = Constants.EVENTS.UNLOCK_MOVER
+local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 local MoverFrameMixin = {}
 
@@ -22,6 +28,31 @@ function MoverFrameMixin:Init()
   self:RegisterForDrag("LeftButton")
   self:SetScript("OnDragStart", self.StartMoving)
   self:SetScript("OnDragStop", self.StopMovingOrSizing)
+
+  Core:Subscribe(LOCK_MOVER, function ()
+    self:Hide()
+    self:EnableMouse(false)
+    self:SetMovable(false)
+
+    local position = {self:GetPoint(1)}
+    Core:Dispatch(SaveFramePosition(position))
+  end)
+
+  Core:Subscribe(UNLOCK_MOVER, function ()
+    self:Show()
+    self:EnableMouse(true)
+    self:SetMovable(true)
+  end)
+
+  Core:Subscribe(UPDATE_CONFIG, function (key)
+    if (key == "frameWidth") then
+      self:SetWidth(Core.db.profile.frameWidth)
+    end
+
+    if (key == "frameHeight") then
+      self:SetHeight(Core.db.profile.frameHeight + 35)
+    end
+  end)
 end
 
 Core.Components.CreateMoverFrame = function (name, parent)

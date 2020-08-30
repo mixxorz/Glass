@@ -1,7 +1,9 @@
-local Core = unpack(select(2, ...))
+local Core, Constants = unpack(select(2, ...))
 local Fonts = Core:GetModule("Fonts")
 
 local LSM = Core.Libs.LSM
+
+local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 -- luacheck: push ignore 113
 local CreateFont = CreateFont
@@ -10,6 +12,7 @@ local CreateFont = CreateFont
 function Fonts:OnInitialize()
   self.fonts = {}
 
+  -- GlassMessageFont
   self.fonts.GlassMessageFont = CreateFont("GlassMessageFont")
   self.fonts.GlassMessageFont:SetFont(
     LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
@@ -20,11 +23,13 @@ function Fonts:OnInitialize()
   self.fonts.GlassMessageFont:SetJustifyH("LEFT")
   self.fonts.GlassMessageFont:SetJustifyV("MIDDLE")
   self.fonts.GlassMessageFont:SetSpacing(3)
-end
 
-function Fonts:OnRefreshConfig(key)
-  self.fonts.GlassMessageFont:SetFont(
-    LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
-    Core.db.profile.messageFontSize
-  )
+  Core:Subscribe(UPDATE_CONFIG, function (key)
+    if key == "font" then
+      self.fonts.GlassMessageFont:SetFont(
+        LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
+        Core.db.profile.messageFontSize
+      )
+    end
+  end)
 end

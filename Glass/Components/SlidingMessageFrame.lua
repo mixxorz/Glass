@@ -1,5 +1,4 @@
 local Core, Constants = unpack(select(2, ...))
-local MC = Core:GetModule("MainContainer")
 local TP = Core:GetModule("TextProcessing")
 
 -- luacheck: push ignore 113
@@ -39,8 +38,8 @@ local SlidingMessageFrameMixin = {}
 
 function SlidingMessageFrameMixin:Init()
   self.config = {
-    height = MC:GetFrame():GetHeight() - GeneralDockManager:GetHeight() - 5,
-    width = MC:GetFrame():GetWidth(),
+    height = Core.db.profile.frameHeight - GeneralDockManager:GetHeight() - 5,
+    width = Core.db.profile.frameWidth,
     messageOpacity = Core.db.profile.chatBackgroundOpacity,
     overflowHeight = 60,
     xPadding = 15
@@ -415,8 +414,8 @@ function SlidingMessageFrameMixin:OnUpdateChatBackgroundOpacity()
 end
 
 function SlidingMessageFrameMixin:OnUpdateFrame()
-  self.config.height = MC:GetFrame():GetHeight() - GeneralDockManager:GetHeight() - 5
-  self.config.width = MC:GetFrame():GetWidth()
+  self.config.height = Core.db.profile.frameHeight - GeneralDockManager:GetHeight() - 5
+  self.config.width = Core.db.profile.frameWidth
 
   self:SetHeight(self.config.height + self.config.overflowHeight)
   self:SetWidth(self.config.width)

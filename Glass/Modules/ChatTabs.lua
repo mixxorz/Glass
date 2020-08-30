@@ -7,6 +7,9 @@ local LSM = Core.Libs.LSM
 
 local UnlockMover = Constants.ACTIONS.UnlockMover
 
+local MOUSE_ENTER = Constants.EVENTS.MOUSE_ENTER
+local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
+
 -- luacheck: push ignore 113
 local CHAT_CONFIGURATION = CHAT_CONFIGURATION
 local CLOSE_CHAT_WINDOW = CLOSE_CHAT_WINDOW
@@ -254,42 +257,42 @@ function CT:OnEnable()
   end)
 
   GeneralDockManager:Hide()
-end
 
-function CT:OnEnterContainer()
-  -- Don't hide tabs when mouse is over
-  self.state.mouseOver = true
+  Core:Subscribe(MOUSE_ENTER, function ()
+    -- Don't hide tabs when mouse is over
+    self.state.mouseOver = true
 
-  if not GeneralDockManager:IsVisible() then
-    GeneralDockManager:Show()
-  end
+    if not GeneralDockManager:IsVisible() then
+      GeneralDockManager:Show()
+    end
 
-  if self.outroTimer then
-    self.outroTimer:Cancel()
-  end
+    if self.outroTimer then
+      self.outroTimer:Cancel()
+    end
 
-  if self.outroAg:IsPlaying() then
-    self.outroAg:Stop()
-    self.introAg:Play()
-  end
-end
+    if self.outroAg:IsPlaying() then
+      self.outroAg:Stop()
+      self.introAg:Play()
+    end
+  end)
 
-function CT:OnLeaveContainer()
-  -- Hide chat tab when mouse leaves
-  self.state.mouseOver = false
+  Core:Subscribe(MOUSE_LEAVE, function ()
+    -- Hide chat tab when mouse leaves
+    self.state.mouseOver = false
 
-  if Core.db.profile.chatShowOnMouseOver then
-    -- When chatShowOnMouseOver is on, synchronize the chat tab's fade out with
-    -- the chat
-    self.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
-      if GeneralDockManager:IsVisible() then
-        self.outroAg:Play()
-      end
-    end)
-  else
-    -- Otherwise hide it immediately on mouse leave
-    self.outroAg:Play()
-  end
+    if Core.db.profile.chatShowOnMouseOver then
+      -- When chatShowOnMouseOver is on, synchronize the chat tab's fade out with
+      -- the chat
+      self.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
+        if GeneralDockManager:IsVisible() then
+          self.outroAg:Play()
+        end
+      end)
+    else
+      -- Otherwise hide it immediately on mouse leave
+      self.outroAg:Play()
+    end
+  end)
 end
 
 function CT:OnUpdateFont()

@@ -27,14 +27,30 @@ Constants.COLORS = {
 -- Events
 Constants.EVENTS = {
   LOCK_MOVER = "Glass/LOCK_MOVER",
+  MOUSE_ENTER = "Glass/MOUSE_ENTER",
+  MOUSE_LEAVE = "Glass/MOUSE_LEAVE",
+  SAVE_FRAME_POSITION = "Glass/SAVE_FRAME_POSITION",
   UNLOCK_MOVER = "Glass/UNLOCK_MOVER",
+  UPDATE_CONFIG = "Glass/UPDATE_CONFIG",
 }
 
 Constants.ACTIONS = {
   LockMover = function ()
     return Constants.EVENTS.LOCK_MOVER
   end,
+  MouseEnter = function ()
+    return Constants.EVENTS.MOUSE_ENTER
+  end,
+  MouseLeave = function ()
+    return Constants.EVENTS.MOUSE_LEAVE
+  end,
+  SaveFramePosition = function (position)
+    return Constants.EVENTS.SAVE_FRAME_POSITION, position
+  end,
   UnlockMover = function ()
     return Constants.EVENTS.UNLOCK_MOVER
+  end,
+  UpdateConfig = function (payload)
+    return Constants.EVENTS.UPDATE_CONFIG, payload
   end,
 }
