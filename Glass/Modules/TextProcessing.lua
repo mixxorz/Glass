@@ -70,7 +70,7 @@ end
 ---
 -- Adds Prat Timestamps if configured
 local function pratTimestampProcessor(text)
-  return _G.Prat.Addon:GetModule('Timestamps'):InsertTimeStamp(text)
+  return _G.Prat.Addon:GetModule("Timestamps"):InsertTimeStamp(text)
 end
 
 ---

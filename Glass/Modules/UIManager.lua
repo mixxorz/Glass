@@ -1,6 +1,9 @@
 local Core, Constants = unpack(select(2, ...))
 local UIManager = Core:GetModule("UIManager")
 
+local CreateChatDock = Core.Components.CreateChatDock
+local CreateChatTab = Core.Components.CreateChatTab
+local CreateEditBox = Core.Components.CreateEditBox
 local CreateMainContainerFrame = Core.Components.CreateMainContainerFrame
 local CreateMoverDialog = Core.Components.CreateMoverDialog
 local CreateMoverFrame = Core.Components.CreateMoverFrame
@@ -15,7 +18,6 @@ local BNToastFrame = BNToastFrame
 local ChatAlertFrame = ChatAlertFrame
 local ChatFrameChannelButton = ChatFrameChannelButton
 local ChatFrameMenuButton = ChatFrameMenuButton
-local GeneralDockManager = GeneralDockManager
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
 local QuickJoinToastButton = QuickJoinToastButton
 local UIParent = UIParent
@@ -25,17 +27,37 @@ local UIParent = UIParent
 -- UIManager Module
 function UIManager:OnInitialize()
   self.state = {
-    frames = {}
+    frames = {},
+    tabs = {}
   }
 end
 
 function UIManager:OnEnable()
-  self:InitMainContainer()
-  self:InitSlidingMessageFrames()
-  self:InitBlizzardUI()
-end
+  -- Mover
+  self.moverFrame = CreateMoverFrame("GlassMoverFrame", UIParent)
+  self.moverDialog = CreateMoverDialog("GlassMoverDialog", UIParent)
 
-function UIManager:InitBlizzardUI()
+  -- Main Container
+  self.container = CreateMainContainerFrame("GlassFrame", UIParent)
+  self.container:SetPoint("TOPLEFT", self.moverFrame)
+
+  -- Chat dock
+  self.dock = CreateChatDock(self.container)
+
+  -- SlidingMessageFrames
+  for i=1, NUM_CHAT_WINDOWS do
+    local chatFrame = _G["ChatFrame"..i]
+    local smf = CreateSlidingMessageFrame(
+      "Glass"..chatFrame:GetName(), self.container, chatFrame
+    )
+
+    self.state.frames[i] = smf
+    self.state.tabs[i] = CreateChatTab(smf)
+  end
+
+  -- Edit box
+  self.editBox = CreateEditBox(self.container)
+
   -- Fix Battle.net Toast frame position
   BNToastFrame:ClearAllPoints()
   self:RawHook(BNToastFrame, "SetPoint", function ()
@@ -50,66 +72,8 @@ function UIManager:InitBlizzardUI()
   QuickJoinToastButton:Hide()
   ChatFrameChannelButton:Hide()
   ChatFrameMenuButton:Hide()
-end
 
-function UIManager:InitMainContainer()
-  self.moverFrame = CreateMoverFrame("GlassMoverFrame", UIParent)
-  self.moverDialog = CreateMoverDialog("GlassMoverDialog", UIParent)
-
-  self.container = CreateMainContainerFrame("GlassFrame", self.moverFrame)
-  self.container:SetPoint("TOPLEFT", self.moverFrame)
-end
-
-function UIManager:InitSlidingMessageFrames()
-  -- Replace default chat frames with SlidingMessageFrames
-  local dockHeight = GeneralDockManager:GetHeight() + 5
-  local height = self.container:GetHeight() - dockHeight
-
-  for i=1, NUM_CHAT_WINDOWS do
-    repeat
-      local chatFrame = _G["ChatFrame"..i]
-
-      _G[chatFrame:GetName().."ButtonFrame"]:Hide()
-
-      chatFrame:SetClampRectInsets(0,0,0,0)
-      chatFrame:SetClampedToScreen(false)
-      chatFrame:SetResizable(false)
-      chatFrame:SetParent(self.container)
-      chatFrame:ClearAllPoints()
-      chatFrame:SetHeight(height - 20)
-
-      self:RawHook(chatFrame, "SetPoint", function ()
-        self.hooks[chatFrame].SetPoint(chatFrame, "TOPLEFT", self.container, "TOPLEFT", 0, -45)
-      end, true)
-
-      -- Skip combat log
-      if i == 2 then
-        do break end
-      end
-
-      local smf = CreateSlidingMessageFrame("Glass"..chatFrame:GetName(), self.container)
-      self.state.frames[i] = smf
-
-      smf:Hide()
-
-      self:Hook(chatFrame, "AddMessage", function (...)
-        smf:AddMessage(...)
-      end, true)
-
-      -- Hide the default chat frame and show the sliding message frame instead
-      self:RawHook(chatFrame, "Show", function ()
-        smf:Show()
-      end, true)
-
-      self:RawHook(chatFrame, "Hide", function (f)
-        self.hooks[chatFrame].Hide(f)
-        smf:Hide()
-      end, true)
-
-      chatFrame:Hide()
-    until true
-  end
-
+  -- Listeners
   Core:Subscribe(MOUSE_ENTER, function ()
     for _, smf in ipairs(self.state.frames) do
       smf:OnEnterContainer()
@@ -124,14 +88,16 @@ function UIManager:InitSlidingMessageFrames()
 
   Core:Subscribe(UPDATE_CONFIG, function (key)
     if key == "frameWidth" or key == "frameHeight" then
-      for _, smf in ipairs(self.state.frames) do
+      for i, smf in ipairs(self.state.frames) do
         smf:OnUpdateFrame()
+        self.state.tabs[i]:OnUpdateConfig()
       end
     end
 
     if key == "font" or key == "messageFontSize" then
-      for _, smf in ipairs(self.state.frames) do
+      for i, smf in ipairs(self.state.frames) do
         smf:OnUpdateFont()
+        self.state.tabs[i]:OnUpdateConfig()
       end
     end
 

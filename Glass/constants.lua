@@ -44,8 +44,8 @@ Constants.ACTIONS = {
   MouseLeave = function ()
     return Constants.EVENTS.MOUSE_LEAVE
   end,
-  SaveFramePosition = function (position)
-    return Constants.EVENTS.SAVE_FRAME_POSITION, position
+  SaveFramePosition = function (payload)
+    return Constants.EVENTS.SAVE_FRAME_POSITION, payload
   end,
   UnlockMover = function ()
     return Constants.EVENTS.UNLOCK_MOVER

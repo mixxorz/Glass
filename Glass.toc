@@ -31,6 +31,9 @@ Glass\constants.lua
 Glass\utils.lua
 
 # Components
+Glass\Components\ChatDock.lua
+Glass\Components\ChatTab.lua
+Glass\Components\EditBox.lua
 Glass\Components\MainContainerFrame.lua
 Glass\Components\MoverDialog.lua
 Glass\Components\MoverFrame.lua
@@ -38,8 +41,6 @@ Glass\Components\SlidingMessageFrame.lua
 
 # Modules
 Glass\Modules\Config.lua
-Glass\Modules\ChatTabs.lua
-Glass\Modules\EditBox.lua
 Glass\Modules\Fonts.lua
 Glass\Modules\TextProcessing.lua
 Glass\Modules\UIManager.lua

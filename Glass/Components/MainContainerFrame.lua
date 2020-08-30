@@ -54,6 +54,8 @@ function MainContainerFrameMixin:OnUpdate(elapsed)
       else
         Core:Dispatch(MouseLeave())
       end
+
+      self.state.mouseOver = not self.state.mouseOver
     end
   end
 end

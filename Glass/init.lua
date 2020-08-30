@@ -18,6 +18,7 @@ Core.Libs = {
   AceConfigDialog = _G.LibStub("AceConfigDialog-3.0"),
   AceDBOptions = _G.LibStub("AceDBOptions-3.0"),
   AceDB = _G.LibStub("AceDB-3.0"),
+  AceHook = _G.LibStub("AceHook-3.0"),
   LSM = _G.LibStub("LibSharedMedia-3.0"),
   lodash = _G.LibStub("lodash.wow")
 }
@@ -25,11 +26,7 @@ Core.Components = {}
 
 -- Modules
 -- These need to be initialized first
-Core:NewModule("Mover", "AceConsole-3.0")
-
-Core:NewModule("ChatTabs", "AceHook-3.0")
 Core:NewModule("Config", "AceConsole-3.0")
-Core:NewModule("EditBox", "AceHook-3.0")
 Core:NewModule("Fonts")
 Core:NewModule("TextProcessing")
 Core:NewModule("UIManager", "AceHook-3.0")
@@ -85,6 +82,6 @@ function Core:Dispatch(messageType, payload)
   --@end-debug@--
 
   for _, listener in ipairs(self.listeners[messageType]) do
-    listener(messageType, payload)
+    listener(payload)
   end
 end

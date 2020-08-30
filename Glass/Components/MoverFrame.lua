@@ -1,4 +1,4 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 
 local SaveFramePosition = Constants.ACTIONS.SaveFramePosition
 
@@ -34,7 +34,15 @@ function MoverFrameMixin:Init()
     self:EnableMouse(false)
     self:SetMovable(false)
 
-    local position = {self:GetPoint(1)}
+    local point, relativeTo, relativePoint, xOfs, yOfs = self:GetPoint(1)
+    local position = {
+      point = point,
+      relativeTo = relativeTo,
+      relativePoint = relativePoint,
+      xOfs = xOfs,
+      yOfs = yOfs
+    }
+
     Core:Dispatch(SaveFramePosition(position))
   end)
 

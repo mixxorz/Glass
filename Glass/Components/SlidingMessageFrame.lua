@@ -1,6 +1,13 @@
 local Core, Constants = unpack(select(2, ...))
 local TP = Core:GetModule("TextProcessing")
 
+local AceHook = Core.Libs.AceHook
+
+local lodash = Core.Libs.lodash
+local drop, reduce, take = lodash.drop, lodash.reduce, lodash.take
+
+local Colors = Constants.COLORS
+
 -- luacheck: push ignore 113
 local BattlePetToolTip_ShowLink = BattlePetToolTip_ShowLink
 local BattlePetTooltip = BattlePetTooltip
@@ -14,11 +21,6 @@ local SetItemRef = SetItemRef
 local ShowUIPanel = ShowUIPanel
 local UIParent = UIParent
 -- luacheck: pop
-
-local lodash = Core.Libs.lodash
-local drop, reduce, take = lodash.drop, lodash.reduce, lodash.take
-
-local Colors = Constants.COLORS
 
 local linkTypes = {
   item = true,
@@ -36,7 +38,7 @@ local linkTypes = {
 -- Custom frame for displaying pretty sliding messages
 local SlidingMessageFrameMixin = {}
 
-function SlidingMessageFrameMixin:Init()
+function SlidingMessageFrameMixin:Init(chatFrame)
   self.config = {
     height = Core.db.profile.frameHeight - GeneralDockManager:GetHeight() - 5,
     width = Core.db.profile.frameWidth,
@@ -48,8 +50,33 @@ function SlidingMessageFrameMixin:Init()
     mouseOver = false,
     showingTooltip = false,
     incomingMessages = {},
-    messages = {}
+    messages = {},
+    isCombatLog = false,
   }
+  self.chatFrame = chatFrame
+
+  -- Override Blizzard UI
+  _G[chatFrame:GetName().."ButtonFrame"]:Hide()
+
+  chatFrame:SetClampRectInsets(0,0,0,0)
+  chatFrame:SetClampedToScreen(false)
+  chatFrame:SetResizable(false)
+  chatFrame:SetParent(self:GetParent())
+  chatFrame:ClearAllPoints()
+
+  -- Skip combat log
+  if chatFrame == _G.ChatFrame2 then
+    self.state.isCombatLog = true
+    self:RawHook(chatFrame, "SetPoint", function ()
+      self.hooks[chatFrame].SetPoint(chatFrame, "TOPLEFT", self:GetParent(), "TOPLEFT", 0, -45)
+      self.hooks[chatFrame].SetPoint(chatFrame, "BOTTOMRIGHT", self:GetParent(), "BOTTOMRIGHT", 0, 0)
+    end, true)
+    return
+  end
+
+  self:RawHook(chatFrame, "SetPoint", function ()
+    self.hooks[chatFrame].SetPoint(chatFrame, "TOPLEFT", self:GetParent(), "TOPLEFT", 0, -45)
+  end, true)
 
   -- Chat scroll frame
   self:SetHeight(self.config.height + self.config.overflowHeight)
@@ -121,6 +148,22 @@ function SlidingMessageFrameMixin:Init()
       message:Hide()
     end
   )
+
+  self:Hook(chatFrame, "AddMessage", function (...)
+    self:AddMessage(...)
+  end, true)
+
+  -- Hide the default chat frame and show the sliding message frame instead
+  self:RawHook(chatFrame, "Show", function ()
+    self:Show()
+  end, true)
+
+  self:RawHook(chatFrame, "Hide", function (f)
+    self.hooks[chatFrame].Hide(f)
+    self:Hide()
+  end, true)
+
+  chatFrame:Hide()
 end
 
 function SlidingMessageFrameMixin:MessagePoolCreator()
@@ -414,23 +457,27 @@ function SlidingMessageFrameMixin:OnUpdateChatBackgroundOpacity()
 end
 
 function SlidingMessageFrameMixin:OnUpdateFrame()
-  self.config.height = Core.db.profile.frameHeight - GeneralDockManager:GetHeight() - 5
-  self.config.width = Core.db.profile.frameWidth
+  if self.state.isCombatLog == false then
+    self.config.height = Core.db.profile.frameHeight - GeneralDockManager:GetHeight() - 5
+    self.config.width = Core.db.profile.frameWidth
 
-  self:SetHeight(self.config.height + self.config.overflowHeight)
-  self:SetWidth(self.config.width)
+    self:SetHeight(self.config.height + self.config.overflowHeight)
+    self:SetWidth(self.config.width)
 
-  self.slider:SetHeight(self.config.height + self.config.overflowHeight)
-  self.slider:SetWidth(self.config.width)
+    self.slider:SetHeight(self.config.height + self.config.overflowHeight)
+    self.slider:SetWidth(self.config.width)
 
-  for _, message in ipairs(self.state.messages) do
-    message:UpdateFrame()
+    for _, message in ipairs(self.state.messages) do
+      message:UpdateFrame()
+    end
   end
 end
 
-Core.Components.CreateSlidingMessageFrame = function (name, parent)
+Core.Components.CreateSlidingMessageFrame = function (name, parent, chatFrame)
   local frame = CreateFrame("ScrollFrame", name, parent)
   local object = Mixin(frame, SlidingMessageFrameMixin)
-  object:Init()
+  AceHook:Embed(object)
+  object:Init(chatFrame)
+  object:Hide()
   return object
 end

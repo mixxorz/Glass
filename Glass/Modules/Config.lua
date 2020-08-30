@@ -1,7 +1,5 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 local C = Core:GetModule("Config")
-local CT = Core:GetModule("ChatTabs")
-local EB = Core:GetModule("EditBox")
 local UIManager = Core:GetModule("UIManager")
 
 local AceConfig = Core.Libs.AceConfig
@@ -42,8 +40,6 @@ function C:OnEnable()
               set = function(info, input)
                 Core.db.profile.font = input
                 Core:Dispatch(UPDATE_CONFIG, "font")
-                EB:OnUpdateFont()
-                CT:OnUpdateFont()
               end,
             },
             messageFontSize = {
@@ -62,7 +58,6 @@ function C:OnEnable()
               set = function (info, input)
                 Core.db.profile.messageFontSize = input
                 Core:Dispatch(UPDATE_CONFIG, "messageFontSize")
-                EB:OnUpdateFont()
               end,
             },
             messageFontSizeNl = {
@@ -193,8 +188,6 @@ function C:OnEnable()
               set = function (info, input)
                 Core.db.profile.frameWidth = input
                 Core:Dispatch(UPDATE_CONFIG, "frameWidth")
-                EB:OnUpdateFrame()
-                CT:OnUpdateFrame()
               end
             },
             frameHeight = {
@@ -229,14 +222,7 @@ function C:OnEnable()
   Core.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
 
   Core:Subscribe(SAVE_FRAME_POSITION, function (position)
-    local point, relativeTo, relativePoint, xOfs, yOfs = unpack(position)
-    Core.db.profile.positionAnchor = {
-      point = point,
-      relativeTo = relativeTo,
-      relativePoint = relativePoint,
-      xOfs = xOfs,
-      yOfs = yOfs
-    }
+    Core.db.profile.positionAnchor = position
   end)
 end
 
@@ -250,5 +236,4 @@ end
 
 function C:RefreshConfig()
   UIManager:OnUpdateFont()
-  EB:OnUpdateFont()
 end
