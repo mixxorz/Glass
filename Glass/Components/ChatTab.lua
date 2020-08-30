@@ -69,7 +69,7 @@ function ChatTabMixin:Init(slidingMessageFrame)
 
   -- Don't highlight when frame is already visible
   self:RawHook(self.glow, "Show", function ()
-    if slidingMessageFrame:IsVisible() then
+    if not slidingMessageFrame:IsVisible() then
       self.hooks[self.glow].Show(self.glow)
     end
   end, true)
