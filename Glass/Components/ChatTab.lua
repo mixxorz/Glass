@@ -71,7 +71,12 @@ function ChatTabMixin:Init(slidingMessageFrame)
 
   if not self:IsHooked(self.Text, "SetTextColor") then
     self:RawHook(self.Text, "SetTextColor", function (...)
-      self.hooks[self.Text].SetTextColor(self.Text, Colors.apache.r, Colors.apache.g, Colors.apache.b)
+      -- Temporary chat frames retain their color
+      if self.chatFrame.isTemporary then
+        self.hooks[self.Text].SetTextColor(...)
+      else
+        self.hooks[self.Text].SetTextColor(self.Text, Colors.apache.r, Colors.apache.g, Colors.apache.b)
+      end
     end, true)
   end
 
@@ -153,15 +158,13 @@ function ChatTabMixin:Init(slidingMessageFrame)
   end, "MENU")
 
   -- Listeners
-  Core:Subscribe(UPDATE_CONFIG, function (key)
-    if key == "frameWidth" or key == "frameHeight" or key == "font" or key == "messageFontSize" then
-      self:SetWidth()
-    end
-  end)
-end
-
-function ChatTabMixin:OnUpdateConfig()
-  self:SetWidth() -- Calls hooked function
+  if self.unsubscribe == nil then
+    self.unsubscribe = Core:Subscribe(UPDATE_CONFIG, function (key)
+      if key == "frameWidth" or key == "frameHeight" or key == "font" or key == "messageFontSize" then
+        self:SetWidth()
+      end
+    end)
+  end
 end
 
 Core.Components.CreateChatTab = function (slidingMessageFrame)

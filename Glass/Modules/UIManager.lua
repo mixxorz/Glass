@@ -87,8 +87,8 @@ function UIManager:OnEnable()
   self:RawHook("FCF_Close", function (chatFrame)
     self.hooks["FCF_Close"](chatFrame)
 
-    local smf = self.state.temporaryFrames[chatFrame:GetName()]
-    self.slidingMessageFramePool:Release(smf)
+    self.slidingMessageFramePool:Release(self.state.temporaryFrames[chatFrame:GetName()])
+    self.state.temporaryFrames[chatFrame:GetName()] = nil
     self.state.temporaryTabs[chatFrame:GetName()] = nil
   end, true)
 end
