@@ -19,7 +19,9 @@ function MessageLineMixin:Init()
   self:SetWidth(Core.db.profile.frameWidth)
 
   -- Gradient background
-  self.leftBg = self:CreateTexture(nil, "BACKGROUND")
+  if self.leftBg == nil then
+    self.leftBg = self:CreateTexture(nil, "BACKGROUND")
+  end
   self.leftBg:SetPoint("LEFT")
   self.leftBg:SetWidth(50)
   self.leftBg:SetColorTexture(1, 1, 1, 1)
@@ -29,7 +31,9 @@ function MessageLineMixin:Init()
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, Core.db.profile.chatBackgroundOpacity
   )
 
-  self.centerBg = self:CreateTexture(nil, "BACKGROUND")
+  if self.centerBg == nil then
+    self.centerBg = self:CreateTexture(nil, "BACKGROUND")
+  end
   self.centerBg:SetPoint("LEFT", 50, 0)
   self.centerBg:SetPoint("RIGHT", -250, 0)
   self.centerBg:SetColorTexture(
@@ -39,7 +43,9 @@ function MessageLineMixin:Init()
     Core.db.profile.chatBackgroundOpacity
   )
 
-  self.rightBg = self:CreateTexture(nil, "BACKGROUND")
+  if self.rightBg == nil then
+    self.rightBg = self:CreateTexture(nil, "BACKGROUND")
+  end
   self.rightBg:SetPoint("RIGHT")
   self.rightBg:SetWidth(250)
   self.rightBg:SetColorTexture(1, 1, 1, 1)
@@ -49,24 +55,30 @@ function MessageLineMixin:Init()
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0
   )
 
-  self.text = self:CreateFontString(nil, "ARTWORK", "GlassMessageFont")
+  if self.text == nil then
+    self.text = self:CreateFontString(nil, "ARTWORK", "GlassMessageFont")
+  end
   self.text:SetPoint("LEFT", Constants.TEXT_XPADDING, 0)
   self.text:SetWidth(Core.db.profile.frameWidth - Constants.TEXT_XPADDING * 2)
 
   -- Intro animations
-  self.introAg = self:CreateAnimationGroup()
-  local fadeIn = self.introAg:CreateAnimation("Alpha")
-  fadeIn:SetFromAlpha(0)
-  fadeIn:SetToAlpha(1)
-  fadeIn:SetDuration(0.6)
-  fadeIn:SetSmoothing("OUT")
+  if self.introAg == nil then
+    self.introAg = self:CreateAnimationGroup()
+    local fadeIn = self.introAg:CreateAnimation("Alpha")
+    fadeIn:SetFromAlpha(0)
+    fadeIn:SetToAlpha(1)
+    fadeIn:SetDuration(0.6)
+    fadeIn:SetSmoothing("OUT")
+  end
 
   -- Outro animations
-  self.outroAg = self:CreateAnimationGroup()
-  local fadeOut = self.outroAg:CreateAnimation("Alpha")
-  fadeOut:SetFromAlpha(1)
-  fadeOut:SetToAlpha(0)
-  fadeOut:SetDuration(0.6)
+  if self.outroAg == nil then
+    self.outroAg = self:CreateAnimationGroup()
+    local fadeOut = self.outroAg:CreateAnimation("Alpha")
+    fadeOut:SetFromAlpha(1)
+    fadeOut:SetToAlpha(0)
+    fadeOut:SetDuration(0.6)
+  end
 
   -- Hide the frame when the outro animation finishes
   self.outroAg:SetScript("OnFinished", function ()
@@ -122,8 +134,6 @@ end
 ---
 -- Update texture color based on setting
 function MessageLineMixin:UpdateTextures()
-  Core.db.profile.chatBackgroundOpacity = Core.db.profile.chatBackgroundOpacity
-
   self.leftBg:SetGradientAlpha(
     "HORIZONTAL",
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0,
