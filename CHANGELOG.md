@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 (2020-08-31)
 
 * Major rearchitecture (#79)
 * Add support for new tab whisper mode (#80)
