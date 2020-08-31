@@ -15,6 +15,7 @@ local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 -- luacheck: push ignore 113
 local C_Timer = C_Timer
 local CreateFrame = CreateFrame
+local CreateObjectPool = CreateObjectPool
 local Mixin = Mixin
 -- luacheck: pop
 
@@ -33,6 +34,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
   self.state = {
     mouseOver = false,
     showingTooltip = false,
+    prevLine = nil,
     incomingMessages = {},
     messages = {},
     isCombatLog = false,
@@ -70,7 +72,9 @@ function SlidingMessageFrameMixin:Init(chatFrame)
   -- Set initial scroll position
   self:SetVerticalScroll(self.config.overflowHeight)
 
-  self.bg = self:CreateTexture(nil, "BACKGROUND")
+  if self.bg == nil then
+    self.bg = self:CreateTexture(nil, "BACKGROUND")
+  end
   self.bg:SetAllPoints()
   self.bg:SetColorTexture(0, 1, 0, 0)
 
@@ -103,23 +107,34 @@ function SlidingMessageFrameMixin:Init(chatFrame)
   self:EnableMouse(false)
 
   -- ScrollChild
-  self.slider = CreateFrame("Frame", nil, self)
+  if self.slider == nil then
+    self.slider = CreateFrame("Frame", nil, self)
+  end
   self.slider:SetHeight(self.config.height + self.config.overflowHeight)
   self.slider:SetWidth(self.config.width)
   self:SetScrollChild(self.slider)
 
-  self.slider.bg = self.slider:CreateTexture(nil, "BACKGROUND")
+  if self.slider.bg == nil then
+    self.slider.bg = self.slider:CreateTexture(nil, "BACKGROUND")
+  end
   self.slider.bg:SetAllPoints()
   self.slider.bg:SetColorTexture(0, 0, 1, 0)
 
   -- Initialize slide up animations
-  self.sliderAg = self.slider:CreateAnimationGroup()
-  self.sliderTranslateUp = self.sliderAg:CreateAnimation("Translation")
+  if self.sliderAg == nil then
+    self.sliderAg = self.slider:CreateAnimationGroup()
+  end
+
+  if self.sliderTranslateUp == nil then
+    self.sliderTranslateUp = self.sliderAg:CreateAnimation("Translation")
+  end
   self.sliderTranslateUp:SetDuration(0.3)
   self.sliderTranslateUp:SetSmoothing("OUT")
 
   -- Pool for the message frames
-  self.messageFramePool = CreateMessageLinePool(self.slider)
+  if self.messageFramePool == nil then
+    self.messageFramePool = CreateMessageLinePool(self.slider)
+  end
 
   self:Hook(chatFrame, "AddMessage", function (...)
     self:AddMessage(...)
@@ -207,12 +222,12 @@ function SlidingMessageFrameMixin:CreateMessageFrame(frame, text, red, green, bl
   message:SetPoint("BOTTOMLEFT")
 
   -- Attach previous message to this one
-  if self.prevLine then
-    self.prevLine:ClearAllPoints()
-    self.prevLine:SetPoint("BOTTOMLEFT", message, "TOPLEFT")
+  if self.state.prevLine then
+    self.state.prevLine:ClearAllPoints()
+    self.state.prevLine:SetPoint("BOTTOMLEFT", message, "TOPLEFT")
   end
 
-  self.prevLine = message
+  self.state.prevLine = message
 
   message.text:SetTextColor(red, green, blue, 1)
   message.text:SetText(TP:ProcessText(text))
@@ -285,11 +300,43 @@ function SlidingMessageFrameMixin:Update()
   end
 end
 
-Core.Components.CreateSlidingMessageFrame = function (name, parent, chatFrame)
+local function CreateSlidingMessageFrame(name, parent, chatFrame)
   local frame = CreateFrame("ScrollFrame", name, parent)
   local object = Mixin(frame, SlidingMessageFrameMixin)
   AceHook:Embed(object)
-  object:Init(chatFrame)
+
+  if chatFrame then
+    object:Init(chatFrame)
+  end
   object:Hide()
   return object
 end
+
+local function CreateSlidingMessageFramePool(parent)
+  return CreateObjectPool(
+    function () return CreateSlidingMessageFrame(nil, parent) end,
+    function (_, smf)
+      smf:Hide()
+
+      if smf.chatFrame then
+        smf:Unhook(smf.chatFrame, "SetPoint")
+        smf:Unhook(smf.chatFrame, "AddMessage")
+        smf:Unhook(smf.chatFrame, "Show")
+        smf:Unhook(smf.chatFrame, "Hide")
+      end
+
+      if smf.state ~= nil then
+        smf.state.prevLine = nil
+        smf.state.messages = {}
+        smf.state.incomingMessages = {}
+      end
+
+      if smf.messageFramePool ~= nil then
+        smf.messageFramePool:ReleaseAll()
+      end
+    end
+  )
+end
+
+Core.Components.CreateSlidingMessageFrame = CreateSlidingMessageFrame
+Core.Components.CreateSlidingMessageFramePool = CreateSlidingMessageFramePool
