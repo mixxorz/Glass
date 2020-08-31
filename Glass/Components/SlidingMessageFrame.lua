@@ -38,6 +38,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     incomingMessages = {},
     messages = {},
     isCombatLog = false,
+    scrollAtBottom = true,
   }
   self.chatFrame = chatFrame
 
@@ -67,7 +68,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
   -- Chat scroll frame
   self:SetHeight(self.config.height + self.config.overflowHeight)
   self:SetWidth(self.config.width)
-  self:SetPoint("BOTTOMLEFT", 0, self.config.overflowHeight * -1)
+  self:SetPoint("TOPLEFT", 0, (Constants.DOCK_HEIGHT + 5) * -1)
 
   -- Set initial scroll position
   self:SetVerticalScroll(self.config.overflowHeight)
@@ -85,14 +86,36 @@ function SlidingMessageFrameMixin:Init(chatFrame)
 
   -- Scrolling
   self:SetScript("OnMouseWheel", function (frame, delta)
-    local currentScrollOffset = self:GetVerticalScroll()
-    local scrollRange = self:GetVerticalScrollRange()
+    local maxScroll = (
+      self.state.scrollAtBottom and
+      self:GetVerticalScrollRange() + self.config.overflowHeight
+      or self:GetVerticalScrollRange()
+    )
+    local minScroll = self.config.height + self.config.overflowHeight
+    local scrollValue
 
-    -- Adjust scroll
-    if delta < 0 and currentScrollOffset < scrollRange + self.config.overflowHeight then
-      self:SetVerticalScroll(math.min(currentScrollOffset + 20, scrollRange + self.config.overflowHeight))
-    elseif delta > 0 and currentScrollOffset > self:GetHeight() then
-      self:SetVerticalScroll(currentScrollOffset - 20)
+    if delta < 0 then
+      -- Scroll down
+      scrollValue = math.min(self:GetVerticalScroll() + 20, maxScroll)
+    else
+      -- Scroll up
+      scrollValue = math.max(self:GetVerticalScroll() - 20, minScroll)
+    end
+
+    self:UpdateScrollChildRect()
+    self:SetVerticalScroll(scrollValue)
+
+    self.state.scrollAtBottom = scrollValue == maxScroll
+
+    -- Adjust height of scroll frame when scrolling
+    if self.state.scrollAtBottom then
+      -- If scrolled to the bottom, the height of the scroll frame should
+      -- include overflow to account for slide up animations
+      self:SetHeight(self.config.height + self.config.overflowHeight)
+    else
+      -- If not, the height should fit the frame exactly so messages don't spill
+      -- under the edit box area
+      self:SetHeight(self.config.height)
     end
 
     -- Show hidden messages
@@ -192,10 +215,11 @@ function SlidingMessageFrameMixin:Init(chatFrame)
         self:SetHeight(self.config.height + self.config.overflowHeight)
         self:SetWidth(self.config.width)
 
-        self.slider:SetHeight(self.config.height + self.config.overflowHeight)
         self.slider:SetWidth(self.config.width)
 
-        self:SetVerticalScroll(self.slider:GetHeight() - self:GetHeight() + self.config.overflowHeight)
+        self.state.scrollAtBottom = true
+        self:UpdateScrollChildRect()
+        self:SetVerticalScroll(self:GetVerticalScrollRange() + self.config.overflowHeight)
       end
 
       if key == "font" or key == "messageFontSize" or key == "frameWidth" or key == "frameHeight" then
@@ -272,11 +296,14 @@ function SlidingMessageFrameMixin:Update()
     self.slider:SetHeight(newHeight)
     self.sliderTranslateUp:SetOffset(0, offset)
 
-    -- Display and run everything
-    self.sliderAg:SetScript("OnFinished", function ()
-      self:SetVerticalScroll(newHeight - self:GetHeight() + self.config.overflowHeight)
-    end)
-    self.sliderAg:Play()
+    -- Only play slide up if not scrolling
+    if self.state.scrollAtBottom then
+      -- Display and run everything
+      self.sliderAg:SetScript("OnFinished", function ()
+        self:SetVerticalScroll(newHeight - self:GetHeight() + self.config.overflowHeight)
+      end)
+      self.sliderAg:Play()
+    end
 
     for _, messageFrame in ipairs(newMessages) do
       messageFrame:Show()
