@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Major rearchitecture (#79)
+* Add support for new tab whisper mode (#80)
 
 ## 1.1.1 (2020-08-26)
 
