@@ -59,10 +59,7 @@ function UIManager:OnEnable()
 
   -- Fix Battle.net Toast frame position
   BNToastFrame:ClearAllPoints()
-  self:RawHook(BNToastFrame, "SetPoint", function ()
-    BNToastFrame:ClearAllPoints()
-    self.hooks[BNToastFrame].SetPoint(BNToastFrame, "BOTTOMLEFT", ChatAlertFrame, "BOTTOMLEFT", 0, 0)
-  end, true)
+  BNToastFrame:SetPoint("BOTTOMLEFT", ChatAlertFrame, "BOTTOMLEFT", 0, 0)
 
   ChatAlertFrame:ClearAllPoints()
   ChatAlertFrame:SetPoint("BOTTOMLEFT", self.container, "TOPLEFT", 15, 10)
