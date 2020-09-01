@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1 (2020-09-01)
+
+* Fix conflict with ElvUI Mover
+
 ## 1.2.0 (2020-08-31)
 
 * Major rearchitecture (#79)
