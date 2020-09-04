@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0-alpha1 (2020-09-04)
+
+* Add support for third-party chat links (#90)
+
 ## 1.2.1 (2020-09-01)
 
 * Fix conflict with ElvUI Mover

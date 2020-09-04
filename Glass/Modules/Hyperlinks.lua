@@ -9,7 +9,6 @@ local HYPERLINK_LEAVE = Constants.EVENTS.HYPERLINK_LEAVE
 local BattlePetToolTip_ShowLink = BattlePetToolTip_ShowLink
 local BattlePetTooltip = BattlePetTooltip
 local GameTooltip = GameTooltip
-local SetItemRef = SetItemRef
 local ShowUIPanel = ShowUIPanel
 local UIParent = UIParent
 -- luacheck: pop
@@ -33,7 +32,9 @@ end
 function Hyperlinks:OnEnable()
   Core:Subscribe(HYPERLINK_CLICK, function (payload)
     local link, text, button = unpack(payload)
-    SetItemRef(link, text, button)
+    -- Use global reference in case some addon has hooked into it for custom
+    -- hyperlinks (e.g. Mythic Dungeon Tools, Prat)
+    _G.SetItemRef(link, text, button)
   end)
 
   Core:Subscribe(HYPERLINK_ENTER, function (payload)
