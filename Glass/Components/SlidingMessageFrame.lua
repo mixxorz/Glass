@@ -245,7 +245,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
       scrollValue = math.min(self:GetVerticalScroll() + 20, maxScroll)
     else
       -- Scroll up
-      scrollValue = math.max(self:GetVerticalScroll() - 20, minScroll)
+      scrollValue = math.max(self:GetVerticalScroll() - 20, math.min(minScroll, maxScroll))
     end
 
     self:UpdateScrollChildRect()
