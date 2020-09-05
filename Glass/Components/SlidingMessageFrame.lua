@@ -332,9 +332,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     for _, message in ipairs(self.state.messages) do
       if message:IsVisible() then
         message.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
-          if message:IsVisible() then
-            message.outroAg:Play()
-          end
+          message:Hide()
         end)
       end
     end

@@ -10,27 +10,30 @@ local Mixin = Mixin
 local FadingFrameMixin = {}
 
 function FadingFrameMixin:Init()
-  self.showAg = self:CreateAnimationGroup()
-  self.fadeIn = self.showAg:CreateAnimation("Alpha")
-  self.fadeIn:SetFromAlpha(0)
-  self.fadeIn:SetToAlpha(1)
-  self.fadeIn:SetDuration(0)
-  self.fadeIn:SetSmoothing("OUT")
+  if self.showAg == nil then
+    self.showAg = self:CreateAnimationGroup()
+    self.fadeIn = self.showAg:CreateAnimation("Alpha")
+    self.fadeIn:SetFromAlpha(0)
+    self.fadeIn:SetToAlpha(1)
+    self.fadeIn:SetDuration(0)
+    self.fadeIn:SetSmoothing("OUT")
 
-  -- Outro animations
-  self.hideAg = self:CreateAnimationGroup()
-  self.fadeOut = self.hideAg:CreateAnimation("Alpha")
-  self.fadeOut:SetFromAlpha(1)
-  self.fadeOut:SetToAlpha(0)
-  self.fadeOut:SetDuration(0)
+    self.showAg:SetScript("OnPlay", function ()
+      self:QuickShow()
+    end)
+  end
 
-  self.showAg:SetScript("OnPlay", function ()
-    self:QuickShow()
-  end)
+  if self.hideAg == nil then
+    self.hideAg = self:CreateAnimationGroup()
+    self.fadeOut = self.hideAg:CreateAnimation("Alpha")
+    self.fadeOut:SetFromAlpha(1)
+    self.fadeOut:SetToAlpha(0)
+    self.fadeOut:SetDuration(0)
 
-  self.hideAg:SetScript("OnFinished", function ()
-    self:QuickHide()
-  end)
+    self.hideAg:SetScript("OnFinished", function ()
+      self:QuickHide()
+    end)
+  end
 end
 
 function FadingFrameMixin:QuickShow()
@@ -42,16 +45,12 @@ function FadingFrameMixin:QuickHide()
 end
 
 function FadingFrameMixin:Show()
-  Utils.print('Showing', self)
-
   if not self:IsVisible() then
     self.showAg:Play()
   end
 end
 
 function FadingFrameMixin:Hide()
-  Utils.print('Hiding', self)
-
   if self:IsVisible() then
     self.hideAg:Play()
   end
@@ -73,3 +72,4 @@ local function CreateFadingFrame(frameType, name, parent)
 end
 
 Core.Components.CreateFadingFrame = CreateFadingFrame
+Core.Components.FadingFrameMixin = FadingFrameMixin
