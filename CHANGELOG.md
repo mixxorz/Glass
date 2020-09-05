@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Improve scrolling behavior (#92)
+
 ## 1.3.0-alpha1 (2020-09-04)
 
 * Add support for third-party chat links (#90)

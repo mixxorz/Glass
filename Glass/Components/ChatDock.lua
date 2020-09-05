@@ -9,7 +9,6 @@ local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
 local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 -- luacheck: push ignore 113
-local C_Timer = C_Timer
 local Mixin = Mixin
 local FCFDock_GetInsertIndex = FCFDock_GetInsertIndex
 local FCFDock_HideInsertHighlight = FCFDock_HideInsertHighlight
@@ -31,6 +30,8 @@ function ChatDockMixin:Init(parent)
   self:SetHeight(Constants.DOCK_HEIGHT)
   self:ClearAllPoints()
   self:SetPoint("TOPLEFT", parent, "TOPLEFT")
+  self:SetFadeInDuration(0.3)
+  self:SetFadeOutDuration(0.3)
 
   self.scrollFrame:SetHeight(Constants.DOCK_HEIGHT)
   self.scrollFrame:SetPoint("TOPLEFT", _G.ChatFrame2Tab, "TOPRIGHT")
@@ -84,50 +85,12 @@ function ChatDockMixin:Init(parent)
     FCF_DockFrame(chatFrame, FCFDock_GetInsertIndex(GENERAL_CHAT_DOCK, chatFrame, mouseX, mouseY), true);
   end, true)
 
-  -- Intro animations
-  self.introAg = self:CreateAnimationGroup()
-  local fadeIn = self.introAg:CreateAnimation("Alpha")
-  fadeIn:SetFromAlpha(0)
-  fadeIn:SetToAlpha(1)
-  fadeIn:SetDuration(0.3)
-  fadeIn:SetSmoothing("OUT")
-
-  -- Outro animations
-  self.outroAg = self:CreateAnimationGroup()
-  local fadeOut = self.outroAg:CreateAnimation("Alpha")
-  fadeOut:SetFromAlpha(1)
-  fadeOut:SetToAlpha(0)
-  fadeOut:SetDuration(0.3)
-  fadeOut:SetEndDelay(1)
-
-  -- Hide the frame when the outro animation finishes
-  self.outroAg:SetScript("OnFinished", function ()
-    self:Hide()
-  end)
-
-  -- Start intro animation when element is shown
-  self:SetScript("OnShow", function ()
-    self.introAg:Play()
-  end)
-
-  self:Hide()
+  self:QuickHide()
 
   Core:Subscribe(MOUSE_ENTER, function ()
     -- Don't hide tabs when mouse is over
     self.state.mouseOver = true
-
-    if not self:IsVisible() then
-      self:Show()
-    end
-
-    if self.outroTimer then
-      self.outroTimer:Cancel()
-    end
-
-    if self.outroAg:IsPlaying() then
-      self.outroAg:Stop()
-      self.introAg:Play()
-    end
+    self:Show()
   end)
 
   Core:Subscribe(MOUSE_LEAVE, function ()
@@ -137,14 +100,10 @@ function ChatDockMixin:Init(parent)
     if Core.db.profile.chatShowOnMouseOver then
       -- When chatShowOnMouseOver is on, synchronize the chat tab's fade out with
       -- the chat
-      self.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
-        if self:IsVisible() then
-          self.outroAg:Play()
-        end
-      end)
+      self:HideDelay(Core.db.profile.chatHoldTime)
     else
       -- Otherwise hide it immediately on mouse leave
-      self.outroAg:Play()
+      self:Hide()
     end
   end)
 
@@ -162,9 +121,12 @@ Core.Components.CreateChatDock = function (parent)
     error("ChatDock already exists. Only one ChatDock can exist at a time.")
   end
 
+  local FadingFrameMixin = Core.Components.FadingFrameMixin
+
   isCreated = true
-  local object = Mixin(GeneralDockManager, ChatDockMixin)
+  local object = Mixin(GeneralDockManager, FadingFrameMixin, ChatDockMixin)
   AceHook:Embed(object)
-  object:Init(parent)
+  FadingFrameMixin.Init(object)
+  ChatDockMixin.Init(object, parent)
   return object
 end

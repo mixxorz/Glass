@@ -7,7 +7,6 @@ local HyperlinkEnter = Constants.ACTIONS.HyperlinkEnter
 local HyperlinkLeave = Constants.ACTIONS.HyperlinkLeave
 
 -- luacheck: push ignore 113
-local C_Timer = C_Timer
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
 local Mixin = Mixin
@@ -17,6 +16,8 @@ local MessageLineMixin = {}
 
 function MessageLineMixin:Init()
   self:SetWidth(Core.db.profile.frameWidth)
+  self:SetFadeInDuration(0.6)
+  self:SetFadeOutDuration(0.6)
 
   -- Gradient background
   if self.leftBg == nil then
@@ -60,44 +61,6 @@ function MessageLineMixin:Init()
   end
   self.text:SetPoint("LEFT", Constants.TEXT_XPADDING, 0)
   self.text:SetWidth(Core.db.profile.frameWidth - Constants.TEXT_XPADDING * 2)
-
-  -- Intro animations
-  if self.introAg == nil then
-    self.introAg = self:CreateAnimationGroup()
-    local fadeIn = self.introAg:CreateAnimation("Alpha")
-    fadeIn:SetFromAlpha(0)
-    fadeIn:SetToAlpha(1)
-    fadeIn:SetDuration(0.6)
-    fadeIn:SetSmoothing("OUT")
-  end
-
-  -- Outro animations
-  if self.outroAg == nil then
-    self.outroAg = self:CreateAnimationGroup()
-    local fadeOut = self.outroAg:CreateAnimation("Alpha")
-    fadeOut:SetFromAlpha(1)
-    fadeOut:SetToAlpha(0)
-    fadeOut:SetDuration(0.6)
-  end
-
-  -- Hide the frame when the outro animation finishes
-  self.outroAg:SetScript("OnFinished", function ()
-    self:Hide()
-  end)
-
-  -- Start intro animation when element is shown
-  self:SetScript("OnShow", function ()
-    self.introAg:Play()
-
-    -- Play outro after hold time
-    if not self:GetParent():GetParent().state.mouseOver then
-      self.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
-        if self:IsVisible() then
-          self.outroAg:Play()
-        end
-      end)
-    end
-  end)
 
   -- Hyperlink handling
   self:SetHyperlinksEnabled(true)
@@ -155,9 +118,11 @@ function MessageLineMixin:UpdateTextures()
 end
 
 local function CreateMessageLine(parent)
+  local FadingFrameMixin = Core.Components.FadingFrameMixin
   local frame = CreateFrame("Frame", nil, parent)
-  local object = Mixin(frame, MessageLineMixin)
-  object:Init()
+  local object = Mixin(frame, FadingFrameMixin, MessageLineMixin)
+  FadingFrameMixin.Init(object)
+  MessageLineMixin.Init(object)
   return object
 end
 
@@ -166,13 +131,7 @@ local function CreateMessageLinePool(parent)
     function () return CreateMessageLine(parent) end,
     function (_, message)
       -- Reset all animations and timers
-      if message.outroTimer then
-        message.outroTimer:Cancel()
-      end
-
-      message.introAg:Stop()
-      message.outroAg:Stop()
-      message:Hide()
+      message:QuickHide()
     end
   )
 end

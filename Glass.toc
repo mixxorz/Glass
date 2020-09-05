@@ -24,6 +24,7 @@ libs\AceDBOptions-3.0\AceDBOptions-3.0.xml
 libs\AceGUI-3.0-SharedMediaWidgets\widget.xml
 libs\AceHook-3.0\AceHook-3.0.xml
 libs\lodash.wow\lodash.wow.xml
+libs\LibEasing\LibEasing.lua
 
 # Glass
 Glass\init.lua
@@ -34,6 +35,7 @@ Glass\utils.lua
 Glass\Components\ChatDock.lua
 Glass\Components\ChatTab.lua
 Glass\Components\EditBox.lua
+Glass\Components\FadingFrame.lua
 Glass\Components\MainContainerFrame.lua
 Glass\Components\MessageLine.lua
 Glass\Components\MoverDialog.lua

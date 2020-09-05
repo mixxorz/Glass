@@ -1,10 +1,13 @@
 local Core, _, Utils = unpack(select(2, ...))
 
 -- Utility functions
+Utils.super = function (obj)
+  return getmetatable(obj).__index
+end
 
 ---
 -- Print to VDT
-Utils.print = function(str, t)
+Utils.print = function (str, t)
   if _G.ViragDevTool_AddData then
     _G.ViragDevTool_AddData(t, str)
   else
