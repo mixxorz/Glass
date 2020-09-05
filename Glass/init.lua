@@ -19,6 +19,7 @@ Core.Libs = {
   AceDBOptions = _G.LibStub("AceDBOptions-3.0"),
   AceDB = _G.LibStub("AceDB-3.0"),
   AceHook = _G.LibStub("AceHook-3.0"),
+  LibEasing = _G.LibStub("LibEasing-1.0"),
   LSM = _G.LibStub("LibSharedMedia-3.0"),
   lodash = _G.LibStub("lodash.wow")
 }

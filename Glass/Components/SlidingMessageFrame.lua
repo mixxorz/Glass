@@ -3,6 +3,7 @@ local TP = Core:GetModule("TextProcessing")
 
 local AceHook = Core.Libs.AceHook
 
+local LibEasing = Core.Libs.LibEasing
 local lodash = Core.Libs.lodash
 local drop, reduce, take = lodash.drop, lodash.reduce, lodash.take
 
@@ -85,8 +86,8 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     self.overlay:SetHeight(64)
     self.overlay:SetPoint("TOPLEFT", 0, (self.config.height - 62) * -1)
     self.overlay:SetPoint("TOPRIGHT", 0, (self.config.height - 62) * -1)
-    self.overlay:SetFadeInDuration(0.6)
-    self.overlay:SetFadeOutDuration(0.3)
+    self.overlay:SetFadeInDuration(0.3)
+    self.overlay:SetFadeOutDuration(0.15)
     self.overlay:QuickHide()
 
     self.overlay.mask = self.overlay:CreateMaskTexture()
@@ -145,10 +146,25 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     self.overlay.snapToBottomFrame:SetScript("OnMouseDown", function ()
       self.state.scrollAtBottom = true
       self.state.unreadMessages = false
-      self:SetHeight(self.config.height + self.config.overflowHeight)
-      self:SetVerticalScroll(self:GetVerticalScrollRange())
       self.overlay:Hide()
       self.overlay.newMessageHighlightFrame:Hide()
+
+      local startOffset = math.max(
+        self:GetVerticalScrollRange() - self.config.height * 2,
+        self:GetVerticalScroll()
+      )
+      local endOffset = self:GetVerticalScrollRange()
+
+      LibEasing:Ease(
+        function (offset) self:SetVerticalScroll(offset) end,
+        startOffset,
+        endOffset,
+        0.3,
+        LibEasing.OutCubic,
+        function ()
+          self:SetHeight(self.config.height + self.config.overflowHeight)
+        end
+      )
     end)
 
     -- See new messages frame
@@ -165,7 +181,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     )
     self.overlay.newMessageHighlightFrame.text:SetTextColor(Colors.apache.r, Colors.apache.g, Colors.apache.b)
     self.overlay.newMessageHighlightFrame.text:SetPoint("BOTTOMLEFT", 30, 10)
-    self.overlay.newMessageHighlightFrame.text:SetText("New messages")
+    self.overlay.newMessageHighlightFrame.text:SetText("Unread messages")
 
     -- Highlight line
     self.overlay.newMessageHighlightFrame.leftBg = self.overlay.newMessageHighlightFrame:CreateTexture(
