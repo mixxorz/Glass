@@ -155,6 +155,7 @@ function MessageLineMixin:UpdateTextures()
 end
 
 local function CreateMessageLine(parent)
+  -- TODO: Use FadingFrame
   local frame = CreateFrame("Frame", nil, parent)
   local object = Mixin(frame, MessageLineMixin)
   object:Init()
