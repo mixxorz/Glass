@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.0-alpha2 (2020-09-06)
 
 * Improve scrolling behavior (#92)
 
