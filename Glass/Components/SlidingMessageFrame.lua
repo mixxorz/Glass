@@ -8,6 +8,8 @@ local drop, reduce, take = lodash.drop, lodash.reduce, lodash.take
 
 local CreateMessageLinePool = Core.Components.CreateMessageLinePool
 
+local Colors = Constants.COLORS
+
 local MOUSE_ENTER = Constants.EVENTS.MOUSE_ENTER
 local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
 local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
@@ -73,11 +75,114 @@ function SlidingMessageFrameMixin:Init(chatFrame)
   -- Set initial scroll position
   self:SetVerticalScroll(self.config.overflowHeight)
 
-  if self.bg == nil then
-    self.bg = self:CreateTexture(nil, "BACKGROUND")
+  -- Overlay
+  if self.overlay == nil then
+    local overlayOpacity = 0.65
+
+    self.overlay = CreateFrame("Frame", nil, self)
+    self.overlay:SetHeight(64)
+    self.overlay:SetPoint("TOPLEFT", 0, (self.config.height - 62) * -1)
+    self.overlay:SetPoint("TOPRIGHT", 0, (self.config.height - 62) * -1)
+
+    self.overlay.mask = self.overlay:CreateMaskTexture()
+    self.overlay.mask:SetTexture("Interface\\Addons\\Glass\\Assets\\overlayMask", "CLAMP", "CLAMPTOBLACKADDITIVE")
+    self.overlay.mask:SetSize(16, 64)
+    self.overlay.mask:SetPoint("CENTER", 0, -32)
+
+    self.overlay.leftBg = self.overlay:CreateTexture(nil, "BACKGROUND")
+    self.overlay.leftBg:SetPoint("TOPLEFT")
+    self.overlay.leftBg:SetPoint("BOTTOMLEFT")
+    self.overlay.leftBg:SetWidth(15)
+    self.overlay.leftBg:SetColorTexture(1, 1, 1, 1)
+    self.overlay.leftBg:SetGradientAlpha(
+      "HORIZONTAL",
+      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0,
+      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, overlayOpacity
+    )
+    self.overlay.leftBg:AddMaskTexture(self.overlay.mask)
+
+    self.overlay.centerBg = self.overlay:CreateTexture(nil, "BACKGROUND")
+    self.overlay.centerBg:SetPoint("TOPLEFT", 15, 0)
+    self.overlay.centerBg:SetPoint("BOTTOMRIGHT", -15, 0)
+    self.overlay.centerBg:SetColorTexture(
+      Colors.codGray.r,
+      Colors.codGray.g,
+      Colors.codGray.b,
+      overlayOpacity
+    )
+    self.overlay.centerBg:AddMaskTexture(self.overlay.mask)
+
+    self.overlay.rightBg = self.overlay:CreateTexture(nil, "BACKGROUND")
+    self.overlay.rightBg:SetPoint("TOPRIGHT")
+    self.overlay.rightBg:SetPoint("BOTTOMRIGHT")
+    self.overlay.rightBg:SetWidth(15)
+    self.overlay.rightBg:SetColorTexture(1, 1, 1, 1)
+    self.overlay.rightBg:SetGradientAlpha(
+      "HORIZONTAL",
+      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, overlayOpacity,
+      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0
+    )
+    self.overlay.rightBg:AddMaskTexture(self.overlay.mask)
+
+    self.overlay.icon = self.overlay:CreateTexture(nil, "ARTWORK")
+    self.overlay.icon:SetTexture("Interface\\Addons\\Glass\\Glass\\Assets\\snapToBottomIcon")
+    self.overlay.icon:SetSize(16, 16)
+    self.overlay.icon:SetPoint("BOTTOMLEFT", 15, 5)
+
+    -- Animations
+    local showAg = self.overlay:CreateAnimationGroup()
+    local fadeIn = showAg:CreateAnimation("Alpha")
+    fadeIn:SetFromAlpha(0)
+    fadeIn:SetToAlpha(1)
+    fadeIn:SetDuration(0.6)
+    fadeIn:SetSmoothing("OUT")
+
+    -- Outro animations
+    local hideAg = self.overlay:CreateAnimationGroup()
+    local fadeOut = hideAg:CreateAnimation("Alpha")
+    fadeOut:SetFromAlpha(1)
+    fadeOut:SetToAlpha(0)
+    fadeOut:SetDuration(0.3)
+
+    self.overlay.OrigShow = self.overlay.Show
+    self.overlay.OrigHide = self.overlay.Hide
+
+    showAg:SetScript("OnPlay", function ()
+      self.overlay:OrigShow()
+    end)
+
+    hideAg:SetScript("OnFinished", function ()
+      self.overlay:OrigHide()
+    end)
+
+    self.overlay.Show = function (overlay)
+      if not self.overlay:IsVisible() then
+        showAg:Play()
+      end
+    end
+
+    self.overlay.Hide = function (overlay)
+      if self.overlay:IsVisible() then
+        hideAg:Play()
+      end
+    end
+
+    self.overlay:OrigHide()
   end
-  self.bg:SetAllPoints()
-  self.bg:SetColorTexture(0, 1, 0, 0)
+
+  if self.snapToBottomFrame == nil then
+    self.snapToBottomFrame = CreateFrame("Frame", nil, self)
+    self.snapToBottomFrame:SetHeight(20)
+    self.snapToBottomFrame:SetPoint("TOPLEFT", 0, (self.config.height - 20) * -1)
+    self.snapToBottomFrame:SetPoint("TOPRIGHT", 0, (self.config.height - 20) * -1)
+
+    self.snapToBottomFrame:SetScript("OnMouseDown", function ()
+      self.state.scrollAtBottom = true
+      self:SetHeight(self.config.height + self.config.overflowHeight)
+      self:SetVerticalScroll(self:GetVerticalScrollRange())
+      self.overlay:Hide()
+    end)
+  end
 
   self.timeElapsed = 0
   self:SetScript("OnUpdate", function (frame, elapsed)
@@ -112,10 +217,12 @@ function SlidingMessageFrameMixin:Init(chatFrame)
       -- If scrolled to the bottom, the height of the scroll frame should
       -- include overflow to account for slide up animations
       self:SetHeight(self.config.height + self.config.overflowHeight)
+      self.overlay:Hide()
     else
       -- If not, the height should fit the frame exactly so messages don't spill
       -- under the edit box area
       self:SetHeight(self.config.height)
+      self.overlay:Show()
     end
 
     -- Show hidden messages
