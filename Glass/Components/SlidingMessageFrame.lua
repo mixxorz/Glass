@@ -330,6 +330,14 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     -- Don't hide chats when mouse is over
     self.state.mouseOver = true
 
+    if not self.state.scrollAtBottom then
+      self.overlay:Show()
+
+      if self.overlay.outroTimer then
+        self.overlay.outroTimer:Cancel()
+      end
+    end
+
     for _, message in ipairs(self.state.messages) do
       if Core.db.profile.chatShowOnMouseOver and not message:IsVisible() then
         message:Show()
@@ -344,6 +352,10 @@ function SlidingMessageFrameMixin:Init(chatFrame)
   Core:Subscribe(MOUSE_LEAVE, function ()
     -- Hide chats when mouse leaves
     self.state.mouseOver = false
+
+    self.overlay.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
+      self.overlay:Hide()
+    end)
 
     for _, message in ipairs(self.state.messages) do
       if message:IsVisible() then
