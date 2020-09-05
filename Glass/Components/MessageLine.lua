@@ -63,15 +63,6 @@ function MessageLineMixin:Init()
   self.text:SetPoint("LEFT", Constants.TEXT_XPADDING, 0)
   self.text:SetWidth(Core.db.profile.frameWidth - Constants.TEXT_XPADDING * 2)
 
-  self:HookScript("OnShow", function ()
-    -- Play outro after hold time
-    if not self:GetParent():GetParent().state.mouseOver then
-      self.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
-        self:Hide()
-      end)
-    end
-  end)
-
   -- Hyperlink handling
   self:SetHyperlinksEnabled(true)
 
@@ -141,10 +132,6 @@ local function CreateMessageLinePool(parent)
     function () return CreateMessageLine(parent) end,
     function (_, message)
       -- Reset all animations and timers
-      if message.outroTimer then
-        message.outroTimer:Cancel()
-      end
-
       message:QuickHide()
     end
   )

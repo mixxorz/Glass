@@ -3,6 +3,7 @@ local Core, _, Utils = unpack(select(2, ...))
 local super = Utils.super
 
 -- luacheck: push ignore 113
+local C_Timer = C_Timer
 local CreateFrame = CreateFrame
 local Mixin = Mixin
 -- luacheck: pop
@@ -37,22 +38,60 @@ function FadingFrameMixin:Init()
 end
 
 function FadingFrameMixin:QuickShow()
+  if self.hideAg:IsPlaying() then
+    self.hideAg:Stop()
+  end
+
+  if self.hideTimer ~= nil then
+    self.hideTimer:Cancel()
+  end
+
   super(self).Show(self)
 end
 
 function FadingFrameMixin:QuickHide()
+  if self.hideTimer ~= nil then
+    self.hideTimer:Cancel()
+  end
+
   super(self).Hide(self)
 end
 
 function FadingFrameMixin:Show()
+  if self.hideAg:IsPlaying() then
+    self.hideAg:Stop()
+  end
+
   if not self:IsVisible() then
     self.showAg:Play()
+  end
+
+  if self.hideTimer ~= nil then
+    self.hideTimer:Cancel()
   end
 end
 
 function FadingFrameMixin:Hide()
   if self:IsVisible() then
     self.hideAg:Play()
+  end
+
+  if self.hideTimer ~= nil then
+    self.hideTimer:Cancel()
+  end
+end
+
+function FadingFrameMixin:HideDelay(delay)
+  delay = delay or 0
+
+  if self:IsVisible() then
+    if self.hideTimer ~= nil then
+      self.hideTimer:Cancel()
+    end
+
+    self.hideTimer = C_Timer.NewTimer(delay, function ()
+      self:Hide()
+    end)
   end
 end
 

@@ -17,7 +17,6 @@ local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
 local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 -- luacheck: push ignore 113
-local C_Timer = C_Timer
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
 local Mixin = Mixin
@@ -270,9 +269,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
 
     -- Show hidden messages
     for _, message in ipairs(self.state.messages) do
-      if not message:IsVisible() then
-        message:Show()
-      end
+      message:Show()
     end
   end)
 
@@ -332,19 +329,11 @@ function SlidingMessageFrameMixin:Init(chatFrame)
 
     if not self.state.scrollAtBottom then
       self.overlay:Show()
-
-      if self.overlay.outroTimer then
-        self.overlay.outroTimer:Cancel()
-      end
     end
 
     for _, message in ipairs(self.state.messages) do
-      if Core.db.profile.chatShowOnMouseOver and not message:IsVisible() then
+      if Core.db.profile.chatShowOnMouseOver then
         message:Show()
-      end
-
-      if message.outroTimer then
-        message.outroTimer:Cancel()
       end
     end
   end)
@@ -353,16 +342,10 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     -- Hide chats when mouse leaves
     self.state.mouseOver = false
 
-    self.overlay.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
-      self.overlay:Hide()
-    end)
+    self.overlay:HideDelay(Core.db.profile.chatHoldTime)
 
     for _, message in ipairs(self.state.messages) do
-      if message:IsVisible() then
-        message.outroTimer = C_Timer.NewTimer(Core.db.profile.chatHoldTime, function()
-          message:Hide()
-        end)
-      end
+      message:HideDelay(Core.db.profile.chatHoldTime)
     end
   end)
 
@@ -431,7 +414,6 @@ function SlidingMessageFrameMixin:AddMessage(...)
   table.insert(self.state.incomingMessages, args)
 end
 
-
 function SlidingMessageFrameMixin:OnUpdate(elapsed)
   self.timeElapsed = self.timeElapsed + elapsed
   while (self.timeElapsed > 0.1) do
@@ -468,12 +450,17 @@ function SlidingMessageFrameMixin:Update()
       self.sliderAg:Play()
     else
       self.state.unreadMessages = true
+      self.overlay:Show()
       self.overlay.newMessageHighlightFrame:Show()
+      self.overlay:HideDelay(Core.db.profile.chatHoldTime)
     end
 
-    for _, messageFrame in ipairs(newMessages) do
-      messageFrame:Show()
-      table.insert(self.state.messages, messageFrame)
+    for _, message in ipairs(newMessages) do
+      message:Show()
+      if not self.state.mouseOver then
+        message:HideDelay(Core.db.profile.chatHoldTime)
+      end
+      table.insert(self.state.messages, message)
     end
 
     -- Release old messages
