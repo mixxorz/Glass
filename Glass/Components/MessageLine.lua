@@ -7,7 +7,6 @@ local HyperlinkEnter = Constants.ACTIONS.HyperlinkEnter
 local HyperlinkLeave = Constants.ACTIONS.HyperlinkLeave
 
 -- luacheck: push ignore 113
-local C_Timer = C_Timer
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
 local Mixin = Mixin
