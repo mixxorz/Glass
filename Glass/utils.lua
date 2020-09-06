@@ -17,7 +17,7 @@ Utils.print = function (str, t)
 end
 
 ---
--- Print's Glass notification messages
+-- Prints Glass' notification messages
 Utils.notify = function (message)
   print("|c00DFBA69Glass|r: ", message)
 end
