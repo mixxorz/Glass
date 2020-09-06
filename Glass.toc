@@ -1,4 +1,9 @@
+#@retail@
 ## Interface: 80300
+#@end-retail@
+#@non-retail@
+# ## Interface: 11305
+#@end-non-retail@
 ## Plain Title: Glass
 ## Author: mixxorz
 ## Version: @project-version@

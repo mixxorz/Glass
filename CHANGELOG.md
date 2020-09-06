@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Add classic support (#95)
+
 ## 1.3.0 (2020-09-06)
 
 * Add support for third-party chat links (#90)
