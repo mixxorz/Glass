@@ -1,4 +1,4 @@
-local Core = unpack(select(2, ...))
+local Core, _, Utils = unpack(select(2, ...))
 local UIManager = Core:GetModule("UIManager")
 
 local CreateChatDock = Core.Components.CreateChatDock
@@ -11,6 +11,7 @@ local CreateSlidingMessageFramePool = Core.Components.CreateSlidingMessageFrameP
 
 -- luacheck: push ignore 113
 local BNToastFrame = BNToastFrame
+local C_CVar = C_CVar
 local ChatAlertFrame = ChatAlertFrame
 local ChatFrameChannelButton = ChatFrameChannelButton
 local ChatFrameMenuButton = ChatFrameMenuButton
@@ -68,6 +69,16 @@ function UIManager:OnEnable()
   QuickJoinToastButton:Hide()
   ChatFrameChannelButton:Hide()
   ChatFrameMenuButton:Hide()
+
+  -- Force classic chat style
+  if C_CVar.GetCVar("chatStyle") ~= "classic" then
+    C_CVar.SetCVar("chatStyle", "classic")
+    Utils.notify('Chat Style set to "Classic Style"')
+
+    -- Resets the background that IM style causes
+    self.editBox:SetFocus()
+    self.editBox:ClearFocus()
+  end
 
   -- Handle temporary chat frames (whisper popout, pet battle)
   self:RawHook("FCF_OpenTemporaryWindow", function (...)
