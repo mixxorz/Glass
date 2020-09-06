@@ -2,6 +2,8 @@ local _, Constants = unpack(select(2, ...))
 
 -- luacheck: push ignore 113
 local UIParent = UIParent
+local WOW_PROJECT_CLASSIC = WOW_PROJECT_CLASSIC
+local WOW_PROJECT_ID = WOW_PROJECT_ID
 -- luacheck: pop
 
 -- Constants
@@ -15,6 +17,12 @@ Constants.DEFAULT_ANCHOR_POINT = {
 
 Constants.DOCK_HEIGHT = 20
 Constants.TEXT_XPADDING = 15
+
+Constants.ENV = "retail"
+
+if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+  Constants.ENV = "classic"
+end
 
 -- Colors
 local function createColor(r, g, b)

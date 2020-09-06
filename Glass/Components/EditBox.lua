@@ -17,16 +17,19 @@ function EditBoxMixin:Init(parent)
   _G[self:GetName().."Left"]:Hide()
   _G[self:GetName().."Mid"]:Hide()
   _G[self:GetName().."Right"]:Hide()
-  _G[self:GetName().."FocusLeft"]:Hide()
-  _G[self:GetName().."FocusMid"]:Hide()
-  _G[self:GetName().."FocusRight"]:Hide()
 
   self:RawHook(_G[self:GetName().."Left"], "Show", function () end, true)
   self:RawHook(_G[self:GetName().."Mid"], "Show", function () end, true)
   self:RawHook(_G[self:GetName().."Right"], "Show", function () end, true)
-  self:RawHook(_G[self:GetName().."FocusLeft"], "Show", function () end, true)
-  self:RawHook(_G[self:GetName().."FocusMid"], "Show", function () end, true)
-  self:RawHook(_G[self:GetName().."FocusRight"], "Show", function () end, true)
+
+  if Constants.ENV == "retail" then
+    _G[self:GetName().."FocusLeft"]:Hide()
+    _G[self:GetName().."FocusMid"]:Hide()
+    _G[self:GetName().."FocusRight"]:Hide()
+    self:RawHook(_G[self:GetName().."FocusLeft"], "Show", function () end, true)
+    self:RawHook(_G[self:GetName().."FocusMid"], "Show", function () end, true)
+    self:RawHook(_G[self:GetName().."FocusRight"], "Show", function () end, true)
+  end
 
   -- New styling
   self:ClearAllPoints()

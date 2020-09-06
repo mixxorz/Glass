@@ -1,4 +1,4 @@
-local Core, _, Utils = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 local UIManager = Core:GetModule("UIManager")
 
 local CreateChatDock = Core.Components.CreateChatDock
@@ -11,12 +11,13 @@ local CreateSlidingMessageFramePool = Core.Components.CreateSlidingMessageFrameP
 
 -- luacheck: push ignore 113
 local BNToastFrame = BNToastFrame
-local C_CVar = C_CVar
 local ChatAlertFrame = ChatAlertFrame
 local ChatFrameChannelButton = ChatFrameChannelButton
 local ChatFrameMenuButton = ChatFrameMenuButton
+local GetCVar = C_CVar and C_CVar.GetCVar or GetCVar
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
 local QuickJoinToastButton = QuickJoinToastButton
+local SetCVar = C_CVar and C_CVar.SetCVar or SetCVar
 local UIParent = UIParent
 -- luacheck: pop
 
@@ -66,13 +67,16 @@ function UIManager:OnEnable()
   ChatAlertFrame:SetPoint("BOTTOMLEFT", self.container, "TOPLEFT", 15, 10)
 
   -- Hide other chat elements
-  QuickJoinToastButton:Hide()
+  if Constants.ENV == "retail" then
+    QuickJoinToastButton:Hide()
+  end
+
   ChatFrameChannelButton:Hide()
   ChatFrameMenuButton:Hide()
 
   -- Force classic chat style
-  if C_CVar.GetCVar("chatStyle") ~= "classic" then
-    C_CVar.SetCVar("chatStyle", "classic")
+  if GetCVar("chatStyle") ~= "classic" then
+    SetCVar("chatStyle", "classic")
     Utils.notify('Chat Style set to "Classic Style"')
 
     -- Resets the background that IM style causes
