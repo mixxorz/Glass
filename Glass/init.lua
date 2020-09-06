@@ -11,7 +11,6 @@ AddonVars[2] = Constants
 AddonVars[3] = Utils
 _G[AddonName] = Core
 
-
 -- Core
 Core.Libs = {
   AceConfig = _G.LibStub("AceConfig-3.0"),

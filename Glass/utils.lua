@@ -15,3 +15,9 @@ Utils.print = function (str, t)
     table.insert(Core.printBuffer, {str, t})
   end
 end
+
+---
+-- Print's Glass notification messages
+Utils.notify = function (message)
+  print("|c00DFBA69Glass|r: ", message)
+end
