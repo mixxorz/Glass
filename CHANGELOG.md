@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.4.0-alpha (2020-09-07)
+## 1.4.0 (2020-09-07)
 
 * Add classic support (#95)
 
