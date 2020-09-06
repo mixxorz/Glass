@@ -1,16 +1,10 @@
 # Changelog
 
-## Unreleased
-
-* Force chatStyle to classic (#94)
-
-## 1.3.0-alpha2 (2020-09-06)
-
-* Improve scrolling behavior (#92)
-
-## 1.3.0-alpha1 (2020-09-04)
+## 1.3.0 (2020-09-06)
 
 * Add support for third-party chat links (#90)
+* Improve scrolling behavior (#92)
+* Force chatStyle to classic (#94)
 
 ## 1.2.1 (2020-09-01)
 

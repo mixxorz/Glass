@@ -44,12 +44,28 @@ characters.
 
 ## Addon compatibility
 
-* ElvUI
-  * Yes, but disable the Chat module
-* Prat 3.0
-  * Yes, but disable the EditBox module
-  * Prat timestamps are supported. If you want to disable timestamps, you'll
-      need to set the Timestamps module on Prat to "Don't load".
+### ElvUI
+
+Glass works with ElvUI, but make sure to disable the Chat module.
+
+### Prat 3.0
+
+Glass works with Prat, but make sure to disable the EditBox module.
+
+Prat Timestamps work with Glass but with a caveat. Prat allows you to select
+which tabs to enable timestamps on. This is currently not supported and
+Timestamps will be enabled on all tabs if the Prat Timestamps module is loaded.
+If you want to disable Prat Timestamps, you'll need to set the module to "Don't
+load" (just "Disabled" won't work).
+
+Note: WoW's built-in timestamps work with Glass. (Interface -> Social ->
+Timestamps)
+
+### Leatrix Plus
+
+Glass works with Leatrix Plus. You might encounter issues when enabling features
+that modify chat behaviour such as "Recent chat window" or "Use easy resizing".
+Switching these features off will resolve issues with Glass.
 
 ## Issues and suggestions
 
