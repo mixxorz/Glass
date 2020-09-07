@@ -38,6 +38,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     mouseOver = false,
     showingTooltip = false,
     prevLine = nil,
+    prevEasingHandle = nil,
     incomingMessages = {},
     messages = {},
     isCombatLog = false,
@@ -290,17 +291,6 @@ function SlidingMessageFrameMixin:Init(chatFrame)
   self.slider.bg:SetAllPoints()
   self.slider.bg:SetColorTexture(0, 0, 1, 0)
 
-  -- Initialize slide up animations
-  if self.sliderAg == nil then
-    self.sliderAg = self.slider:CreateAnimationGroup()
-  end
-
-  if self.sliderTranslateUp == nil then
-    self.sliderTranslateUp = self.sliderAg:CreateAnimation("Translation")
-  end
-  self.sliderTranslateUp:SetDuration(0.3)
-  self.sliderTranslateUp:SetSmoothing("OUT")
-
   -- Pool for the message frames
   if self.messageFramePool == nil then
     self.messageFramePool = CreateMessageLinePool(self.slider)
@@ -424,7 +414,7 @@ end
 
 function SlidingMessageFrameMixin:Update()
   -- Make sure previous iteration is complete before running again
-  if #self.state.incomingMessages > 0 and not self.sliderAg:IsPlaying() then
+  if #self.state.incomingMessages > 0 then
     -- Create new message frame for each message
     local newMessages = {}
 
@@ -439,20 +429,32 @@ function SlidingMessageFrameMixin:Update()
 
     local newHeight = self.slider:GetHeight() + offset
     self.slider:SetHeight(newHeight)
-    self.sliderTranslateUp:SetOffset(0, offset)
 
-    -- Only play slide up if not scrolling
+    -- Display and run everything
     if self.state.scrollAtBottom then
-      -- Display and run everything
-      self.sliderAg:SetScript("OnFinished", function ()
-        self:SetVerticalScroll(newHeight - self:GetHeight() + self.config.overflowHeight)
-      end)
-      self.sliderAg:Play()
+      -- Only play slide up if not scrolling
+      if self.state.prevEasingHandle ~= nil then
+        LibEasing:StopEasing(self.state.prevEasingHandle)
+      end
+
+      local startOffset = self:GetVerticalScroll()
+      local endOffset = newHeight - self:GetHeight() + self.config.overflowHeight
+
+      self.state.prevEasingHandle = LibEasing:Ease(
+        function (n) self:SetVerticalScroll(n) end,
+        startOffset,
+        endOffset,
+        0.3,
+        LibEasing.OutCubic
+      )
     else
+      -- Otherwise show "Unread messages" notification
       self.state.unreadMessages = true
       self.overlay:Show()
       self.overlay.newMessageHighlightFrame:Show()
-      self.overlay:HideDelay(Core.db.profile.chatHoldTime)
+      if not self.state.mouseOver then
+        self.overlay:HideDelay(Core.db.profile.chatHoldTime)
+      end
     end
 
     for _, message in ipairs(newMessages) do
