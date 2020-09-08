@@ -36,7 +36,12 @@ function Core:OnInitialize()
     profile = {
       frameWidth = 450,
       frameHeight = 230,
-      positionAnchor = Constants.DEFAULT_ANCHOR_POINT,
+      positionAnchor = {
+        point = "BOTTOMLEFT",
+        relativePoint = "BOTTOMLEFT",
+        xOfs = 20,
+        yOfs = 230
+      },
       font = "Friz Quadrata TT",
       messageFontSize = 12,
       editBoxFontSize = 12,
