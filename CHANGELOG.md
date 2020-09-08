@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.4.1 (2020-09-08)
 
 * Fix AceDB issues
 
