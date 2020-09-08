@@ -1,20 +1,11 @@
 local _, Constants = unpack(select(2, ...))
 
 -- luacheck: push ignore 113
-local UIParent = UIParent
 local WOW_PROJECT_CLASSIC = WOW_PROJECT_CLASSIC
 local WOW_PROJECT_ID = WOW_PROJECT_ID
 -- luacheck: pop
 
 -- Constants
-Constants.DEFAULT_ANCHOR_POINT = {
-  point = "BOTTOMLEFT",
-  relativeTo = UIParent,
-  relativePoint = "BOTTOMLEFT",
-  xOfs = 20,
-  yOfs = 230
-}
-
 Constants.DOCK_HEIGHT = 20
 Constants.TEXT_XPADDING = 15
 

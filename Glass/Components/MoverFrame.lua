@@ -17,7 +17,7 @@ local Mixin = Mixin
 function MoverFrameMixin:Init()
   local editBoxMargin = 35
   local pos = Core.db.profile.positionAnchor
-  self:SetPoint(pos.point, pos.relativeTo, pos.relativePoint, pos.xOfs, pos.yOfs)
+  self:SetPoint(pos.point, nil, pos.relativePoint, pos.xOfs, pos.yOfs)
   self:SetWidth(Core.db.profile.frameWidth)
   self:SetHeight(Core.db.profile.frameHeight + editBoxMargin)
 
@@ -36,10 +36,9 @@ function MoverFrameMixin:Init()
     self:EnableMouse(false)
     self:SetMovable(false)
 
-    local point, relativeTo, relativePoint, xOfs, yOfs = self:GetPoint(1)
+    local point, _, relativePoint, xOfs, yOfs = self:GetPoint(1)
     local position = {
       point = point,
-      relativeTo = relativeTo,
       relativePoint = relativePoint,
       xOfs = xOfs,
       yOfs = yOfs
@@ -66,7 +65,7 @@ function MoverFrameMixin:Init()
 
   Core:Subscribe(REFRESH_CONFIG, function ()
     pos = Core.db.profile.positionAnchor
-    self:SetPoint(pos.point, pos.relativeTo, pos.relativePoint, pos.xOfs, pos.yOfs)
+    self:SetPoint(pos.point, nil, pos.relativePoint, pos.xOfs, pos.yOfs)
   end)
 end
 
