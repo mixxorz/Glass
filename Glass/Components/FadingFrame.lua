@@ -18,10 +18,6 @@ function FadingFrameMixin:Init()
     self.fadeIn:SetToAlpha(1)
     self.fadeIn:SetDuration(0)
     self.fadeIn:SetSmoothing("OUT")
-
-    self.showAg:SetScript("OnPlay", function ()
-      self:QuickShow()
-    end)
   end
 
   if self.hideAg == nil then
@@ -62,12 +58,13 @@ function FadingFrameMixin:Show()
     self.hideAg:Stop()
   end
 
-  if not self:IsVisible() then
-    self.showAg:Play()
-  end
-
   if self.hideTimer ~= nil then
     self.hideTimer:Cancel()
+  end
+
+  if not self:IsVisible() then
+    super(self).Show(self)
+    self.showAg:Play()
   end
 end
 
