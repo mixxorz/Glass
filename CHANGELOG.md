@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Fix icons not sliding up (#99)
+
 ## 1.4.1 (2020-09-08)
 
 * Fix AceDB issues
