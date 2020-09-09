@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## 1.4.2-alpha1 (2020-09-09)
 
 * Fix icons not sliding up (#99)
+* Fix messages not being displayed sometimes (#99)
+* Fix issues with scrolling after frame resize (#99)
 
 ## 1.4.1 (2020-09-08)
 
