@@ -341,6 +341,12 @@ function SlidingMessageFrameMixin:Init(chatFrame)
 
   Core:Subscribe(UPDATE_CONFIG, function (key)
     if self.state.isCombatLog == false then
+      if key == "font" or key == "messageFontSize" or key == "frameWidth" or key == "frameHeight" then
+        for _, message in ipairs(self.state.messages) do
+            message:UpdateFrame()
+        end
+      end
+
       if key == "frameWidth" or key == "frameHeight" then
         self.config.height = Core.db.profile.frameHeight - Constants.DOCK_HEIGHT - 5
         self.config.width = Core.db.profile.frameWidth
@@ -348,6 +354,10 @@ function SlidingMessageFrameMixin:Init(chatFrame)
         self:SetHeight(self.config.height + self.config.overflowHeight)
         self:SetWidth(self.config.width)
 
+        local contentHeight = reduce(self.state.messages, function (acc, message)
+          return acc + message:GetHeight()
+        end, 0)
+        self.slider:SetHeight(self.config.height + self.config.overflowHeight + contentHeight)
         self.slider:SetWidth(self.config.width)
 
         self.state.scrollAtBottom = true
@@ -356,12 +366,6 @@ function SlidingMessageFrameMixin:Init(chatFrame)
         self:SetVerticalScroll(self:GetVerticalScrollRange() + self.config.overflowHeight)
         self.overlay:Hide()
         self.overlay.newMessageHighlightFrame:Hide()
-      end
-
-      if key == "font" or key == "messageFontSize" or key == "frameWidth" or key == "frameHeight" then
-        for _, message in ipairs(self.state.messages) do
-            message:UpdateFrame()
-        end
       end
 
       if key == "chatBackgroundOpacity" then
