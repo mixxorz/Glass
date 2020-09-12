@@ -34,9 +34,7 @@ function FadingFrameMixin:Init()
 end
 
 function FadingFrameMixin:QuickShow()
-  if self.hideAg:IsPlaying() then
-    self.hideAg:Stop()
-  end
+  self:StopAnimating()
 
   if self.hideTimer ~= nil then
     self.hideTimer:Cancel()
@@ -54,9 +52,7 @@ function FadingFrameMixin:QuickHide()
 end
 
 function FadingFrameMixin:Show()
-  if self.hideAg:IsPlaying() then
-    self.hideAg:Stop()
-  end
+  self:StopAnimating()
 
   if self.hideTimer ~= nil then
     self.hideTimer:Cancel()
