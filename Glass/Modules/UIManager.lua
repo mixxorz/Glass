@@ -74,6 +74,13 @@ function UIManager:OnEnable()
   ChatFrameChannelButton:Hide()
   ChatFrameMenuButton:Hide()
 
+  -- New version alert
+  --[===[@non-debug@
+  if Core.db.global.version == nil or Utils.versionGreaterThan(Core.Version, Core.db.global.version) then
+    Utils.notify('Glass has just been updated. [See what’s new]')
+  end
+  --@end-non-debug@]===]--
+
   -- Force classic chat style
   if GetCVar("chatStyle") ~= "classic" then
     SetCVar("chatStyle", "classic")
