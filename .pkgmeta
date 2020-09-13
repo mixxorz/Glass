@@ -17,5 +17,5 @@ externals:
     libs/lodash.wow: git://github.com/mixxorz/lodash.wow.git
 
 manual-changelog:
-  filename: CHANGELOG.md
+  filename: LATEST.md
   markup-type: markdown
