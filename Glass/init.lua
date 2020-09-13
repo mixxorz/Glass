@@ -55,11 +55,15 @@ Core.defaults = {
 
     -- Messages
     messageFontSize = 12,
-    iconTextureYOffset = 4,
-    mouseOverTooltips = true,
-    chatHoldTime = 10,
     chatBackgroundOpacity = 0.4,
+
+    chatHoldTime = 10,
     chatShowOnMouseOver = true,
+    chatFadeInDuration = 0.6,
+    chatFadeOutDuration = 0.6,
+
+    mouseOverTooltips = true,
+    iconTextureYOffset = 4,
   }
 }
 

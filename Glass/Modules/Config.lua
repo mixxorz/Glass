@@ -276,6 +276,44 @@ function C:OnEnable()
                     Core.db.profile.chatShowOnMouseOver = input
                   end,
                 },
+                fadeInDuration = {
+                  name = "Fade in duration",
+                  desc = "Default: "..Core.defaults.profile.chatFadeInDuration..
+                    "\nMin: 0\nMax:30",
+                  type = "range",
+                  order = 2.3,
+                  min = 0,
+                  max = 30,
+                  softMin = 0,
+                  softMax = 10,
+                  step = 0.05,
+                  get = function ()
+                    return Core.db.profile.chatFadeInDuration
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.chatFadeInDuration = input
+                    Core:Dispatch(UpdateConfig("chatFadeInDuration"))
+                  end
+                },
+                fadeOutDuration = {
+                  name = "Fade out duration",
+                  desc = "Default: "..Core.defaults.profile.chatFadeOutDuration..
+                    "\nMin: 0\nMax:30",
+                  type = "range",
+                  order = 2.3,
+                  min = 0,
+                  max = 30,
+                  softMin = 0,
+                  softMax = 10,
+                  step = 0.05,
+                  get = function ()
+                    return Core.db.profile.chatFadeOutDuration
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.chatFadeOutDuration = input
+                    Core:Dispatch(UpdateConfig("chatFadeOutDuration"))
+                  end
+                }
               }
             },
             section3 = {
@@ -286,7 +324,7 @@ function C:OnEnable()
               args = {
                 mouseOverTooltips = {
                   name = "Mouse over tooltips",
-                  desc = "Should tooltips to appear when hovering over chat links.",
+                  desc = "Should tooltips appear when hovering over chat links.",
                   type = "toggle",
                   order = 3.1,
                   get = function ()
@@ -358,6 +396,8 @@ function C:RefreshConfig()
   -- Messages
   Core:Dispatch(UpdateConfig("messageFontSize"))
   Core:Dispatch(UpdateConfig("chatBackgroundOpacity"))
+  Core:Dispatch(UpdateConfig("chatFadeInDuration"))
+  Core:Dispatch(UpdateConfig("chatFadeOutDuration"))
 
   -- For things that don't update using the config frame e.g. frame position
   Core:Dispatch(RefreshConfig())

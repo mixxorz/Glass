@@ -6,6 +6,8 @@ local HyperlinkClick = Constants.ACTIONS.HyperlinkClick
 local HyperlinkEnter = Constants.ACTIONS.HyperlinkEnter
 local HyperlinkLeave = Constants.ACTIONS.HyperlinkLeave
 
+local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
+
 -- luacheck: push ignore 113
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
@@ -16,8 +18,8 @@ local MessageLineMixin = {}
 
 function MessageLineMixin:Init()
   self:SetWidth(Core.db.profile.frameWidth)
-  self:SetFadeInDuration(0.6)
-  self:SetFadeOutDuration(0.6)
+  self:SetFadeInDuration(Core.db.profile.chatFadeInDuration)
+  self:SetFadeOutDuration(Core.db.profile.chatFadeOutDuration)
 
   -- Gradient background
   if self.leftBg == nil then
@@ -78,6 +80,20 @@ function MessageLineMixin:Init()
   self:SetScript("OnHyperlinkLeave", function (_, link)
     Core:Dispatch(HyperlinkLeave(link))
   end)
+
+  if self.subscriptions == nil then
+    self.subscriptions = {
+      Core:Subscribe(UPDATE_CONFIG, function (key)
+        if key == "chatFadeInDuration" then
+          self:SetFadeInDuration(Core.db.profile.chatFadeInDuration)
+        end
+
+        if key == "chatFadeOutDuration" then
+          self:SetFadeOutDuration(Core.db.profile.chatFadeOutDuration)
+        end
+      end)
+    }
+  end
 end
 
 ---
