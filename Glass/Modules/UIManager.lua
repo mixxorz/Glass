@@ -77,7 +77,7 @@ function UIManager:OnEnable()
   -- New version alert
   --[===[@non-debug@
   if Core.db.global.version == nil or Utils.versionGreaterThan(Core.Version, Core.db.global.version) then
-    Utils.notify('Glass has just been updated. [See what’s new]')
+    Utils.notify('Glass has just been updated. |cFFFFFF00|Hgarrmission:Glass:opennews|h[See what’s new]|h|r')
   end
   --@end-non-debug@]===]--
 
