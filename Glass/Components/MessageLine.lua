@@ -34,11 +34,13 @@ function MessageLineMixin:Init()
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, Core.db.profile.chatBackgroundOpacity
   )
 
+  local rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
+
   if self.centerBg == nil then
     self.centerBg = self:CreateTexture(nil, "BACKGROUND")
   end
   self.centerBg:SetPoint("LEFT", 50, 0)
-  self.centerBg:SetPoint("RIGHT", -250, 0)
+  self.centerBg:SetPoint("RIGHT", -rightBgWidth, 0)
   self.centerBg:SetColorTexture(
     Colors.codGray.r,
     Colors.codGray.g,
@@ -50,7 +52,7 @@ function MessageLineMixin:Init()
     self.rightBg = self:CreateTexture(nil, "BACKGROUND")
   end
   self.rightBg:SetPoint("RIGHT")
-  self.rightBg:SetWidth(250)
+  self.rightBg:SetWidth(rightBgWidth)
   self.rightBg:SetColorTexture(1, 1, 1, 1)
   self.rightBg:SetGradientAlpha(
     "HORIZONTAL",
@@ -108,6 +110,10 @@ function MessageLineMixin:UpdateFrame()
 
   self:SetWidth(Core.db.profile.frameWidth)
   self.text:SetWidth(Core.db.profile.frameWidth - Constants.TEXT_XPADDING * 2)
+
+  local rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
+  self.centerBg:SetPoint("RIGHT", -rightBgWidth, 0)
+  self.rightBg:SetWidth(rightBgWidth)
 end
 
 ---

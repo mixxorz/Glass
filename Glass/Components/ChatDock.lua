@@ -50,9 +50,11 @@ function ChatDockMixin:Init(parent)
     Colors.black.r, Colors.black.g, Colors.black.b, opacity
   )
 
+  local rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
+
   self.centerBg = self:CreateTexture(nil, "BACKGROUND")
   self.centerBg:SetPoint("LEFT", 50, 0)
-  self.centerBg:SetPoint("RIGHT", -250, 0)
+  self.centerBg:SetPoint("RIGHT", -rightBgWidth, 0)
   self.centerBg:SetHeight(Constants.DOCK_HEIGHT)
   self.centerBg:SetColorTexture(
     Colors.black.r,
@@ -63,7 +65,7 @@ function ChatDockMixin:Init(parent)
 
   self.rightBg = self:CreateTexture(nil, "BACKGROUND")
   self.rightBg:SetPoint("RIGHT")
-  self.rightBg:SetWidth(250)
+  self.rightBg:SetWidth(rightBgWidth)
   self.rightBg:SetHeight(Constants.DOCK_HEIGHT)
   self.rightBg:SetColorTexture(1, 1, 1, 1)
   self.rightBg:SetGradientAlpha(
@@ -87,31 +89,37 @@ function ChatDockMixin:Init(parent)
 
   self:QuickHide()
 
-  Core:Subscribe(MOUSE_ENTER, function ()
-    -- Don't hide tabs when mouse is over
-    self.state.mouseOver = true
-    self:Show()
-  end)
+  if self.subscriptions == nil then
+    self.subscriptions = {
+      Core:Subscribe(MOUSE_ENTER, function ()
+        -- Don't hide tabs when mouse is over
+        self.state.mouseOver = true
+        self:Show()
+      end),
+      Core:Subscribe(MOUSE_LEAVE, function ()
+        -- Hide chat tab when mouse leaves
+        self.state.mouseOver = false
 
-  Core:Subscribe(MOUSE_LEAVE, function ()
-    -- Hide chat tab when mouse leaves
-    self.state.mouseOver = false
+        if Core.db.profile.chatShowOnMouseOver then
+          -- When chatShowOnMouseOver is on, synchronize the chat tab's fade out with
+          -- the chat
+          self:HideDelay(Core.db.profile.chatHoldTime)
+        else
+          -- Otherwise hide it immediately on mouse leave
+          self:Hide()
+        end
+      end),
+      Core:Subscribe(UPDATE_CONFIG, function (key)
+        if key == "frameWidth" then
+          self:SetWidth(Core.db.profile.frameWidth)
 
-    if Core.db.profile.chatShowOnMouseOver then
-      -- When chatShowOnMouseOver is on, synchronize the chat tab's fade out with
-      -- the chat
-      self:HideDelay(Core.db.profile.chatHoldTime)
-    else
-      -- Otherwise hide it immediately on mouse leave
-      self:Hide()
-    end
-  end)
-
-  Core:Subscribe(UPDATE_CONFIG, function (key)
-    if key == "frameWidth" then
-      self:SetWidth(Core.db.profile.frameWidth)
-    end
-  end)
+          rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
+          self.centerBg:SetPoint("RIGHT", -rightBgWidth, 0)
+          self.rightBg:SetWidth(rightBgWidth)
+        end
+      end)
+    }
+  end
 end
 
 local isCreated = false

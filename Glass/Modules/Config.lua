@@ -75,10 +75,11 @@ function C:OnEnable()
               args = {
                 frameWidth = {
                   name = "Width",
-                  desc = "Default: "..Core.defaults.profile.frameWidth,
+                  desc = "Default: "..Core.defaults.profile.frameWidth..
+                    "\nMin: 100",
                   type = "range",
                   order = 2.1,
-                  min = 300,
+                  min = 100,
                   max = 9999,
                   softMin = 300,
                   softMax = 800,

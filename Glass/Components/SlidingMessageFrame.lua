@@ -349,16 +349,19 @@ function SlidingMessageFrameMixin:Init(chatFrame)
             key == "messageLeading" or
             key == "messageLinePadding"
           ) then
-            for _, message in ipairs(self.state.messages) do
-                message:UpdateFrame()
-            end
-
+            -- Adjust frame dimensions first
             self.config.height = Core.db.profile.frameHeight - Constants.DOCK_HEIGHT - 5
             self.config.width = Core.db.profile.frameWidth
 
             self:SetHeight(self.config.height + self.config.overflowHeight)
             self:SetWidth(self.config.width)
 
+            -- Then adjust message line dimensions
+            for _, message in ipairs(self.state.messages) do
+                message:UpdateFrame()
+            end
+
+            -- Then update scroll values
             local contentHeight = reduce(self.state.messages, function (acc, message)
               return acc + message:GetHeight()
             end, 0)
