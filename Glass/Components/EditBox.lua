@@ -33,7 +33,13 @@ function EditBoxMixin:Init(parent)
 
   -- New styling
   self:ClearAllPoints()
-  self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, -5)
+
+  self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+
+  if Core.db.profile.editBoxAnchor.position == "ABOVE" then
+    self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+  end
+
   self:SetFontObject("GlassEditBoxFont")
   self:SetWidth(Core.db.profile.frameWidth - 8 * 2)
   self.header:SetFontObject("GlassEditBoxFont")
@@ -111,6 +117,16 @@ function EditBoxMixin:Init(parent)
       bg:SetColorTexture(
         Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, Core.db.profile.editBoxBackgroundOpacity
       )
+    end
+
+    if key == "editBoxAnchor" then
+      if Core.db.profile.editBoxAnchor.position == "ABOVE" then
+        self:ClearAllPoints()
+        self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+      else
+        self:ClearAllPoints()
+        self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+      end
     end
   end)
 end

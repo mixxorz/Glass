@@ -140,6 +140,54 @@ function C:OnEnable()
                   end,
                 },
               }
+            },
+            section2 = {
+              name = "Position",
+              type = "group",
+              inline = true,
+              order = 2,
+              args = {
+                editBoxAnchorPosition = {
+                  name = "Position",
+                  desc = "Default: "..Core.defaults.profile.editBoxAnchor.position,
+                  type = "select",
+                  order = 2.1,
+                  values = {
+                    ABOVE = "Above",
+                    BELOW = "Below",
+                  },
+                  get = function ()
+                    return Core.db.profile.editBoxAnchor.position
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.editBoxAnchor.position = input
+                    if input == "ABOVE" then
+                      Core.db.profile.editBoxAnchor.yOfs = 5
+                    else
+                      Core.db.profile.editBoxAnchor.yOfs = -5
+                    end
+                    Core:Dispatch(UpdateConfig("editBoxAnchor"))
+                  end
+                },
+                editBoxAnchorYOfs = {
+                  name = "Vertical offset",
+                  desc = "Default: 5 or -5",
+                  type = "range",
+                  order = 2.2,
+                  min = -9999,
+                  max = 9999,
+                  softMin = -10,
+                  softMax = 10,
+                  step = 1,
+                  get = function ()
+                    return Core.db.profile.editBoxAnchor.yOfs
+                  end,
+                  set = function (info, input)
+                    Core.db.profile.editBoxAnchor.yOfs = input
+                    Core:Dispatch(UpdateConfig("editBoxAnchor"))
+                  end
+                }
+              },
             }
           },
         },
@@ -250,7 +298,7 @@ function C:OnEnable()
                 },
                 iconTextureYOffset = {
                   type = "range",
-                  name = "Icon texture Y offset",
+                  name = "Text icons Y offset",
                   desc = "Default: "..Core.defaults.profile.iconTextureYOffset..
                     "\nAdjust this if text icons aren't centered.",
                   order = 3.2,
@@ -297,11 +345,19 @@ function C:OnSlashCommand(input)
 end
 
 function C:RefreshConfig()
-  Core:Dispatch(UpdateConfig("chatBackgroundOpacity"))
+  -- General
   Core:Dispatch(UpdateConfig("font"))
   Core:Dispatch(UpdateConfig("frameHeight"))
   Core:Dispatch(UpdateConfig("frameWidth"))
+
+  -- Edit box
+  Core:Dispatch(UpdateConfig("editBoxFontSize"))
+  Core:Dispatch(UpdateConfig("editBoxBackgroundOpacity"))
+  Core:Dispatch(UpdateConfig("editBoxAnchor"))
+
+  -- Messages
   Core:Dispatch(UpdateConfig("messageFontSize"))
+  Core:Dispatch(UpdateConfig("chatBackgroundOpacity"))
 
   -- For things that don't update using the config frame e.g. frame position
   Core:Dispatch(RefreshConfig())

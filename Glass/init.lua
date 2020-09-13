@@ -48,6 +48,10 @@ Core.defaults = {
     -- Edit box
     editBoxFontSize = 12,
     editBoxBackgroundOpacity = 0.6,
+    editBoxAnchor = {
+      position = "BELOW",
+      yOfs = -5
+    },
 
     -- Messages
     messageFontSize = 12,
