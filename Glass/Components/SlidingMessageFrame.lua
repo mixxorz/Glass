@@ -313,68 +313,75 @@ function SlidingMessageFrameMixin:Init(chatFrame)
   chatFrame:Hide()
 
   -- Listeners
-  Core:Subscribe(MOUSE_ENTER, function ()
-    -- Don't hide chats when mouse is over
-    self.state.mouseOver = true
+  if self.subscriptions == nil then
+    self.subscriptions = {
+      Core:Subscribe(MOUSE_ENTER, function ()
+        -- Don't hide chats when mouse is over
+        self.state.mouseOver = true
 
-    if not self.state.scrollAtBottom then
-      self.overlay:Show()
-    end
-
-    for _, message in ipairs(self.state.messages) do
-      if Core.db.profile.chatShowOnMouseOver then
-        message:Show()
-      end
-    end
-  end)
-
-  Core:Subscribe(MOUSE_LEAVE, function ()
-    -- Hide chats when mouse leaves
-    self.state.mouseOver = false
-
-    self.overlay:HideDelay(Core.db.profile.chatHoldTime)
-
-    for _, message in ipairs(self.state.messages) do
-      message:HideDelay(Core.db.profile.chatHoldTime)
-    end
-  end)
-
-  Core:Subscribe(UPDATE_CONFIG, function (key)
-    if self.state.isCombatLog == false then
-      if key == "font" or key == "messageFontSize" or key == "frameWidth" or key == "frameHeight" then
-        for _, message in ipairs(self.state.messages) do
-            message:UpdateFrame()
+        if not self.state.scrollAtBottom then
+          self.overlay:Show()
         end
-      end
 
-      if key == "frameWidth" or key == "frameHeight" then
-        self.config.height = Core.db.profile.frameHeight - Constants.DOCK_HEIGHT - 5
-        self.config.width = Core.db.profile.frameWidth
-
-        self:SetHeight(self.config.height + self.config.overflowHeight)
-        self:SetWidth(self.config.width)
-
-        local contentHeight = reduce(self.state.messages, function (acc, message)
-          return acc + message:GetHeight()
-        end, 0)
-        self.slider:SetHeight(self.config.height + self.config.overflowHeight + contentHeight)
-        self.slider:SetWidth(self.config.width)
-
-        self.state.scrollAtBottom = true
-        self.state.unreadMessages = false
-        self:UpdateScrollChildRect()
-        self:SetVerticalScroll(self:GetVerticalScrollRange() + self.config.overflowHeight)
-        self.overlay:Hide()
-        self.overlay.newMessageHighlightFrame:Hide()
-      end
-
-      if key == "chatBackgroundOpacity" then
         for _, message in ipairs(self.state.messages) do
-          message:UpdateTextures()
+          if Core.db.profile.chatShowOnMouseOver then
+            message:Show()
+          end
         end
-      end
-    end
-  end)
+      end),
+      Core:Subscribe(MOUSE_LEAVE, function ()
+        -- Hide chats when mouse leaves
+        self.state.mouseOver = false
+
+        self.overlay:HideDelay(Core.db.profile.chatHoldTime)
+
+        for _, message in ipairs(self.state.messages) do
+          message:HideDelay(Core.db.profile.chatHoldTime)
+        end
+      end),
+      Core:Subscribe(UPDATE_CONFIG, function (key)
+        if self.state.isCombatLog == false then
+          if (
+            key == "font" or
+            key == "messageFontSize" or
+            key == "frameWidth" or
+            key == "frameHeight" or
+            key == "messageLeading" or
+            key == "messageLinePadding"
+          ) then
+            for _, message in ipairs(self.state.messages) do
+                message:UpdateFrame()
+            end
+
+            self.config.height = Core.db.profile.frameHeight - Constants.DOCK_HEIGHT - 5
+            self.config.width = Core.db.profile.frameWidth
+
+            self:SetHeight(self.config.height + self.config.overflowHeight)
+            self:SetWidth(self.config.width)
+
+            local contentHeight = reduce(self.state.messages, function (acc, message)
+              return acc + message:GetHeight()
+            end, 0)
+            self.slider:SetHeight(self.config.height + self.config.overflowHeight + contentHeight)
+            self.slider:SetWidth(self.config.width)
+
+            self.state.scrollAtBottom = true
+            self.state.unreadMessages = false
+            self:UpdateScrollChildRect()
+            self:SetVerticalScroll(self:GetVerticalScrollRange() + self.config.overflowHeight)
+            self.overlay:Hide()
+            self.overlay.newMessageHighlightFrame:Hide()
+          end
+
+          if key == "chatBackgroundOpacity" then
+            for _, message in ipairs(self.state.messages) do
+              message:UpdateTextures()
+            end
+          end
+        end
+      end)
+    }
+  end
 end
 
 function SlidingMessageFrameMixin:CreateMessageFrame(frame, text, red, green, blue, messageId, holdTime)

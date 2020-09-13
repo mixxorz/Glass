@@ -99,7 +99,7 @@ end
 ---
 -- Update height based on text height
 function MessageLineMixin:UpdateFrame()
-  local Ypadding = self.text:GetLineHeight() * 0.25
+  local Ypadding = self.text:GetLineHeight() * Core.db.profile.messageLinePadding
   local messageLineHeight = (self.text:GetStringHeight() + Ypadding * 2)
   self:SetHeight(messageLineHeight)
   self.leftBg:SetHeight(messageLineHeight)

@@ -56,6 +56,8 @@ Core.defaults = {
     -- Messages
     messageFontSize = 12,
     chatBackgroundOpacity = 0.4,
+    messageLeading = 3,
+    messageLinePadding = 0.25,
 
     chatHoldTime = 10,
     chatShowOnMouseOver = true,

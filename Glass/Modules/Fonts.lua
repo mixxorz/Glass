@@ -24,7 +24,7 @@ function Fonts:OnEnable()
   self.fonts.GlassMessageFont:SetShadowOffset(1, -1)
   self.fonts.GlassMessageFont:SetJustifyH("LEFT")
   self.fonts.GlassMessageFont:SetJustifyV("MIDDLE")
-  self.fonts.GlassMessageFont:SetSpacing(3)
+  self.fonts.GlassMessageFont:SetSpacing(Core.db.profile.messageLeading)
 
   -- GlassChatDockFont
   self.fonts.GlassChatDockFont = CreateFont("GlassChatDockFont")
@@ -53,6 +53,10 @@ function Fonts:OnEnable()
         LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
         Core.db.profile.messageFontSize
       )
+    end
+
+    if key == "messageLeading" then
+      self.fonts.GlassMessageFont:SetSpacing(Core.db.profile.messageLeading)
     end
 
     if key == "font" then

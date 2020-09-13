@@ -238,6 +238,42 @@ function C:OnEnable()
                     Core:Dispatch(UpdateConfig("chatBackgroundOpacity"))
                   end,
                 },
+                messageLeading = {
+                  name = "Leading",
+                  desc = "Default: "..Core.defaults.profile.messageLeading.."\nMin: 0\nMax: 10",
+                  type = "range",
+                  min = 0,
+                  max = 10,
+                  softMin = 0,
+                  softMax = 5,
+                  step = 1,
+                  get = function ()
+                    return Core.db.profile.messageLeading
+                  end,
+                  set = function (info, input)
+                    Core.db.profile.messageLeading = input
+                    Core:Dispatch(UpdateConfig("messageLeading"))
+                  end,
+                  order = 1.4,
+                },
+                messageLinePadding = {
+                  name = "Line padding",
+                  desc = "Default: "..Core.defaults.profile.messageLinePadding.."\nMin: 0\nMax: 5",
+                  type = "range",
+                  min = 0,
+                  max = 5,
+                  softMin = 0,
+                  softMax = 1,
+                  step = 0.05,
+                  get = function ()
+                    return Core.db.profile.messageLinePadding
+                  end,
+                  set = function (info, input)
+                    Core.db.profile.messageLinePadding = input
+                    Core:Dispatch(UpdateConfig("messageLinePadding"))
+                  end,
+                  order = 1.5,
+                },
               },
             },
             section2 = {
