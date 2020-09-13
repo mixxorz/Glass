@@ -31,31 +31,32 @@ Core:NewModule("Hyperlinks")
 Core:NewModule("TextProcessing")
 Core:NewModule("UIManager", "AceHook-3.0")
 
-function Core:OnInitialize()
-  local defaults = {
-    profile = {
-      frameWidth = 450,
-      frameHeight = 230,
-      positionAnchor = {
-        point = "BOTTOMLEFT",
-        relativePoint = "BOTTOMLEFT",
-        xOfs = 20,
-        yOfs = 230
-      },
-      font = "Friz Quadrata TT",
-      messageFontSize = 12,
-      editBoxFontSize = 12,
-      iconTextureYOffset = 4,
-      mouseOverTooltips = true,
-      chatHoldTime = 10,
-      chatBackgroundOpacity = 0.4,
-      chatShowOnMouseOver = true
-    }
+-- Default settings
+Core.defaults = {
+  profile = {
+    frameWidth = 450,
+    frameHeight = 230,
+    positionAnchor = {
+      point = "BOTTOMLEFT",
+      relativePoint = "BOTTOMLEFT",
+      xOfs = 20,
+      yOfs = 230
+    },
+    font = "Friz Quadrata TT",
+    messageFontSize = 12,
+    editBoxFontSize = 12,
+    iconTextureYOffset = 4,
+    mouseOverTooltips = true,
+    chatHoldTime = 10,
+    chatBackgroundOpacity = 0.4,
+    chatShowOnMouseOver = true
   }
+}
 
+function Core:OnInitialize()
   self.listeners = {}
 
-  self.db = self.Libs.AceDB:New("GlassDB", defaults, true)
+  self.db = self.Libs.AceDB:New("GlassDB", self.defaults, true)
   self.printBuffer = {}
 end
 
