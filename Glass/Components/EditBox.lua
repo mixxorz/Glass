@@ -37,6 +37,7 @@ function EditBoxMixin:Init(parent)
   self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
 
   if Core.db.profile.editBoxAnchor.position == "ABOVE" then
+    self:ClearAllPoints()
     self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
   end
 

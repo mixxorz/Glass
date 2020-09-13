@@ -12,7 +12,12 @@ local UpdateConfig = Constants.ACTIONS.UpdateConfig
 
 local SAVE_FRAME_POSITION = Constants.EVENTS.SAVE_FRAME_POSITION
 
-local ANCHORS = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
+local ANCHORS = {
+  ["TOPLEFT"] = "Top left",
+  ["TOPRIGHT"] = "Top right",
+  ["BOTTOMLEFT"] = "Bottom left",
+  ["BOTTOMRIGHT"] = "Bottom right"
+}
 local FLAGS = { [""] = "None", ["OUTLINE"] = "Outline", ["OUTLINE, MONOCHROME"] = "Outline Monochrome" }
 
 function C:OnEnable()
@@ -103,7 +108,57 @@ function C:OnEnable()
                     Core.db.profile.frameHeight = input
                     Core:Dispatch(UpdateConfig("frameHeight"))
                   end
-                }
+                },
+                frameXOfs = {
+                  name = "X offset",
+                  desc = "Default: "..Core.defaults.profile.positionAnchor.xOfs,
+                  type = "range",
+                  order = 2.3,
+                  min = -9999,
+                  max = 9999,
+                  softMin = -2000,
+                  softMax = 2000,
+                  step = 1,
+                  get = function ()
+                    return Core.db.profile.positionAnchor.xOfs
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.positionAnchor.xOfs = input
+                    Core:Dispatch(UpdateConfig("framePosition"))
+                  end
+                },
+                frameYOfs = {
+                  name = "Y offset",
+                  desc = "Default: "..Core.defaults.profile.positionAnchor.yOfs,
+                  type = "range",
+                  order = 2.4,
+                  min = -9999,
+                  max = 9999,
+                  softMin = -2000,
+                  softMax = 2000,
+                  step = 1,
+                  get = function ()
+                    return Core.db.profile.positionAnchor.yOfs
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.positionAnchor.yOfs = input
+                    Core:Dispatch(UpdateConfig("framePosition"))
+                  end
+                },
+                frameAnchor = {
+                  name = "Anchor",
+                  desc = "Default: "..Core.db.profile.positionAnchor.point,
+                  type = "select",
+                  order = 2.5,
+                  values = ANCHORS,
+                  get = function ()
+                    return Core.db.profile.positionAnchor.point
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.positionAnchor.point = input
+                    Core:Dispatch(UpdateConfig("framePosition"))
+                  end
+                },
               }
             }
           }
@@ -439,6 +494,7 @@ function C:RefreshConfig()
   Core:Dispatch(UpdateConfig("font"))
   Core:Dispatch(UpdateConfig("frameHeight"))
   Core:Dispatch(UpdateConfig("frameWidth"))
+  Core:Dispatch(UpdateConfig("framePosition"))
 
   -- Edit box
   Core:Dispatch(UpdateConfig("editBoxFontSize"))

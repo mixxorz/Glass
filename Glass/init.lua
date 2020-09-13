@@ -41,7 +41,6 @@ Core.defaults = {
     frameHeight = 230,
     positionAnchor = {
       point = "BOTTOMLEFT",
-      relativePoint = "BOTTOMLEFT",
       xOfs = 20,
       yOfs = 230
     },

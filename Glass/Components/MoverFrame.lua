@@ -3,7 +3,6 @@ local Core, Constants = unpack(select(2, ...))
 local SaveFramePosition = Constants.ACTIONS.SaveFramePosition
 
 local LOCK_MOVER = Constants.EVENTS.LOCK_MOVER
-local REFRESH_CONFIG = Constants.EVENTS.REFRESH_CONFIG
 local UNLOCK_MOVER = Constants.EVENTS.UNLOCK_MOVER
 local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
@@ -16,8 +15,12 @@ local Mixin = Mixin
 
 function MoverFrameMixin:Init()
   local editBoxMargin = 35
-  local pos = Core.db.profile.positionAnchor
-  self:SetPoint(pos.point, nil, pos.relativePoint, pos.xOfs, pos.yOfs)
+  self:ClearAllPoints()
+  self:SetPoint(
+    Core.db.profile.positionAnchor.point,
+    Core.db.profile.positionAnchor.xOfs,
+    Core.db.profile.positionAnchor.yOfs
+  )
   self:SetWidth(Core.db.profile.frameWidth)
   self:SetHeight(Core.db.profile.frameHeight + editBoxMargin)
 
@@ -31,42 +34,47 @@ function MoverFrameMixin:Init()
   self:SetScript("OnDragStart", self.StartMoving)
   self:SetScript("OnDragStop", self.StopMovingOrSizing)
 
-  Core:Subscribe(LOCK_MOVER, function ()
-    self:Hide()
-    self:EnableMouse(false)
-    self:SetMovable(false)
+  if self.subscriptions == nil then
+    self.subscriptions = {
+      Core:Subscribe(LOCK_MOVER, function ()
+        self:Hide()
+        self:EnableMouse(false)
+        self:SetMovable(false)
 
-    local point, _, relativePoint, xOfs, yOfs = self:GetPoint(1)
-    local position = {
-      point = point,
-      relativePoint = relativePoint,
-      xOfs = xOfs,
-      yOfs = yOfs
+        local point, _, _, xOfs, yOfs = self:GetPoint(1)
+        local position = {
+          point = point,
+          xOfs = xOfs,
+          yOfs = yOfs
+        }
+
+        Core:Dispatch(SaveFramePosition(position))
+      end),
+      Core:Subscribe(UNLOCK_MOVER, function ()
+        self:Show()
+        self:EnableMouse(true)
+        self:SetMovable(true)
+      end),
+      Core:Subscribe(UPDATE_CONFIG, function (key)
+        if (key == "frameWidth") then
+          self:SetWidth(Core.db.profile.frameWidth)
+        end
+
+        if (key == "frameHeight") then
+          self:SetHeight(Core.db.profile.frameHeight + editBoxMargin)
+        end
+
+        if key == "framePosition" then
+          self:ClearAllPoints()
+          self:SetPoint(
+            Core.db.profile.positionAnchor.point,
+            Core.db.profile.positionAnchor.xOfs,
+            Core.db.profile.positionAnchor.yOfs
+          )
+        end
+      end),
     }
-
-    Core:Dispatch(SaveFramePosition(position))
-  end)
-
-  Core:Subscribe(UNLOCK_MOVER, function ()
-    self:Show()
-    self:EnableMouse(true)
-    self:SetMovable(true)
-  end)
-
-  Core:Subscribe(UPDATE_CONFIG, function (key)
-    if (key == "frameWidth") then
-      self:SetWidth(Core.db.profile.frameWidth)
-    end
-
-    if (key == "frameHeight") then
-      self:SetHeight(Core.db.profile.frameHeight + editBoxMargin)
-    end
-  end)
-
-  Core:Subscribe(REFRESH_CONFIG, function ()
-    pos = Core.db.profile.positionAnchor
-    self:SetPoint(pos.point, nil, pos.relativePoint, pos.xOfs, pos.yOfs)
-  end)
+  end
 end
 
 Core.Components.CreateMoverFrame = function (name, parent)
