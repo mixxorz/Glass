@@ -12,6 +12,9 @@ local UpdateConfig = Constants.ACTIONS.UpdateConfig
 
 local SAVE_FRAME_POSITION = Constants.EVENTS.SAVE_FRAME_POSITION
 
+local ANCHORS = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
+local FLAGS = { [""] = "None", ["OUTLINE"] = "Outline", ["OUTLINE, MONOCHROME"] = "Outline Monochrome" }
+
 function C:OnEnable()
   local options = {
       name = "Glass",
@@ -33,6 +36,7 @@ function C:OnEnable()
                   name = "Font",
                   desc = "Font to use throughout Glass",
                   type = "select",
+                  order = 1.1,
                   dialogControl = "LSM30_Font",
                   values = LSM:HashTable("font"),
                   get = function()
@@ -42,9 +46,21 @@ function C:OnEnable()
                     Core.db.profile.font = input
                     Core:Dispatch(UpdateConfig("font"))
                   end,
-                  order = 1.1,
                 },
-              }
+                fontFlags = {
+                  name = "Font flag",
+                  type = "select",
+                  order = 1.2,
+                  values = FLAGS,
+                  get = function ()
+                    return Core.db.profile.fontFlags
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.fontFlags = input
+                    Core:Dispatch(UpdateConfig("font"))
+                  end
+                }
+              },
             },
             section2 = {
               name = "Frame",
