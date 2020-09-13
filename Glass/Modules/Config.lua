@@ -21,56 +21,7 @@ function C:OnEnable()
         general = {
           name = "General",
           type = "group",
-          args = {
-            section1 = {
-              name = "Frame",
-              type = "group",
-              inline = true,
-              order = 1,
-              args = {
-                frameWidth = {
-                  name = "Width",
-                  desc = "Default: "..Core.defaults.profile.frameWidth,
-                  type = "range",
-                  order = 1.1,
-                  min = 300,
-                  max = 9999,
-                  softMin = 300,
-                  softMax = 800,
-                  step = 1,
-                  get = function ()
-                    return Core.db.profile.frameWidth
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.frameWidth = input
-                    Core:Dispatch(UpdateConfig("frameWidth"))
-                  end
-                },
-                frameHeight = {
-                  name = "Height",
-                  desc = "Default: "..Core.defaults.profile.frameHeight,
-                  type = "range",
-                  order = 1.2,
-                  min = 1,
-                  max = 9999,
-                  softMin = 200,
-                  softMax = 800,
-                  step = 1,
-                  get = function ()
-                    return Core.db.profile.frameHeight
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.frameHeight = input
-                    Core:Dispatch(UpdateConfig("frameHeight"))
-                  end
-                }
-              }
-            }
-          }
-        },
-        messages = {
-          name = "Messages",
-          type = "group",
+          order = 1,
           args = {
             section1 = {
               name = "Appearance",
@@ -93,8 +44,118 @@ function C:OnEnable()
                   end,
                   order = 1.1,
                 },
+              }
+            },
+            section2 = {
+              name = "Frame",
+              type = "group",
+              inline = true,
+              order = 2,
+              args = {
+                frameWidth = {
+                  name = "Width",
+                  desc = "Default: "..Core.defaults.profile.frameWidth,
+                  type = "range",
+                  order = 2.1,
+                  min = 300,
+                  max = 9999,
+                  softMin = 300,
+                  softMax = 800,
+                  step = 1,
+                  get = function ()
+                    return Core.db.profile.frameWidth
+                  end,
+                  set = function (info, input)
+                    Core.db.profile.frameWidth = input
+                    Core:Dispatch(UpdateConfig("frameWidth"))
+                  end
+                },
+                frameHeight = {
+                  name = "Height",
+                  desc = "Default: "..Core.defaults.profile.frameHeight,
+                  type = "range",
+                  order = 2.2,
+                  min = 1,
+                  max = 9999,
+                  softMin = 200,
+                  softMax = 800,
+                  step = 1,
+                  get = function ()
+                    return Core.db.profile.frameHeight
+                  end,
+                  set = function (info, input)
+                    Core.db.profile.frameHeight = input
+                    Core:Dispatch(UpdateConfig("frameHeight"))
+                  end
+                }
+              }
+            }
+          }
+        },
+        editBox = {
+          name = "Edit box",
+          type = "group",
+          order = 2,
+          args = {
+            section1 = {
+              name = "Appearance",
+              type = "group",
+              inline = true,
+              order = 1,
+              args = {
+                editBoxFontSize = {
+                  name = "Font size",
+                  desc = "Default: "..Core.defaults.profile.editBoxFontSize.."\nMin: 1\nMax: 100",
+                  type = "range",
+                  min = 1,
+                  max = 100,
+                  softMin = 6,
+                  softMax = 24,
+                  step = 1,
+                  get = function ()
+                    return Core.db.profile.editBoxFontSize
+                  end,
+                  set = function (info, input)
+                    Core.db.profile.editBoxFontSize = input
+                    Core:Dispatch(UpdateConfig("editBoxFontSize"))
+                  end,
+                  order = 1.1,
+                },
+                editBoxBackgroundOpacity = {
+                  name = "Background opacity",
+                  desc = "Default: "..Core.defaults.profile.editBoxBackgroundOpacity,
+                  type = "range",
+                  order = 1.3,
+                  min = 0,
+                  max = 1,
+                  softMin = 0,
+                  softMax = 1,
+                  step = 0.01,
+                  get = function ()
+                    return Core.db.profile.editBoxBackgroundOpacity
+                  end,
+                  set = function (info, input)
+                    Core.db.profile.editBoxBackgroundOpacity = input
+                    Core:Dispatch(UpdateConfig("editBoxBackgroundOpacity"))
+                  end,
+                },
+              }
+            }
+          },
+        },
+        messages = {
+          name = "Messages",
+          type = "group",
+          order = 3,
+          args = {
+            section1 = {
+              name = "Appearance",
+              type = "group",
+              inline = true,
+              order = 1,
+              args = {
                 messageFontSize = {
-                  name = "Size",
+                  name = "Font size",
                   desc = "Default: "..Core.defaults.profile.messageFontSize.."\nMin: 1\nMax: 100",
                   type = "range",
                   min = 1,
