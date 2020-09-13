@@ -51,5 +51,6 @@ Glass\Components\SlidingMessageFrame.lua
 Glass\Modules\Config.lua
 Glass\Modules\Fonts.lua
 Glass\Modules\Hyperlinks.lua
+Glass\Modules\News.lua
 Glass\Modules\TextProcessing.lua
 Glass\Modules\UIManager.lua

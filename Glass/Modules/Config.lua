@@ -6,6 +6,7 @@ local AceConfigDialog = Core.Libs.AceConfigDialog
 local AceDBOptions = Core.Libs.AceDBOptions
 local LSM = Core.Libs.LSM
 
+local OpenNews = Constants.ACTIONS.OpenNews
 local RefreshConfig = Constants.ACTIONS.RefreshConfig
 local UnlockMover = Constants.ACTIONS.UnlockMover
 local UpdateConfig = Constants.ACTIONS.UpdateConfig
@@ -48,7 +49,7 @@ function C:OnEnable()
                   name = "What’s new",
                   type = "execute",
                   func = function()
-                    Utils.print('Click what new')
+                    Core:Dispatch(OpenNews())
                   end,
                   order = 2.2,
                 },
