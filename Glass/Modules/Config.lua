@@ -1,4 +1,4 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 local C = Core:GetModule("Config")
 
 local AceConfig = Core.Libs.AceConfig
@@ -32,16 +32,54 @@ function C:OnEnable()
           order = 1,
           args = {
             section1 = {
+              name = "Info",
+              type = "group",
+              inline = true,
+              order = 2,
+              args = {
+                version = {
+                  name = " |cffffd100Version:|r  "..Core.Version,
+                  type = "description",
+                  width = "double",
+                  fontSize = "medium",
+                  order = 2.1,
+                },
+                whatsNew = {
+                  name = "What’s new",
+                  type = "execute",
+                  func = function()
+                    Utils.print('Click what new')
+                  end,
+                  order = 2.2,
+                },
+                slashCmd = {
+                  name = "|c00DFBA69/glass|r  |cff808080...............|r  Open config window\n"..
+                         "|c00DFBA69/glass lock|r  |cff808080.......|r  Unlock Glass frame\n",
+                  type = "description",
+                  width = "double",
+                  order = 2.3,
+                },
+                unlockFrame = {
+                  name = "Unlock frame",
+                  type = "execute",
+                  func = function()
+                    Core:Dispatch(UnlockMover())
+                  end,
+                  order = 2.4,
+                },
+              }
+            },
+            section2 = {
               name = "Appearance",
               type = "group",
               inline = true,
-              order = 1,
+              order = 3,
               args = {
                 font = {
                   name = "Font",
                   desc = "Font to use throughout Glass",
                   type = "select",
-                  order = 1.1,
+                  order = 3.1,
                   dialogControl = "LSM30_Font",
                   values = LSM:HashTable("font"),
                   get = function()
@@ -55,7 +93,7 @@ function C:OnEnable()
                 fontFlags = {
                   name = "Font flag",
                   type = "select",
-                  order = 1.2,
+                  order = 3.2,
                   values = FLAGS,
                   get = function ()
                     return Core.db.profile.fontFlags
@@ -67,18 +105,18 @@ function C:OnEnable()
                 }
               },
             },
-            section2 = {
+            section3 = {
               name = "Frame",
               type = "group",
               inline = true,
-              order = 2,
+              order = 4,
               args = {
                 frameWidth = {
                   name = "Width",
                   desc = "Default: "..Core.defaults.profile.frameWidth..
                     "\nMin: 100",
                   type = "range",
-                  order = 2.1,
+                  order = 4.1,
                   min = 100,
                   max = 9999,
                   softMin = 300,
@@ -96,7 +134,7 @@ function C:OnEnable()
                   name = "Height",
                   desc = "Default: "..Core.defaults.profile.frameHeight,
                   type = "range",
-                  order = 2.2,
+                  order = 4.2,
                   min = 1,
                   max = 9999,
                   softMin = 200,
@@ -114,7 +152,7 @@ function C:OnEnable()
                   name = "X offset",
                   desc = "Default: "..Core.defaults.profile.positionAnchor.xOfs,
                   type = "range",
-                  order = 2.3,
+                  order = 4.3,
                   min = -9999,
                   max = 9999,
                   softMin = -2000,
@@ -132,7 +170,7 @@ function C:OnEnable()
                   name = "Y offset",
                   desc = "Default: "..Core.defaults.profile.positionAnchor.yOfs,
                   type = "range",
-                  order = 2.4,
+                  order = 4.4,
                   min = -9999,
                   max = 9999,
                   softMin = -2000,
@@ -150,7 +188,7 @@ function C:OnEnable()
                   name = "Anchor",
                   desc = "Default: "..Core.db.profile.positionAnchor.point,
                   type = "select",
-                  order = 2.5,
+                  order = 4.5,
                   values = ANCHORS,
                   get = function ()
                     return Core.db.profile.positionAnchor.point
@@ -487,6 +525,7 @@ function C:OnEnable()
   }
 
   AceConfig:RegisterOptionsTable("Glass", options)
+  AceConfigDialog:SetDefaultSize("Glass", 780, 500)
 
   self:RegisterChatCommand("glass", "OnSlashCommand")
 

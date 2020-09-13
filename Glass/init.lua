@@ -23,6 +23,10 @@ Core.Libs = {
   lodash = _G.LibStub("lodash.wow")
 }
 Core.Components = {}
+Core.Version = "@project-version@"
+--@debug@--
+Core.Version = "DEBUG"
+--@end-debug@--
 
 -- Modules
 Core:NewModule("Config", "AceConsole-3.0")
