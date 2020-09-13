@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.5.0-alpha1 (2020-09-14)
 
 * Add more customization options (#107)
 * Add in-game changelog (#108)
