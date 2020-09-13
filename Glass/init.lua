@@ -63,6 +63,7 @@ Core.defaults = {
     chatShowOnMouseOver = true,
     chatFadeInDuration = 0.6,
     chatFadeOutDuration = 0.6,
+    chatSlideInDuration = 0.3,
 
     mouseOverTooltips = true,
     iconTextureYOffset = 4,

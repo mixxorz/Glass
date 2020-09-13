@@ -454,13 +454,17 @@ function SlidingMessageFrameMixin:Update()
       local startOffset = self:GetVerticalScroll()
       local endOffset = newHeight - self:GetHeight() + self.config.overflowHeight
 
-      self.state.prevEasingHandle = LibEasing:Ease(
-        function (n) self:SetVerticalScroll(n) end,
-        startOffset,
-        endOffset,
-        0.3,
-        LibEasing.OutCubic
-      )
+      if Core.db.profile.chatSlideInDuration > 0 then
+        self.state.prevEasingHandle = LibEasing:Ease(
+          function (n) self:SetVerticalScroll(n) end,
+          startOffset,
+          endOffset,
+          Core.db.profile.chatSlideInDuration,
+          LibEasing.OutCubic
+        )
+      else
+        self:SetVerticalScroll(endOffset)
+      end
     else
       -- Otherwise show "Unread messages" notification
       self.state.unreadMessages = true

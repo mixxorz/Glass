@@ -421,6 +421,23 @@ function C:OnEnable()
                     Core.db.profile.chatFadeOutDuration = input
                     Core:Dispatch(UpdateConfig("chatFadeOutDuration"))
                   end
+                },
+                slideInDuration = {
+                  name = "Slide in duration",
+                  desc = "Default: "..Core.defaults.profile.chatSlideInDuration,
+                  type = "range",
+                  order = 2.4,
+                  min = 0,
+                  max = 30,
+                  softMin = 0,
+                  softMax = 5,
+                  step = 0.05,
+                  get = function ()
+                    return Core.db.profile.chatSlideInDuration
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.chatSlideInDuration = input
+                  end
                 }
               }
             },
