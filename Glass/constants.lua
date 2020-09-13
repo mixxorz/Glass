@@ -34,6 +34,7 @@ Constants.EVENTS = {
   LOCK_MOVER = "Glass/LOCK_MOVER",
   MOUSE_ENTER = "Glass/MOUSE_ENTER",
   MOUSE_LEAVE = "Glass/MOUSE_LEAVE",
+  OPEN_NEWS = "Glass/OPEN_NEWS",
   REFRESH_CONFIG = "Glass/REFRESH_CONFIG",
   SAVE_FRAME_POSITION = "Glass/SAVE_FRAME_POSITION",
   UNLOCK_MOVER = "Glass/UNLOCK_MOVER",
@@ -58,6 +59,9 @@ Constants.ACTIONS = {
   end,
   MouseLeave = function ()
     return Constants.EVENTS.MOUSE_LEAVE
+  end,
+  OpenNews = function ()
+    return Constants.EVENTS.OPEN_NEWS
   end,
   RefreshConfig = function ()
     return Constants.EVENTS.REFRESH_CONFIG

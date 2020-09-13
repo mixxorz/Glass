@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased (2020-09-13)
+## Unreleased
 
 * Add more customization options (#107)
+* Add in-game changelog (#108)
 
 ## 1.4.2 (2020-09-09)
 
