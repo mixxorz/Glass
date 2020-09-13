@@ -6,6 +6,8 @@ local HyperlinkClick = Constants.ACTIONS.HyperlinkClick
 local HyperlinkEnter = Constants.ACTIONS.HyperlinkEnter
 local HyperlinkLeave = Constants.ACTIONS.HyperlinkLeave
 
+local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
+
 -- luacheck: push ignore 113
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
@@ -16,8 +18,8 @@ local MessageLineMixin = {}
 
 function MessageLineMixin:Init()
   self:SetWidth(Core.db.profile.frameWidth)
-  self:SetFadeInDuration(0.6)
-  self:SetFadeOutDuration(0.6)
+  self:SetFadeInDuration(Core.db.profile.chatFadeInDuration)
+  self:SetFadeOutDuration(Core.db.profile.chatFadeOutDuration)
 
   -- Gradient background
   if self.leftBg == nil then
@@ -32,11 +34,13 @@ function MessageLineMixin:Init()
     Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, Core.db.profile.chatBackgroundOpacity
   )
 
+  local rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
+
   if self.centerBg == nil then
     self.centerBg = self:CreateTexture(nil, "BACKGROUND")
   end
   self.centerBg:SetPoint("LEFT", 50, 0)
-  self.centerBg:SetPoint("RIGHT", -250, 0)
+  self.centerBg:SetPoint("RIGHT", -rightBgWidth, 0)
   self.centerBg:SetColorTexture(
     Colors.codGray.r,
     Colors.codGray.g,
@@ -48,7 +52,7 @@ function MessageLineMixin:Init()
     self.rightBg = self:CreateTexture(nil, "BACKGROUND")
   end
   self.rightBg:SetPoint("RIGHT")
-  self.rightBg:SetWidth(250)
+  self.rightBg:SetWidth(rightBgWidth)
   self.rightBg:SetColorTexture(1, 1, 1, 1)
   self.rightBg:SetGradientAlpha(
     "HORIZONTAL",
@@ -78,12 +82,26 @@ function MessageLineMixin:Init()
   self:SetScript("OnHyperlinkLeave", function (_, link)
     Core:Dispatch(HyperlinkLeave(link))
   end)
+
+  if self.subscriptions == nil then
+    self.subscriptions = {
+      Core:Subscribe(UPDATE_CONFIG, function (key)
+        if key == "chatFadeInDuration" then
+          self:SetFadeInDuration(Core.db.profile.chatFadeInDuration)
+        end
+
+        if key == "chatFadeOutDuration" then
+          self:SetFadeOutDuration(Core.db.profile.chatFadeOutDuration)
+        end
+      end)
+    }
+  end
 end
 
 ---
 -- Update height based on text height
 function MessageLineMixin:UpdateFrame()
-  local Ypadding = self.text:GetLineHeight() * 0.25
+  local Ypadding = self.text:GetLineHeight() * Core.db.profile.messageLinePadding
   local messageLineHeight = (self.text:GetStringHeight() + Ypadding * 2)
   self:SetHeight(messageLineHeight)
   self.leftBg:SetHeight(messageLineHeight)
@@ -92,6 +110,10 @@ function MessageLineMixin:UpdateFrame()
 
   self:SetWidth(Core.db.profile.frameWidth)
   self.text:SetWidth(Core.db.profile.frameWidth - Constants.TEXT_XPADDING * 2)
+
+  local rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
+  self.centerBg:SetPoint("RIGHT", -rightBgWidth, 0)
+  self.rightBg:SetWidth(rightBgWidth)
 end
 
 ---

@@ -33,14 +33,23 @@ function EditBoxMixin:Init(parent)
 
   -- New styling
   self:ClearAllPoints()
-  self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, -5)
+
+  self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+
+  if Core.db.profile.editBoxAnchor.position == "ABOVE" then
+    self:ClearAllPoints()
+    self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+  end
+
   self:SetFontObject("GlassEditBoxFont")
   self:SetWidth(Core.db.profile.frameWidth - 8 * 2)
   self.header:SetFontObject("GlassEditBoxFont")
   self.header:SetPoint("LEFT", 8, 0)
 
   local bg = self:CreateTexture(nil, "BACKGROUND")
-  bg:SetColorTexture(Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0.6)
+  bg:SetColorTexture(
+    Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, Core.db.profile.editBoxBackgroundOpacity
+  )
   bg:SetAllPoints()
 
   local Ypadding = self.header:GetLineHeight() * 0.66
@@ -95,7 +104,7 @@ function EditBoxMixin:Init(parent)
   end, true)
 
   Core:Subscribe(UPDATE_CONFIG, function (key)
-    if key == "font" or key == "messageFontSize" then
+    if key == "font" or key == "editBoxFontSize" then
       Ypadding = self.header:GetLineHeight() * 0.66
       self:SetHeight(self.header:GetLineHeight() + Ypadding * 2)
       self:SetTextInsets()
@@ -103,6 +112,22 @@ function EditBoxMixin:Init(parent)
 
     if key == "frameWidth" then
       self:SetWidth(Core.db.profile.frameWidth - 8 * 2)
+    end
+
+    if key == "editBoxBackgroundOpacity" then
+      bg:SetColorTexture(
+        Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, Core.db.profile.editBoxBackgroundOpacity
+      )
+    end
+
+    if key == "editBoxAnchor" then
+      if Core.db.profile.editBoxAnchor.position == "ABOVE" then
+        self:ClearAllPoints()
+        self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+      else
+        self:ClearAllPoints()
+        self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+      end
     end
   end)
 end

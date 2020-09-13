@@ -158,12 +158,14 @@ function ChatTabMixin:Init(slidingMessageFrame)
   end, "MENU")
 
   -- Listeners
-  if self.unsubscribe == nil then
-    self.unsubscribe = Core:Subscribe(UPDATE_CONFIG, function (key)
-      if key == "frameWidth" or key == "frameHeight" or key == "font" or key == "messageFontSize" then
-        self:SetWidth()
-      end
-    end)
+  if self.subscriptions == nil then
+    self.subscriptions = {
+      Core:Subscribe(UPDATE_CONFIG, function (key)
+        if key == "frameWidth" or key == "frameHeight" or key == "font" or key == "messageFontSize" then
+          self:SetWidth()
+        end
+      end)
+    }
   end
 end
 
