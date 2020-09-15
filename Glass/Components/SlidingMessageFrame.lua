@@ -17,6 +17,7 @@ local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
 local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 -- luacheck: push ignore 113
+local C_Timer = C_Timer
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
 local Mixin = Mixin
@@ -225,9 +226,18 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     self.overlay.newMessageHighlightFrame:QuickHide()
   end
 
-  self.timeElapsed = 0
-  self:SetScript("OnUpdate", function (frame, elapsed)
-    self:OnUpdate(elapsed)
+  self.locked = false
+  C_Timer.NewTicker(0.1, function ()
+    if #self.state.incomingMessages > 0 and not self.locked then
+      self.locked = true
+      local incoming = {}
+      for _, message in ipairs(self.state.incomingMessages) do
+        table.insert(incoming, message)
+      end
+      self.state.incomingMessages = {}
+      self:Update(incoming)
+      self.locked = false
+    end
   end)
 
   -- Scrolling
@@ -418,85 +428,71 @@ function SlidingMessageFrameMixin:AddMessage(...)
   table.insert(self.state.incomingMessages, args)
 end
 
-function SlidingMessageFrameMixin:OnUpdate(elapsed)
-  self.timeElapsed = self.timeElapsed + elapsed
-  while (self.timeElapsed > 0.1) do
-    self.timeElapsed = self.timeElapsed - 0.1
-    self:Update()
+function SlidingMessageFrameMixin:Update(incoming)
+  -- Create new message frame for each message
+  local newMessages = {}
+
+  for _, message in ipairs(incoming) do
+    table.insert(newMessages, self:CreateMessageFrame(unpack(message)))
   end
-end
 
-function SlidingMessageFrameMixin:Update()
-  -- Make sure previous iteration is complete before running again
-  if #self.state.incomingMessages > 0 then
-    -- Create new message frame for each message
-    local newMessages = {}
+  -- Update slider offsets animation
+  local offset = reduce(newMessages, function (acc, message)
+    return acc + message:GetHeight()
+  end, 0)
 
-    for _, message in ipairs(self.state.incomingMessages) do
-      table.insert(newMessages, self:CreateMessageFrame(unpack(message)))
+  local newHeight = self.slider:GetHeight() + offset
+  self.slider:SetHeight(newHeight)
+
+  -- Display and run everything
+  if self.state.scrollAtBottom then
+    -- Only play slide up if not scrolling
+    if self.state.prevEasingHandle ~= nil then
+      LibEasing:StopEasing(self.state.prevEasingHandle)
     end
 
-    -- Update slider offsets animation
-    local offset = reduce(newMessages, function (acc, message)
-      return acc + message:GetHeight()
-    end, 0)
+    local startOffset = self:GetVerticalScroll()
+    local endOffset = newHeight - self:GetHeight() + self.config.overflowHeight
 
-    local newHeight = self.slider:GetHeight() + offset
-    self.slider:SetHeight(newHeight)
-
-    -- Display and run everything
-    if self.state.scrollAtBottom then
-      -- Only play slide up if not scrolling
-      if self.state.prevEasingHandle ~= nil then
-        LibEasing:StopEasing(self.state.prevEasingHandle)
-      end
-
-      local startOffset = self:GetVerticalScroll()
-      local endOffset = newHeight - self:GetHeight() + self.config.overflowHeight
-
-      if Core.db.profile.chatSlideInDuration > 0 then
-        self.state.prevEasingHandle = LibEasing:Ease(
-          function (n) self:SetVerticalScroll(n) end,
-          startOffset,
-          endOffset,
-          Core.db.profile.chatSlideInDuration,
-          LibEasing.OutCubic
-        )
-      else
-        self:SetVerticalScroll(endOffset)
-      end
+    if Core.db.profile.chatSlideInDuration > 0 then
+      self.state.prevEasingHandle = LibEasing:Ease(
+        function (n) self:SetVerticalScroll(n) end,
+        startOffset,
+        endOffset,
+        Core.db.profile.chatSlideInDuration,
+        LibEasing.OutCubic
+      )
     else
-      -- Otherwise show "Unread messages" notification
-      self.state.unreadMessages = true
-      self.overlay:Show()
-      self.overlay.newMessageHighlightFrame:Show()
-      if not self.state.mouseOver then
-        self.overlay:HideDelay(Core.db.profile.chatHoldTime)
-      end
+      self:SetVerticalScroll(endOffset)
     end
-
-    for _, message in ipairs(newMessages) do
-      message:Show()
-      if not self.state.mouseOver then
-        message:HideDelay(Core.db.profile.chatHoldTime)
-      end
-      table.insert(self.state.messages, message)
+  else
+    -- Otherwise show "Unread messages" notification
+    self.state.unreadMessages = true
+    self.overlay:Show()
+    self.overlay.newMessageHighlightFrame:Show()
+    if not self.state.mouseOver then
+      self.overlay:HideDelay(Core.db.profile.chatHoldTime)
     end
+  end
 
-    -- Release old messages
-    local historyLimit = 128
-    if #self.state.messages > historyLimit then
-      local overflow = #self.state.messages - historyLimit
-      local oldMessages = take(self.state.messages, overflow)
-      self.state.messages = drop(self.state.messages, overflow)
-
-      for _, message in ipairs(oldMessages) do
-        self.messageFramePool:Release(message)
-      end
+  for _, message in ipairs(newMessages) do
+    message:Show()
+    if not self.state.mouseOver then
+      message:HideDelay(Core.db.profile.chatHoldTime)
     end
+    table.insert(self.state.messages, message)
+  end
 
-    -- Reset
-    self.state.incomingMessages = {}
+  -- Release old messages
+  local historyLimit = 128
+  if #self.state.messages > historyLimit then
+    local overflow = #self.state.messages - historyLimit
+    local oldMessages = take(self.state.messages, overflow)
+    self.state.messages = drop(self.state.messages, overflow)
+
+    for _, message in ipairs(oldMessages) do
+      self.messageFramePool:Release(message)
+    end
   end
 end
 
