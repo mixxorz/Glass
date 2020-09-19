@@ -41,10 +41,13 @@ Glass\Components\ChatDock.lua
 Glass\Components\ChatTab.lua
 Glass\Components\EditBox.lua
 Glass\Components\FadingFrame.lua
+Glass\Components\GradientBackground.lua
 Glass\Components\MainContainerFrame.lua
 Glass\Components\MessageLine.lua
 Glass\Components\MoverDialog.lua
 Glass\Components\MoverFrame.lua
+Glass\Components\NewMessageAlertFrame.lua
+Glass\Components\ScrollOverlayFrame.lua
 Glass\Components\SlidingMessageFrame.lua
 
 # Modules

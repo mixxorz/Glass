@@ -7,10 +7,8 @@ local LibEasing = Core.Libs.LibEasing
 local lodash = Core.Libs.lodash
 local drop, reduce, take = lodash.drop, lodash.reduce, lodash.take
 
-local CreateFadingFrame = Core.Components.CreateFadingFrame
 local CreateMessageLinePool = Core.Components.CreateMessageLinePool
-
-local Colors = Constants.COLORS
+local CreateScrollOverlayFrame = Core.Components.CreateScrollOverlayFrame
 
 local MOUSE_ENTER = Constants.EVENTS.MOUSE_ENTER
 local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
@@ -81,74 +79,15 @@ function SlidingMessageFrameMixin:Init(chatFrame)
 
   -- Overlay
   if self.overlay == nil then
-    local overlayOpacity = 0.65
-
-    self.overlay = CreateFadingFrame("Frame", nil, self)
-    self.overlay:SetHeight(64)
-    self.overlay:SetPoint("TOPLEFT", 0, (self.config.height - 62) * -1)
-    self.overlay:SetPoint("TOPRIGHT", 0, (self.config.height - 62) * -1)
-    self.overlay:SetFadeInDuration(0.3)
-    self.overlay:SetFadeOutDuration(0.15)
+    self.overlay = CreateScrollOverlayFrame(self)
     self.overlay:QuickHide()
 
-    self.overlay.mask = self.overlay:CreateMaskTexture()
-    self.overlay.mask:SetTexture("Interface\\Addons\\Glass\\Assets\\overlayMask", "CLAMP", "CLAMPTOBLACKADDITIVE")
-    self.overlay.mask:SetSize(16, 64)
-    self.overlay.mask:SetPoint("CENTER", 0, -32)
-
-    self.overlay.leftBg = self.overlay:CreateTexture(nil, "BACKGROUND")
-    self.overlay.leftBg:SetPoint("TOPLEFT")
-    self.overlay.leftBg:SetPoint("BOTTOMLEFT")
-    self.overlay.leftBg:SetWidth(15)
-    self.overlay.leftBg:SetColorTexture(1, 1, 1, 1)
-    self.overlay.leftBg:SetGradientAlpha(
-      "HORIZONTAL",
-      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0,
-      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, overlayOpacity
-    )
-    self.overlay.leftBg:AddMaskTexture(self.overlay.mask)
-
-    self.overlay.centerBg = self.overlay:CreateTexture(nil, "BACKGROUND")
-    self.overlay.centerBg:SetPoint("TOPLEFT", 15, 0)
-    self.overlay.centerBg:SetPoint("BOTTOMRIGHT", -15, 0)
-    self.overlay.centerBg:SetColorTexture(
-      Colors.codGray.r,
-      Colors.codGray.g,
-      Colors.codGray.b,
-      overlayOpacity
-    )
-    self.overlay.centerBg:AddMaskTexture(self.overlay.mask)
-
-    self.overlay.rightBg = self.overlay:CreateTexture(nil, "BACKGROUND")
-    self.overlay.rightBg:SetPoint("TOPRIGHT")
-    self.overlay.rightBg:SetPoint("BOTTOMRIGHT")
-    self.overlay.rightBg:SetWidth(15)
-    self.overlay.rightBg:SetColorTexture(1, 1, 1, 1)
-    self.overlay.rightBg:SetGradientAlpha(
-      "HORIZONTAL",
-      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, overlayOpacity,
-      Colors.codGray.r, Colors.codGray.g, Colors.codGray.b, 0
-    )
-    self.overlay.rightBg:AddMaskTexture(self.overlay.mask)
-
-    -- Down arrow icon
-    self.overlay.icon = self.overlay:CreateTexture(nil, "ARTWORK")
-    self.overlay.icon:SetTexture("Interface\\Addons\\Glass\\Glass\\Assets\\snapToBottomIcon")
-    self.overlay.icon:SetSize(16, 16)
-    self.overlay.icon:SetPoint("BOTTOMLEFT", 15, 5)
-
-    -- See new messages click area
-    self.overlay.snapToBottomFrame = CreateFrame("Frame", nil, self.overlay)
-    self.overlay.snapToBottomFrame:SetHeight(20)
-    self.overlay.snapToBottomFrame:SetPoint("BOTTOMLEFT")
-    self.overlay.snapToBottomFrame:SetPoint("BOTTOMRIGHT")
-
     -- Snap to bottom on click
-    self.overlay.snapToBottomFrame:SetScript("OnMouseDown", function ()
+    self.overlay:SetScript("OnClickSnapFrame", function ()
       self.state.scrollAtBottom = true
       self.state.unreadMessages = false
       self.overlay:Hide()
-      self.overlay.newMessageHighlightFrame:Hide()
+      self.overlay:HideNewMessageAlert()
 
       local startOffset = math.max(
         self:GetVerticalScrollRange() - self.config.height * 2,
@@ -167,63 +106,6 @@ function SlidingMessageFrameMixin:Init(chatFrame)
         end
       )
     end)
-
-    -- See new messages frame
-    self.overlay.newMessageHighlightFrame = CreateFadingFrame("Frame", nil, self.overlay)
-    self.overlay.newMessageHighlightFrame:SetHeight(20)
-    self.overlay.newMessageHighlightFrame:SetPoint("BOTTOMLEFT")
-    self.overlay.newMessageHighlightFrame:SetPoint("BOTTOMRIGHT")
-    self.overlay.newMessageHighlightFrame:SetFadeInDuration(0.15)
-    self.overlay.newMessageHighlightFrame:SetFadeOutDuration(0.15)
-
-    -- New messages text
-    self.overlay.newMessageHighlightFrame.text = self.overlay.newMessageHighlightFrame:CreateFontString(
-      nil, "ARTWORK", "GlassMessageFont"
-    )
-    self.overlay.newMessageHighlightFrame.text:SetTextColor(Colors.apache.r, Colors.apache.g, Colors.apache.b)
-    self.overlay.newMessageHighlightFrame.text:SetPoint("BOTTOMLEFT", 30, 10)
-    self.overlay.newMessageHighlightFrame.text:SetText("Unread messages")
-
-    -- Highlight line
-    self.overlay.newMessageHighlightFrame.leftBg = self.overlay.newMessageHighlightFrame:CreateTexture(
-      nil, "BACKGROUND"
-    )
-    self.overlay.newMessageHighlightFrame.leftBg:SetPoint("BOTTOMLEFT")
-    self.overlay.newMessageHighlightFrame.leftBg:SetHeight(1)
-    self.overlay.newMessageHighlightFrame.leftBg:SetWidth(15)
-    self.overlay.newMessageHighlightFrame.leftBg:SetColorTexture(1, 1, 1, 1)
-    self.overlay.newMessageHighlightFrame.leftBg:SetGradientAlpha(
-      "HORIZONTAL",
-      Colors.apache.r, Colors.apache.g, Colors.apache.b, 0,
-      Colors.apache.r, Colors.apache.g, Colors.apache.b, overlayOpacity
-    )
-
-    self.overlay.newMessageHighlightFrame.centerBg = self.overlay.newMessageHighlightFrame:CreateTexture(
-      nil, "BACKGROUND"
-    )
-    self.overlay.newMessageHighlightFrame.centerBg:SetHeight(1)
-    self.overlay.newMessageHighlightFrame.centerBg:SetPoint("BOTTOMLEFT", 15, 0)
-    self.overlay.newMessageHighlightFrame.centerBg:SetPoint("BOTTOMRIGHT", -15, 0)
-    self.overlay.newMessageHighlightFrame.centerBg:SetColorTexture(
-      Colors.apache.r,
-      Colors.apache.g,
-      Colors.apache.b,
-      overlayOpacity
-    )
-
-    self.overlay.newMessageHighlightFrame.rightBg = self.overlay.newMessageHighlightFrame:CreateTexture(
-      nil, "BACKGROUND"
-    )
-    self.overlay.newMessageHighlightFrame.rightBg:SetPoint("BOTTOMRIGHT")
-    self.overlay.newMessageHighlightFrame.rightBg:SetHeight(1)
-    self.overlay.newMessageHighlightFrame.rightBg:SetWidth(15)
-    self.overlay.newMessageHighlightFrame.rightBg:SetColorTexture(1, 1, 1, 1)
-    self.overlay.newMessageHighlightFrame.rightBg:SetGradientAlpha(
-      "HORIZONTAL",
-      Colors.apache.r, Colors.apache.g, Colors.apache.b, overlayOpacity,
-      Colors.apache.r, Colors.apache.g, Colors.apache.b, 0
-    )
-    self.overlay.newMessageHighlightFrame:QuickHide()
   end
 
   self.locked = false
@@ -269,7 +151,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
       -- include overflow to account for slide up animations
       self:SetHeight(self.config.height + self.config.overflowHeight)
       self.overlay:Hide()
-      self.overlay.newMessageHighlightFrame:Hide()
+      self.overlay:HideNewMessageAlert()
       self.state.unreadMessages = false
     else
       -- If not, the height should fit the frame exactly so messages don't spill
@@ -383,7 +265,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
             self:UpdateScrollChildRect()
             self:SetVerticalScroll(self:GetVerticalScrollRange() + self.config.overflowHeight)
             self.overlay:Hide()
-            self.overlay.newMessageHighlightFrame:Hide()
+            self.overlay:HideNewMessageAlert()
           end
 
           if key == "chatBackgroundOpacity" then
@@ -469,7 +351,7 @@ function SlidingMessageFrameMixin:Update(incoming)
     -- Otherwise show "Unread messages" notification
     self.state.unreadMessages = true
     self.overlay:Show()
-    self.overlay.newMessageHighlightFrame:Show()
+    self.overlay:ShowNewMessageAlert()
     if not self.state.mouseOver then
       self.overlay:HideDelay(Core.db.profile.chatHoldTime)
     end

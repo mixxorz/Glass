@@ -37,42 +37,9 @@ function ChatDockMixin:Init(parent)
   self.scrollFrame:SetPoint("TOPLEFT", _G.ChatFrame2Tab, "TOPRIGHT")
   self.scrollFrame.child:SetHeight(Constants.DOCK_HEIGHT)
 
+  -- Gradient background
   local opacity = 0.4
-
-  self.leftBg = self:CreateTexture(nil, "BACKGROUND")
-  self.leftBg:SetPoint("LEFT")
-  self.leftBg:SetWidth(50)
-  self.leftBg:SetHeight(Constants.DOCK_HEIGHT)
-  self.leftBg:SetColorTexture(1, 1, 1, 1)
-  self.leftBg:SetGradientAlpha(
-    "HORIZONTAL",
-    Colors.black.r, Colors.black.g, Colors.black.b, 0,
-    Colors.black.r, Colors.black.g, Colors.black.b, opacity
-  )
-
-  local rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
-
-  self.centerBg = self:CreateTexture(nil, "BACKGROUND")
-  self.centerBg:SetPoint("LEFT", 50, 0)
-  self.centerBg:SetPoint("RIGHT", -rightBgWidth, 0)
-  self.centerBg:SetHeight(Constants.DOCK_HEIGHT)
-  self.centerBg:SetColorTexture(
-    Colors.black.r,
-    Colors.black.g,
-    Colors.black.b,
-    opacity
-  )
-
-  self.rightBg = self:CreateTexture(nil, "BACKGROUND")
-  self.rightBg:SetPoint("RIGHT")
-  self.rightBg:SetWidth(rightBgWidth)
-  self.rightBg:SetHeight(Constants.DOCK_HEIGHT)
-  self.rightBg:SetColorTexture(1, 1, 1, 1)
-  self.rightBg:SetGradientAlpha(
-    "HORIZONTAL",
-    Colors.black.r, Colors.black.g, Colors.black.b, opacity,
-    Colors.black.r, Colors.black.g, Colors.black.b, 0
-  )
+  self:SetGradientBackground(50, 250, Colors.black, opacity)
 
   -- Override drag behaviour
   -- Disable undocking frames
@@ -113,9 +80,7 @@ function ChatDockMixin:Init(parent)
         if key == "frameWidth" then
           self:SetWidth(Core.db.profile.frameWidth)
 
-          rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
-          self.centerBg:SetPoint("RIGHT", -rightBgWidth, 0)
-          self.rightBg:SetWidth(rightBgWidth)
+          self:SetGradientBackground(50, 250, Colors.black, opacity)
         end
       end)
     }
@@ -130,11 +95,13 @@ Core.Components.CreateChatDock = function (parent)
   end
 
   local FadingFrameMixin = Core.Components.FadingFrameMixin
+  local GradientBackgroundMixin = Core.Components.GradientBackgroundMixin
 
   isCreated = true
-  local object = Mixin(GeneralDockManager, FadingFrameMixin, ChatDockMixin)
+  local object = Mixin(GeneralDockManager, FadingFrameMixin, GradientBackgroundMixin, ChatDockMixin)
   AceHook:Embed(object)
   FadingFrameMixin.Init(object)
+  GradientBackgroundMixin.Init(object)
   ChatDockMixin.Init(object, parent)
   return object
 end
