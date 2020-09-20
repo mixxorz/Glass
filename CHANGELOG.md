@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+* Refactor gradient backgrounds (#109)
+* Refactor scroll overlay (#109)
+* Refactor new message alert (#109)
+* Refactor OnUpdate handler (#109)
+
 ## 1.5.0 (2020-09-14)
 
 * Add more customization options (#107)

@@ -27,9 +27,6 @@ function MainContainerFrameMixin:Init()
   self.bg:SetAllPoints()
   --@end-debug@
 
-  self.timeElapsed = 0
-  self:SetScript("OnUpdate", self.OnUpdate)
-
   Core:Subscribe(UPDATE_CONFIG, function (key)
     if key == "frameWidth" then
       self:SetWidth(Core.db.profile.frameWidth)
@@ -41,22 +38,16 @@ function MainContainerFrameMixin:Init()
   end)
 end
 
-function MainContainerFrameMixin:OnUpdate(elapsed)
-  self.timeElapsed = self.timeElapsed + elapsed
-
-  while (self.timeElapsed > 0.1) do
-    self.timeElapsed = self.timeElapsed - 0.1
-
-    -- Mouse over tracking
-    if self.state.mouseOver ~= MouseIsOver(self) then
-      if not self.state.mouseOver then
-        Core:Dispatch(MouseEnter())
-      else
-        Core:Dispatch(MouseLeave())
-      end
-
-      self.state.mouseOver = not self.state.mouseOver
+function MainContainerFrameMixin:OnFrame()
+  -- Mouse over tracking
+  if self.state.mouseOver ~= MouseIsOver(self) then
+    if not self.state.mouseOver then
+      Core:Dispatch(MouseEnter())
+    else
+      Core:Dispatch(MouseLeave())
     end
+
+    self.state.mouseOver = not self.state.mouseOver
   end
 end
 
