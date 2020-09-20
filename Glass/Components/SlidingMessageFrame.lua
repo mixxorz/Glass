@@ -36,10 +36,12 @@ function SlidingMessageFrameMixin:Init(chatFrame)
   self.state = {
     mouseOver = false,
     showingTooltip = false,
-    prevLine = nil,
     prevEasingHandle = nil,
+    incomingScrollbackMessages = {},
     incomingMessages = {},
     messages = {},
+    head = nil,
+    tail = nil,
     isCombatLog = false,
     scrollAtBottom = true,
     unreadMessages = false,
@@ -178,6 +180,10 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     self:AddMessage(...)
   end, true)
 
+  self:Hook(chatFrame.historyBuffer, "PushBack", function (_, message)
+    self:BackFillMessage(nil, message.message, message.r, message.g, message.b)
+  end, true)
+
   -- Hide the default chat frame and show the sliding message frame instead
   self:RawHook(chatFrame, "Show", function ()
     self:Show()
@@ -279,15 +285,6 @@ function SlidingMessageFrameMixin:CreateMessageFrame(frame, text, red, green, bl
   blue = blue or 1
 
   local message = self.messageFramePool:Acquire()
-  message:SetPoint("BOTTOMLEFT")
-
-  -- Attach previous message to this one
-  if self.state.prevLine then
-    self.state.prevLine:ClearAllPoints()
-    self.state.prevLine:SetPoint("BOTTOMLEFT", message, "TOPLEFT")
-  end
-
-  self.state.prevLine = message
 
   message.text:SetTextColor(red, green, blue, 1)
   message.text:SetText(TP:ProcessText(text))
@@ -304,6 +301,11 @@ function SlidingMessageFrameMixin:AddMessage(...)
   table.insert(self.state.incomingMessages, args)
 end
 
+function SlidingMessageFrameMixin:BackFillMessage(...)
+  local args = {...}
+  table.insert(self.state.incomingScrollbackMessages, args)
+end
+
 function SlidingMessageFrameMixin:OnFrame()
   if #self.state.incomingMessages > 0 then
     local incoming = {}
@@ -311,16 +313,55 @@ function SlidingMessageFrameMixin:OnFrame()
       table.insert(incoming, message)
     end
     self.state.incomingMessages = {}
-    self:Update(incoming)
+    self:Update(incoming, false)
+  end
+
+  if #self.state.incomingScrollbackMessages > 0 then
+    local incoming = {}
+    for _, message in ipairs(self.state.incomingScrollbackMessages) do
+      table.insert(incoming, message)
+    end
+    self.state.incomingScrollbackMessages = {}
+    self:Update(incoming, true)
   end
 end
 
-function SlidingMessageFrameMixin:Update(incoming)
+function SlidingMessageFrameMixin:Update(incoming, reverse)
   -- Create new message frame for each message
   local newMessages = {}
 
   for _, message in ipairs(incoming) do
-    table.insert(newMessages, self:CreateMessageFrame(unpack(message)))
+    local messageFrame = self:CreateMessageFrame(unpack(message))
+    messageFrame:SetPoint("BOTTOMLEFT")
+
+    -- Attach previous messageFrame to this one
+    if reverse then
+      if self.state.tail then
+        messageFrame:ClearAllPoints()
+        messageFrame:SetPoint("BOTTOMLEFT", self.state.tail, "TOPLEFT")
+      end
+    else
+      if self.state.head then
+        self.state.head:ClearAllPoints()
+        self.state.head:SetPoint("BOTTOMLEFT", messageFrame, "TOPLEFT")
+      end
+    end
+
+    if self.state.tail == nil then
+      self.state.tail = messageFrame
+    end
+
+    if self.state.head == nil then
+      self.state.head = messageFrame
+    end
+
+    if reverse then
+      self.state.tail = messageFrame
+    else
+      self.state.head = messageFrame
+    end
+
+    table.insert(newMessages, messageFrame)
   end
 
   -- Update slider offsets animation
@@ -367,7 +408,11 @@ function SlidingMessageFrameMixin:Update(incoming)
     if not self.state.mouseOver then
       message:HideDelay(Core.db.profile.chatHoldTime)
     end
-    table.insert(self.state.messages, message)
+    if reverse then
+      table.insert(self.state.messages, 1, message)
+    else
+      table.insert(self.state.messages, message)
+    end
   end
 
   -- Release old messages
@@ -409,9 +454,11 @@ local function CreateSlidingMessageFramePool(parent)
       end
 
       if smf.state ~= nil then
-        smf.state.prevLine = nil
+        smf.state.head = nil
+        smf.state.tail = nil
         smf.state.messages = {}
         smf.state.incomingMessages = {}
+        smf.state.incomingScrollbackMessages = {}
       end
 
       if smf.messageFramePool ~= nil then
