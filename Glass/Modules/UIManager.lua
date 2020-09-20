@@ -14,6 +14,7 @@ local BNToastFrame = BNToastFrame
 local ChatAlertFrame = ChatAlertFrame
 local ChatFrameChannelButton = ChatFrameChannelButton
 local ChatFrameMenuButton = ChatFrameMenuButton
+local CreateFrame = CreateFrame
 local GetCVar = C_CVar and C_CVar.GetCVar or GetCVar
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
 local QuickJoinToastButton = QuickJoinToastButton
@@ -33,6 +34,8 @@ function UIManager:OnInitialize()
 end
 
 function UIManager:OnEnable()
+  self.tickerFrame = CreateFrame("Frame", "GlassUpdaterFrame", UIParent)
+
   -- Mover
   self.moverFrame = CreateMoverFrame("GlassMoverFrame", UIParent)
   self.moverDialog = CreateMoverDialog("GlassMoverDialog", UIParent)
@@ -111,4 +114,24 @@ function UIManager:OnEnable()
     self.state.temporaryFrames[chatFrame:GetName()] = nil
     self.state.temporaryTabs[chatFrame:GetName()] = nil
   end, true)
+
+  -- Start rendering
+  self.timeElapsed = 0
+  self.tickerFrame:SetScript("OnUpdate", function (_, elapsed)
+    self.timeElapsed = self.timeElapsed + elapsed
+
+    while (self.timeElapsed > 0.01) do
+      self.timeElapsed = self.timeElapsed - 0.01
+
+      self.container:OnFrame()
+
+      for _, smf in ipairs(self.state.frames) do
+        smf:OnFrame()
+      end
+
+      for _, smf in pairs(self.state.temporaryFrames) do
+        smf:OnFrame()
+      end
+    end
+  end)
 end

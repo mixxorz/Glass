@@ -15,7 +15,6 @@ local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
 local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 -- luacheck: push ignore 113
-local C_Timer = C_Timer
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
 local Mixin = Mixin
@@ -107,20 +106,6 @@ function SlidingMessageFrameMixin:Init(chatFrame)
       )
     end)
   end
-
-  self.locked = false
-  C_Timer.NewTicker(0.1, function ()
-    if #self.state.incomingMessages > 0 and not self.locked then
-      self.locked = true
-      local incoming = {}
-      for _, message in ipairs(self.state.incomingMessages) do
-        table.insert(incoming, message)
-      end
-      self.state.incomingMessages = {}
-      self:Update(incoming)
-      self.locked = false
-    end
-  end)
 
   -- Scrolling
   self:SetScript("OnMouseWheel", function (frame, delta)
@@ -308,6 +293,17 @@ function SlidingMessageFrameMixin:AddMessage(...)
   -- Enqueue messages to be displayed
   local args = {...}
   table.insert(self.state.incomingMessages, args)
+end
+
+function SlidingMessageFrameMixin:OnFrame()
+  if #self.state.incomingMessages > 0 then
+    local incoming = {}
+    for _, message in ipairs(self.state.incomingMessages) do
+      table.insert(incoming, message)
+    end
+    self.state.incomingMessages = {}
+    self:Update(incoming)
+  end
 end
 
 function SlidingMessageFrameMixin:Update(incoming)
