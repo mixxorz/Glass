@@ -6,6 +6,7 @@
 * Refactor scroll overlay (#109)
 * Refactor new message alert (#109)
 * Refactor OnUpdate handler (#109)
+* Fix GMOTD not displaying (#110)
 
 ## 1.5.0 (2020-09-14)
 

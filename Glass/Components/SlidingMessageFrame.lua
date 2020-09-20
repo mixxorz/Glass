@@ -17,6 +17,7 @@ local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 -- luacheck: push ignore 113
 local CreateFrame = CreateFrame
 local CreateObjectPool = CreateObjectPool
+local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME
 local Mixin = Mixin
 -- luacheck: pop
 
@@ -188,6 +189,14 @@ function SlidingMessageFrameMixin:Init(chatFrame)
   end, true)
 
   chatFrame:Hide()
+
+  -- Load any messages already in the chat frame to Glass
+  if chatFrame == DEFAULT_CHAT_FRAME then
+    for i = 1, chatFrame:GetNumMessages() do
+        local text, r, g, b = chatFrame:GetMessageInfo(i);
+        self:AddMessage(chatFrame, text, r, g, b);
+      end
+  end
 
   -- Listeners
   if self.subscriptions == nil then
