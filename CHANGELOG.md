@@ -7,6 +7,7 @@
 * Refactor new message alert (#109)
 * Refactor OnUpdate handler (#109)
 * Fix GMOTD not displaying (#110)
+* Add support for Prat's history module (#100)
 
 ## 1.5.0 (2020-09-14)
 
