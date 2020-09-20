@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.6.0-alpha1 (2020-09-20)
 
 * Refactor gradient backgrounds (#109)
 * Refactor scroll overlay (#109)
