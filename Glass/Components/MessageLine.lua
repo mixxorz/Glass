@@ -29,6 +29,7 @@ function MessageLineMixin:Init()
   end
   self.text:SetPoint("LEFT", Constants.TEXT_XPADDING, 0)
   self.text:SetWidth(Core.db.profile.frameWidth - Constants.TEXT_XPADDING * 2)
+  self.text:SetIndentedWordWrap(Core.db.profile.indentWordWrap)
 
   -- Hyperlink handling
   self:SetHyperlinksEnabled(true)
@@ -71,6 +72,7 @@ function MessageLineMixin:UpdateFrame()
 
   self:SetWidth(Core.db.profile.frameWidth)
   self.text:SetWidth(Core.db.profile.frameWidth - Constants.TEXT_XPADDING * 2)
+  self.text:SetIndentedWordWrap(Core.db.profile.indentWordWrap)
 
   local rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
   self:SetGradientBackground(50, rightBgWidth, Colors.codGray, Core.db.profile.chatBackgroundOpacity)

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Add line indention support
+
 ## 1.6.0 (2020-09-23)
 
 * Refactor gradient backgrounds (#109)
