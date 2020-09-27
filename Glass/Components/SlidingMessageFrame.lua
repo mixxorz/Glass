@@ -239,7 +239,8 @@ function SlidingMessageFrameMixin:Init(chatFrame)
             key == "frameWidth" or
             key == "frameHeight" or
             key == "messageLeading" or
-            key == "messageLinePadding"
+            key == "messageLinePadding" or
+            key == "indentWordWrap"
           ) then
             -- Adjust frame dimensions first
             self.config.height = Core.db.profile.frameHeight - Constants.DOCK_HEIGHT - 5

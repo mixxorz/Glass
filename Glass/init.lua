@@ -71,6 +71,7 @@ Core.defaults = {
     chatFadeOutDuration = 0.6,
     chatSlideInDuration = 0.3,
 
+    indentWordWrap = true,
     mouseOverTooltips = true,
     iconTextureYOffset = 4,
   }

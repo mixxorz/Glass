@@ -486,11 +486,24 @@ function C:OnEnable()
               inline = true,
               order = 3,
               args = {
+                indentWordWrap = {
+                  name = "Indent on line wrap",
+                  desc = "Adds an indent when a message wraps beyond a single line.",
+                  type = "toggle",
+                  order = 3.1,
+                  get = function ()
+                    return Core.db.profile.indentWordWrap
+                  end,
+                  set = function (info, input)
+                    Core.db.profile.indentWordWrap = input
+                    Core:Dispatch(UpdateConfig("indentWordWrap"))
+                  end,
+                },
                 mouseOverTooltips = {
                   name = "Mouse over tooltips",
                   desc = "Should tooltips appear when hovering over chat links.",
                   type = "toggle",
-                  order = 3.1,
+                  order = 3.2,
                   get = function ()
                     return Core.db.profile.mouseOverTooltips
                   end,
@@ -503,7 +516,7 @@ function C:OnEnable()
                   name = "Text icons Y offset",
                   desc = "Default: "..Core.defaults.profile.iconTextureYOffset..
                     "\nAdjust this if text icons aren't centered.",
-                  order = 3.2,
+                  order = 3.3,
                   min = 0,
                   max = 12,
                   softMin = 0,
