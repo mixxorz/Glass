@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.7.0-alpha1 (2020-09-28)
+## 1.7.0 (2020-09-29)
 
 * Add line indention support
 
