@@ -8,6 +8,14 @@ local OPEN_NEWS = Constants.EVENTS.OPEN_NEWS
 -- luacheck: push ignore 631
 local CHANGELOG = {
   {
+    name = "1.8.0 (2020-10-14)",
+    items = {[[
+What's new
+
+- New: Updated for Shadowlands!
+    ]]}
+  },
+  {
     name = "1.7.0 (2020-09-29)",
     items = {[[
 What's new

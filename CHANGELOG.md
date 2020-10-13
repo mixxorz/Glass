@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8.0 (2020-10-14)
+
+* Updated for Shadowlands
+
 ## 1.7.0 (2020-09-29)
 
 * Add line indention support
