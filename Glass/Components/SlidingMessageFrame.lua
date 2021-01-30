@@ -180,9 +180,11 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     self:AddMessage(...)
   end, true)
 
-  self:Hook(chatFrame.historyBuffer, "PushBack", function (_, message)
-    self:BackFillMessage(nil, message.message, message.r, message.g, message.b)
-  end, true)
+  if not self:IsHooked(chatFrame.historyBuffer, "PushBack") then
+    self:Hook(chatFrame.historyBuffer, "PushBack", function (_, message)
+      self:BackFillMessage(nil, message.message, message.r, message.g, message.b)
+    end, true)
+  end
 
   -- Hide the default chat frame and show the sliding message frame instead
   self:RawHook(chatFrame, "Show", function ()
