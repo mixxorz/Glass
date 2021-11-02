@@ -1,3 +1,11 @@
+# Unmaintained
+
+### Unfortunately, I do not play World of Warcraft anymore, so I can no longer maintain this addon.
+
+Please feel free to fork and rebrand if you want to take this on. 🙂
+
+---
+
 ![Glass](https://user-images.githubusercontent.com/3102758/90884068-9549a600-e3e1-11ea-944f-481bd894560e.png)
 
 #### An immersive and minimalistic chat UI for World of Warcraft
