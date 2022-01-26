@@ -11,17 +11,11 @@ jobs:
 
     steps:
       - name: Clone project
-        uses: actions/checkout@v1
-
-      - name: Package and release (retail/github)
-        uses: BigWigsMods/packager@master
-        env:
-          CF_API_KEY: ${{ secrets.CF_API_KEY }}
-          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/checkout@v1          
 
       - name: Package and release (classic)
         uses: BigWigsMods/packager@master
         env:
-          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: -g 1.13.5
+          args: -g classic
