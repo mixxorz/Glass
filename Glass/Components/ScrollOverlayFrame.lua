@@ -15,11 +15,10 @@ local ScrollOverlayFrame = {}
 
 function ScrollOverlayFrame:Init()
     local overlayOpacity = 0.65
-    local topOffset = Core.db.profile.frameHeight - (Constants.DOCK_HEIGHT + 5 + 62)
 
-    self:SetHeight(64)
-    self:SetPoint("TOPLEFT", 0, -topOffset)
-    self:SetPoint("TOPRIGHT", 0, -topOffset)
+    self:SetHeight(16)
+    self:SetPoint("BOTTOMLEFT", 0, -1)
+    self:SetPoint("BOTTOMRIGHT", 0, -1)
     self:SetFadeInDuration(0.3)
     self:SetFadeOutDuration(0.15)
 
@@ -42,7 +41,7 @@ function ScrollOverlayFrame:Init()
     end
     self.icon:SetTexture("Interface\\Addons\\Glass\\Glass\\Assets\\snapToBottomIcon")
     self.icon:SetSize(16, 16)
-    self.icon:SetPoint("BOTTOMLEFT", 15, 5)
+    self.icon:SetPoint("BOTTOMLEFT", 15, -1)
 
     -- See new messages click area
     if self.snapToBottomFrame == nil then

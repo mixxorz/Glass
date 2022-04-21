@@ -21,7 +21,7 @@ function NewMessageAlertFrameMixin:Init()
       self.text = self:CreateFontString(nil, "ARTWORK", "GlassMessageFont")
     end
     self.text:SetTextColor(Colors.apache.r, Colors.apache.g, Colors.apache.b)
-    self.text:SetPoint("BOTTOMLEFT", 30, 10)
+    self.text:SetPoint("BOTTOMLEFT", 30, 2)
     self.text:SetText("Unread messages")
 
     -- Alert line
