@@ -1,8 +1,15 @@
-# Unmaintained
+# Abandoned
 
-### Unfortunately, I do not play World of Warcraft anymore, so I can no longer maintain this addon.
+Please use [LS: Glass](https://www.curseforge.com/wow/addons/ls-glass "LS: Glass")
 
-Please feel free to fork and rebrand if you want to take this on. 🙂
+This project is the original Glass addon by me. I no longer play the game so this project has been abandoned.
+
+i_lightspark has been kind enough to keep the spirit of Glass alive by releasing their own version. Please use that instead.
+
+* [LS: Glass on CurseForge](https://www.curseforge.com/wow/addons/ls-glass)
+* [LS: Glass on Wago](https://addons.wago.io/addons/ls-glass)
+
+**Original description follows**
 
 ---
 
