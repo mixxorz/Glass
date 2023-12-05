@@ -1,13 +1,10 @@
-# Abandoned
+# Glass Minimalistic Chat for Wrath of the Lich King - Classic 
 
-Please use [LS: Glass](https://www.curseforge.com/wow/addons/ls-glass "LS: Glass")
-
-This project is the original Glass addon by me. I no longer play the game so this project has been abandoned.
-
-i_lightspark has been kind enough to keep the spirit of Glass alive by releasing their own version. Please use that instead.
+Please use [LS: Glass](https://www.curseforge.com/wow/addons/ls-glass "LS: Glass") For Retail
 
 * [LS: Glass on CurseForge](https://www.curseforge.com/wow/addons/ls-glass)
 * [LS: Glass on Wago](https://addons.wago.io/addons/ls-glass)
+* This is a fix for WotLK Classic
 
 **Original description follows**
 
