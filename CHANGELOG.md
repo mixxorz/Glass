@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.0-alpha1 (2026-09-26)
+
+* Update Glass for WoW Forever (1.60) and Midnight (12.1)
+* Adapt chat tabs, gradients, fonts, mover controls, and hover behavior to current UI APIs
+* Midnight compatibility has not yet been verified in-game
+
 ## 1.8.0 (2020-10-14)
 
 * Updated for Shadowlands
