@@ -27,8 +27,8 @@ function MessageLineMixin:Init()
   if self.text == nil then
     self.text = self:CreateFontString(nil, "ARTWORK", "GlassMessageFont")
   end
-  self.text:SetPoint("LEFT", Constants.TEXT_XPADDING, 0)
-  self.text:SetWidth(Core.db.profile.frameWidth - Constants.TEXT_XPADDING * 2)
+  self.text:SetPoint("LEFT", Constants.CONTENT_XPADDING, 0)
+  self.text:SetWidth(math.max(1, Core.db.profile.frameWidth - Constants.CONTENT_XPADDING * 2))
   self.text:SetIndentedWordWrap(Core.db.profile.indentWordWrap)
 
   -- Hyperlink handling
@@ -66,13 +66,13 @@ end
 ---
 -- Update height based on text height
 function MessageLineMixin:UpdateFrame()
+  self:SetWidth(Core.db.profile.frameWidth)
+  self.text:SetWidth(math.max(1, Core.db.profile.frameWidth - Constants.CONTENT_XPADDING * 2))
+  self.text:SetIndentedWordWrap(Core.db.profile.indentWordWrap)
+
   local Ypadding = self.text:GetLineHeight() * Core.db.profile.messageLinePadding
   local messageLineHeight = (self.text:GetStringHeight() + Ypadding * 2)
   self:SetHeight(messageLineHeight)
-
-  self:SetWidth(Core.db.profile.frameWidth)
-  self.text:SetWidth(Core.db.profile.frameWidth - Constants.TEXT_XPADDING * 2)
-  self.text:SetIndentedWordWrap(Core.db.profile.indentWordWrap)
 
   local rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
   self:SetGradientBackground(50, rightBgWidth, Colors.codGray, Core.db.profile.chatBackgroundOpacity)

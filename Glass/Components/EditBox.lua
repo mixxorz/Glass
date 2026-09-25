@@ -34,17 +34,17 @@ function EditBoxMixin:Init(parent)
   -- New styling
   self:ClearAllPoints()
 
-  self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+  self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 0, Core.db.profile.editBoxAnchor.yOfs)
 
   if Core.db.profile.editBoxAnchor.position == "ABOVE" then
     self:ClearAllPoints()
-    self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+    self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 0, Core.db.profile.editBoxAnchor.yOfs)
   end
 
   self:SetFontObject("GlassEditBoxFont")
-  self:SetWidth(Core.db.profile.frameWidth - 8 * 2)
+  self:SetWidth(Core.db.profile.frameWidth)
   self.header:SetFontObject("GlassEditBoxFont")
-  self.header:SetPoint("LEFT", 8, 0)
+  self.header:SetPoint("LEFT", Constants.CONTENT_XPADDING, 0)
 
   local bg = self:CreateTexture(nil, "BACKGROUND")
   bg:SetColorTexture(
@@ -59,8 +59,8 @@ function EditBoxMixin:Init(parent)
     Ypadding = self.header:GetLineHeight() * 0.66
     self.hooks[self].SetTextInsets(
       self,
-      self.header:GetStringWidth() + 8,
-      8, Ypadding, Ypadding
+      self.header:GetStringWidth() + Constants.CONTENT_XPADDING,
+      Constants.CONTENT_XPADDING, Ypadding, Ypadding
     )
   end, true)
 
@@ -134,7 +134,7 @@ function EditBoxMixin:Init(parent)
     end
 
     if key == "frameWidth" then
-      self:SetWidth(Core.db.profile.frameWidth - 8 * 2)
+      self:SetWidth(Core.db.profile.frameWidth)
     end
 
     if key == "editBoxBackgroundOpacity" then
@@ -146,10 +146,10 @@ function EditBoxMixin:Init(parent)
     if key == "editBoxAnchor" then
       if Core.db.profile.editBoxAnchor.position == "ABOVE" then
         self:ClearAllPoints()
-        self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+        self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 0, Core.db.profile.editBoxAnchor.yOfs)
       else
         self:ClearAllPoints()
-        self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+        self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 0, Core.db.profile.editBoxAnchor.yOfs)
       end
     end
   end)

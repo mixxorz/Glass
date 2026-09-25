@@ -57,7 +57,7 @@ function ChatDockMixin:Init(parent)
 
   -- Gradient background
   local opacity = 0.4
-  self:SetGradientBackground(50, 250, Colors.black, opacity)
+  self:SetGradientBackground(50, math.min(250, Core.db.profile.frameWidth - 50), Colors.black, opacity)
 
   -- Override drag behaviour
   -- Disable undocking frames
@@ -108,8 +108,9 @@ function ChatDockMixin:Init(parent)
       Core:Subscribe(UPDATE_CONFIG, function (key)
         if key == "frameWidth" then
           self:SetWidth(Core.db.profile.frameWidth)
-
-          self:SetGradientBackground(50, 250, Colors.black, opacity)
+          self:SetGradientBackground(
+            50, math.min(250, Core.db.profile.frameWidth - 50), Colors.black, opacity
+          )
         end
       end)
     }

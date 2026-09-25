@@ -15,6 +15,10 @@ local ChatAlertFrame = ChatAlertFrame
 local ChatFrameChannelButton = ChatFrameChannelButton
 local ChatFrameMenuButton = ChatFrameMenuButton
 local CreateFrame = CreateFrame
+local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME
+local FCF_SelectDockFrame = FCF_SelectDockFrame
+local FCFDock_GetSelectedWindow = FCFDock_GetSelectedWindow
+local GENERAL_CHAT_DOCK = GENERAL_CHAT_DOCK
 local GetCVar = C_CVar and C_CVar.GetCVar or GetCVar
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
 local QuickJoinToastButton = QuickJoinToastButton
@@ -61,6 +65,8 @@ function UIManager:OnEnable()
 
   -- Edit box
   self.editBox = CreateEditBox(self.container)
+
+  FCF_SelectDockFrame(FCFDock_GetSelectedWindow(GENERAL_CHAT_DOCK) or DEFAULT_CHAT_FRAME)
 
   -- Fix Battle.net Toast frame position
   BNToastFrame:ClearAllPoints()
