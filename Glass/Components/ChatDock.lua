@@ -4,8 +4,12 @@ local AceHook = Core.Libs.AceHook
 
 local Colors = Constants.COLORS
 
+local EDIT_BOX_FOCUS_GAINED = Constants.EVENTS.EDIT_BOX_FOCUS_GAINED
+local EDIT_BOX_FOCUS_LOST = Constants.EVENTS.EDIT_BOX_FOCUS_LOST
+local LOCK_MOVER = Constants.EVENTS.LOCK_MOVER
 local MOUSE_ENTER = Constants.EVENTS.MOUSE_ENTER
 local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
+local UNLOCK_MOVER = Constants.EVENTS.UNLOCK_MOVER
 local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 -- luacheck: push ignore 113
@@ -21,9 +25,23 @@ local UIParent = UIParent
 
 local ChatDockMixin = {}
 
+local function HideWhenInactive(self)
+  if self.state.mouseOver or self.state.moverUnlocked or self.state.editBoxFocused then
+    return
+  end
+
+  if Core.db.profile.chatShowOnMouseOver then
+    self:HideDelay(Core.db.profile.chatHoldTime)
+  else
+    self:Hide()
+  end
+end
+
 function ChatDockMixin:Init(parent)
   self.state = {
-    mouseOver = false
+    mouseOver = false,
+    moverUnlocked = false,
+    editBoxFocused = _G.ChatFrame1EditBox:HasFocus()
   }
 
   self:SetWidth(Core.db.profile.frameWidth)
@@ -54,7 +72,11 @@ function ChatDockMixin:Init(parent)
     FCF_DockFrame(chatFrame, FCFDock_GetInsertIndex(GENERAL_CHAT_DOCK, chatFrame, mouseX, mouseY), true);
   end, true)
 
-  self:QuickHide()
+  if self.state.editBoxFocused then
+    self:QuickShow()
+  else
+    self:QuickHide()
+  end
 
   if self.subscriptions == nil then
     self.subscriptions = {
@@ -64,17 +86,24 @@ function ChatDockMixin:Init(parent)
         self:Show()
       end),
       Core:Subscribe(MOUSE_LEAVE, function ()
-        -- Hide chat tab when mouse leaves
         self.state.mouseOver = false
-
-        if Core.db.profile.chatShowOnMouseOver then
-          -- When chatShowOnMouseOver is on, synchronize the chat tab's fade out with
-          -- the chat
-          self:HideDelay(Core.db.profile.chatHoldTime)
-        else
-          -- Otherwise hide it immediately on mouse leave
-          self:Hide()
-        end
+        HideWhenInactive(self)
+      end),
+      Core:Subscribe(EDIT_BOX_FOCUS_GAINED, function ()
+        self.state.editBoxFocused = true
+        self:Show()
+      end),
+      Core:Subscribe(EDIT_BOX_FOCUS_LOST, function ()
+        self.state.editBoxFocused = false
+        HideWhenInactive(self)
+      end),
+      Core:Subscribe(UNLOCK_MOVER, function ()
+        self.state.moverUnlocked = true
+        self:Show()
+      end),
+      Core:Subscribe(LOCK_MOVER, function ()
+        self.state.moverUnlocked = false
+        HideWhenInactive(self)
       end),
       Core:Subscribe(UPDATE_CONFIG, function (key)
         if key == "frameWidth" then

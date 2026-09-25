@@ -1,5 +1,6 @@
 local Core, Constants = unpack(select(2, ...))
 local TP = Core:GetModule("TextProcessing")
+local UIManager = Core:GetModule("UIManager")
 
 local AceHook = Core.Libs.AceHook
 
@@ -10,8 +11,12 @@ local drop, reduce, take = lodash.drop, lodash.reduce, lodash.take
 local CreateMessageLinePool = Core.Components.CreateMessageLinePool
 local CreateScrollOverlayFrame = Core.Components.CreateScrollOverlayFrame
 
+local EDIT_BOX_FOCUS_GAINED = Constants.EVENTS.EDIT_BOX_FOCUS_GAINED
+local EDIT_BOX_FOCUS_LOST = Constants.EVENTS.EDIT_BOX_FOCUS_LOST
+local LOCK_MOVER = Constants.EVENTS.LOCK_MOVER
 local MOUSE_ENTER = Constants.EVENTS.MOUSE_ENTER
 local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
+local UNLOCK_MOVER = Constants.EVENTS.UNLOCK_MOVER
 local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 -- luacheck: push ignore 113
@@ -43,6 +48,8 @@ function SlidingMessageFrameMixin:Init(chatFrame)
     head = nil,
     tail = nil,
     isCombatLog = false,
+    editBoxFocused = _G.ChatFrame1EditBox:HasFocus(),
+    moverUnlocked = UIManager.moverFrame:IsShown(),
     scrollAtBottom = true,
     unreadMessages = false,
   }
@@ -216,7 +223,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
         end
 
         for _, message in ipairs(self.state.messages) do
-          if Core.db.profile.chatShowOnMouseOver then
+          if self.state.moverUnlocked or self.state.editBoxFocused or Core.db.profile.chatShowOnMouseOver then
             message:Show()
           end
         end
@@ -227,8 +234,38 @@ function SlidingMessageFrameMixin:Init(chatFrame)
 
         self.overlay:HideDelay(Core.db.profile.chatHoldTime)
 
+        if not self.state.moverUnlocked and not self.state.editBoxFocused then
+          for _, message in ipairs(self.state.messages) do
+            message:HideDelay(Core.db.profile.chatHoldTime)
+          end
+        end
+      end),
+      Core:Subscribe(EDIT_BOX_FOCUS_GAINED, function ()
+        self.state.editBoxFocused = true
         for _, message in ipairs(self.state.messages) do
-          message:HideDelay(Core.db.profile.chatHoldTime)
+          message:Show()
+        end
+      end),
+      Core:Subscribe(EDIT_BOX_FOCUS_LOST, function ()
+        self.state.editBoxFocused = false
+        if not self.state.moverUnlocked and not self.state.mouseOver then
+          for _, message in ipairs(self.state.messages) do
+            message:HideDelay(Core.db.profile.chatHoldTime)
+          end
+        end
+      end),
+      Core:Subscribe(UNLOCK_MOVER, function ()
+        self.state.moverUnlocked = true
+        for _, message in ipairs(self.state.messages) do
+          message:Show()
+        end
+      end),
+      Core:Subscribe(LOCK_MOVER, function ()
+        self.state.moverUnlocked = false
+        if not self.state.mouseOver and not self.state.editBoxFocused then
+          for _, message in ipairs(self.state.messages) do
+            message:HideDelay(Core.db.profile.chatHoldTime)
+          end
         end
       end),
       Core:Subscribe(UPDATE_CONFIG, function (key)
@@ -406,7 +443,7 @@ function SlidingMessageFrameMixin:Update(incoming, reverse)
 
   for _, message in ipairs(newMessages) do
     message:Show()
-    if not self.state.mouseOver then
+    if not self.state.mouseOver and not self.state.moverUnlocked and not self.state.editBoxFocused then
       message:HideDelay(Core.db.profile.chatHoldTime)
     end
     if reverse then

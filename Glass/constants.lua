@@ -28,6 +28,8 @@ Constants.COLORS = {
 
 -- Events
 Constants.EVENTS = {
+  EDIT_BOX_FOCUS_GAINED = "Glass/EDIT_BOX_FOCUS_GAINED",
+  EDIT_BOX_FOCUS_LOST = "Glass/EDIT_BOX_FOCUS_LOST",
   HYPERLINK_CLICK = "Glass/HYPERLINK_CLICK",
   HYPERLINK_ENTER = "Glass/HYPERLINK_ENTER",
   HYPERLINK_LEAVE = "Glass/HYPERLINK_LEAVE",
@@ -42,6 +44,12 @@ Constants.EVENTS = {
 }
 
 Constants.ACTIONS = {
+  EditBoxFocusGained = function ()
+    return Constants.EVENTS.EDIT_BOX_FOCUS_GAINED
+  end,
+  EditBoxFocusLost = function ()
+    return Constants.EVENTS.EDIT_BOX_FOCUS_LOST
+  end,
   HyperlinkClick = function (payload)
     return Constants.EVENTS.HYPERLINK_CLICK, payload
   end,
