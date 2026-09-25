@@ -1,4 +1,4 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 
 local AceHook = Core.Libs.AceHook
 
@@ -35,8 +35,8 @@ function ChatTabMixin:Init(slidingMessageFrame)
   self:SetHeight(Constants.DOCK_HEIGHT)
   self:SetNormalFontObject("GlassChatDockFont")
   self.Text:ClearAllPoints()
-  self.Text:SetPoint("LEFT", Constants.CONTENT_XPADDING, 0)
-  self:SetWidth(self.Text:GetStringWidth() + Constants.CONTENT_XPADDING * 2)
+  self.Text:SetPoint("LEFT", Utils.getContentXPadding(), 0)
+  self:SetWidth(self.Text:GetStringWidth() + Utils.getContentXPadding() * 2)
 
   if not self:IsHooked(self, "SetAlpha") then
     self:RawHook(self, "SetAlpha", function (alpha)
@@ -47,7 +47,7 @@ function ChatTabMixin:Init(slidingMessageFrame)
   -- Set width dynamically based on text width
   if not self:IsHooked(self, "SetWidth") then
     self:RawHook(self, "SetWidth", function (_, width)
-      self.hooks[self].SetWidth(self, self:GetTextWidth() + Constants.CONTENT_XPADDING * 2)
+      self.hooks[self].SetWidth(self, self:GetTextWidth() + Utils.getContentXPadding() * 2)
     end, true)
   end
 
@@ -97,7 +97,13 @@ function ChatTabMixin:Init(slidingMessageFrame)
   if self.subscriptions == nil then
     self.subscriptions = {
       Core:Subscribe(UPDATE_CONFIG, function (key)
-        if key == "frameWidth" or key == "frameHeight" or key == "font" or key == "messageFontSize" then
+        if key == "frameWidth" or key == "contentXPadding" then
+          self.Text:ClearAllPoints()
+          self.Text:SetPoint("LEFT", Utils.getContentXPadding(), 0)
+        end
+
+        if key == "frameWidth" or key == "frameHeight" or key == "font" or
+          key == "messageFontSize" or key == "contentXPadding" then
           self:SetWidth()
         end
       end)

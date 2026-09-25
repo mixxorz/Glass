@@ -199,6 +199,79 @@ function C:OnEnable()
                     Core:Dispatch(UpdateConfig("framePosition"))
                   end
                 },
+                tabBarBackgroundOpacity = {
+                  name = "Tab bar background opacity",
+                  desc = "Default: "..Core.defaults.profile.tabBarBackgroundOpacity,
+                  type = "range",
+                  order = 4.6,
+                  min = 0,
+                  max = 1,
+                  step = 0.01,
+                  get = function ()
+                    return Core.db.profile.tabBarBackgroundOpacity
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.tabBarBackgroundOpacity = input
+                    Core:Dispatch(UpdateConfig("tabBarBackgroundOpacity"))
+                  end
+                },
+                leftGradientWidth = {
+                  name = "Left gradient width",
+                  desc = "Chat messages and tab bar. Capped to fit the frame. Default: "..
+                    Core.defaults.profile.leftGradientWidth,
+                  type = "range",
+                  order = 4.7,
+                  min = 1,
+                  max = 9999,
+                  softMin = 1,
+                  softMax = 400,
+                  step = 1,
+                  get = function ()
+                    return Core.db.profile.leftGradientWidth
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.leftGradientWidth = input
+                    Core:Dispatch(UpdateConfig("leftGradientWidth"))
+                  end
+                },
+                rightGradientWidth = {
+                  name = "Right gradient width",
+                  desc = "Chat messages and tab bar. Capped to fit the frame. Default: "..
+                    Core.defaults.profile.rightGradientWidth,
+                  type = "range",
+                  order = 4.8,
+                  min = 1,
+                  max = 9999,
+                  softMin = 1,
+                  softMax = 500,
+                  step = 1,
+                  get = function ()
+                    return Core.db.profile.rightGradientWidth
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.rightGradientWidth = input
+                    Core:Dispatch(UpdateConfig("rightGradientWidth"))
+                  end
+                },
+                contentXPadding = {
+                  name = "Horizontal content padding",
+                  desc = "Messages, tabs, and edit box. Capped on narrow frames. Default: "..
+                    Core.defaults.profile.contentXPadding,
+                  type = "range",
+                  order = 4.9,
+                  min = 0,
+                  max = 100,
+                  softMin = 0,
+                  softMax = 50,
+                  step = 1,
+                  get = function ()
+                    return Core.db.profile.contentXPadding
+                  end,
+                  set = function (_, input)
+                    Core.db.profile.contentXPadding = input
+                    Core:Dispatch(UpdateConfig("contentXPadding"))
+                  end
+                },
               }
             }
           }
@@ -566,6 +639,10 @@ function C:RefreshConfig()
   Core:Dispatch(UpdateConfig("frameHeight"))
   Core:Dispatch(UpdateConfig("frameWidth"))
   Core:Dispatch(UpdateConfig("framePosition"))
+  Core:Dispatch(UpdateConfig("contentXPadding"))
+  Core:Dispatch(UpdateConfig("leftGradientWidth"))
+  Core:Dispatch(UpdateConfig("rightGradientWidth"))
+  Core:Dispatch(UpdateConfig("tabBarBackgroundOpacity"))
 
   -- Edit box
   Core:Dispatch(UpdateConfig("editBoxFontSize"))

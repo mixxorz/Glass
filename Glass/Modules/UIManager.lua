@@ -16,6 +16,7 @@ local ChatFrameChannelButton = ChatFrameChannelButton
 local ChatFrameMenuButton = ChatFrameMenuButton
 local CreateFrame = CreateFrame
 local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME
+local FCF_DockUpdate = FCF_DockUpdate
 local FCF_SelectDockFrame = FCF_SelectDockFrame
 local FCFDock_GetSelectedWindow = FCFDock_GetSelectedWindow
 local GENERAL_CHAT_DOCK = GENERAL_CHAT_DOCK
@@ -25,6 +26,8 @@ local QuickJoinToastButton = QuickJoinToastButton
 local SetCVar = C_CVar and C_CVar.SetCVar or SetCVar
 local UIParent = UIParent
 -- luacheck: pop
+
+local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 ----
 -- UIManager Module
@@ -67,6 +70,12 @@ function UIManager:OnEnable()
   self.editBox = CreateEditBox(self.container)
 
   FCF_SelectDockFrame(FCFDock_GetSelectedWindow(GENERAL_CHAT_DOCK) or DEFAULT_CHAT_FRAME)
+
+  Core:Subscribe(UPDATE_CONFIG, function (key)
+    if key == "contentXPadding" then
+      FCF_DockUpdate()
+    end
+  end)
 
   -- Fix Battle.net Toast frame position
   BNToastFrame:ClearAllPoints()

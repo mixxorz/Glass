@@ -11,6 +11,11 @@ Utils.super = function (obj)
   return getmetatable(obj).__index
 end
 
+Utils.getContentXPadding = function ()
+  local profile = Core.db.profile
+  return math.min(profile.contentXPadding, math.floor((profile.frameWidth - 1) / 2))
+end
+
 ---
 -- Print to VDT
 Utils.print = function (str, t)

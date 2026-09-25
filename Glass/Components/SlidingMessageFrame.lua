@@ -275,6 +275,7 @@ function SlidingMessageFrameMixin:Init(chatFrame)
             key == "messageFontSize" or
             key == "frameWidth" or
             key == "frameHeight" or
+            key == "contentXPadding" or
             key == "messageLeading" or
             key == "messageLinePadding" or
             key == "indentWordWrap"
@@ -306,7 +307,8 @@ function SlidingMessageFrameMixin:Init(chatFrame)
             self.overlay:HideNewMessageAlert()
           end
 
-          if key == "chatBackgroundOpacity" then
+          if key == "chatBackgroundOpacity" or
+            key == "leftGradientWidth" or key == "rightGradientWidth" then
             for _, message in ipairs(self.state.messages) do
               message:UpdateTextures()
             end

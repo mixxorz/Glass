@@ -1,4 +1,4 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 
 local Colors = Constants.COLORS
 
@@ -21,14 +21,14 @@ function MessageLineMixin:Init()
   self:SetFadeInDuration(Core.db.profile.chatFadeInDuration)
   self:SetFadeOutDuration(Core.db.profile.chatFadeOutDuration)
 
-  local rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
-  self:SetGradientBackground(50, rightBgWidth, Colors.codGray, Core.db.profile.chatBackgroundOpacity)
+  self:SetChatGradientBackground(Colors.codGray, Core.db.profile.chatBackgroundOpacity)
 
   if self.text == nil then
     self.text = self:CreateFontString(nil, "ARTWORK", "GlassMessageFont")
   end
-  self.text:SetPoint("LEFT", Constants.CONTENT_XPADDING, 0)
-  self.text:SetWidth(math.max(1, Core.db.profile.frameWidth - Constants.CONTENT_XPADDING * 2))
+  local padding = Utils.getContentXPadding()
+  self.text:SetPoint("LEFT", padding, 0)
+  self.text:SetWidth(Core.db.profile.frameWidth - padding * 2)
   self.text:SetIndentedWordWrap(Core.db.profile.indentWordWrap)
 
   -- Hyperlink handling
@@ -67,22 +67,23 @@ end
 -- Update height based on text height
 function MessageLineMixin:UpdateFrame()
   self:SetWidth(Core.db.profile.frameWidth)
-  self.text:SetWidth(math.max(1, Core.db.profile.frameWidth - Constants.CONTENT_XPADDING * 2))
+  local padding = Utils.getContentXPadding()
+  self.text:ClearAllPoints()
+  self.text:SetPoint("LEFT", padding, 0)
+  self.text:SetWidth(Core.db.profile.frameWidth - padding * 2)
   self.text:SetIndentedWordWrap(Core.db.profile.indentWordWrap)
 
   local Ypadding = self.text:GetLineHeight() * Core.db.profile.messageLinePadding
   local messageLineHeight = (self.text:GetStringHeight() + Ypadding * 2)
   self:SetHeight(messageLineHeight)
 
-  local rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
-  self:SetGradientBackground(50, rightBgWidth, Colors.codGray, Core.db.profile.chatBackgroundOpacity)
+  self:SetChatGradientBackground(Colors.codGray, Core.db.profile.chatBackgroundOpacity)
 end
 
 ---
 -- Update texture color based on setting
 function MessageLineMixin:UpdateTextures()
-  local rightBgWidth = math.min(250, Core.db.profile.frameWidth - 50)
-  self:SetGradientBackground(50, rightBgWidth, Colors.codGray, Core.db.profile.chatBackgroundOpacity)
+  self:SetChatGradientBackground(Colors.codGray, Core.db.profile.chatBackgroundOpacity)
 end
 
 local function CreateMessageLine(parent)

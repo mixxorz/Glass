@@ -42,4 +42,11 @@ function GradientBackgroundMixin:SetGradientBackground(leftWidth, rightWidth, co
   self.centerBg:SetColorTexture(color.r, color.g, color.b, opacity)
 end
 
+function GradientBackgroundMixin:SetChatGradientBackground(color, opacity)
+  local profile = Core.db.profile
+  local leftWidth = math.min(profile.leftGradientWidth, self:GetWidth() - 1)
+  local rightWidth = math.min(profile.rightGradientWidth, self:GetWidth() - leftWidth)
+  self:SetGradientBackground(leftWidth, rightWidth, color, opacity)
+end
+
 Core.Components.GradientBackgroundMixin = GradientBackgroundMixin

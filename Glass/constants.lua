@@ -7,7 +7,6 @@ local WOW_PROJECT_ID = WOW_PROJECT_ID
 
 -- Constants
 Constants.DOCK_HEIGHT = 20
-Constants.CONTENT_XPADDING = 25
 
 Constants.ENV = "retail"
 

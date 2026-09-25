@@ -1,4 +1,4 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 
 local AceHook = Core.Libs.AceHook
 
@@ -16,6 +16,11 @@ local Mixin = Mixin
 -- luacheck: pop
 
 local EditBoxMixin = {}
+
+local function GetEditBoxPadding(self)
+  local available = self:GetWidth() - self.header:GetStringWidth() - 20
+  return math.min(Utils.getContentXPadding(), math.max(0, math.floor(available / 2)))
+end
 
 function EditBoxMixin:Init(parent)
   -- Hide default styling
@@ -44,7 +49,6 @@ function EditBoxMixin:Init(parent)
   self:SetFontObject("GlassEditBoxFont")
   self:SetWidth(Core.db.profile.frameWidth)
   self.header:SetFontObject("GlassEditBoxFont")
-  self.header:SetPoint("LEFT", Constants.CONTENT_XPADDING, 0)
 
   local bg = self:CreateTexture(nil, "BACKGROUND")
   bg:SetColorTexture(
@@ -57,11 +61,11 @@ function EditBoxMixin:Init(parent)
 
   self:RawHook(self, "SetTextInsets", function ()
     Ypadding = self.header:GetLineHeight() * 0.66
-    self.hooks[self].SetTextInsets(
-      self,
-      self.header:GetStringWidth() + Constants.CONTENT_XPADDING,
-      Constants.CONTENT_XPADDING, Ypadding, Ypadding
-    )
+    local padding = GetEditBoxPadding(self)
+    self.header:ClearAllPoints()
+    self.header:SetPoint("LEFT", padding, 0)
+    local leftInset = math.min(self.header:GetStringWidth() + padding, self:GetWidth() - padding - 20)
+    self.hooks[self].SetTextInsets(self, leftInset, padding, Ypadding, Ypadding)
   end, true)
 
   self:SetTextInsets()
@@ -135,6 +139,10 @@ function EditBoxMixin:Init(parent)
 
     if key == "frameWidth" then
       self:SetWidth(Core.db.profile.frameWidth)
+    end
+
+    if key == "frameWidth" or key == "contentXPadding" then
+      self:SetTextInsets()
     end
 
     if key == "editBoxBackgroundOpacity" then
