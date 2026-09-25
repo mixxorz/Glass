@@ -8,7 +8,6 @@ local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 -- luacheck: push ignore 113
 local CreateFrame = CreateFrame
 local Mixin = Mixin
-local MouseIsOver = MouseIsOver
 -- luacheck: pop
 
 local MainContainerFrameMixin = {}
@@ -40,7 +39,7 @@ end
 
 function MainContainerFrameMixin:OnFrame()
   -- Mouse over tracking
-  if self.state.mouseOver ~= MouseIsOver(self) then
+  if self.state.mouseOver ~= self:IsMouseOver() then
     if not self.state.mouseOver then
       Core:Dispatch(MouseEnter())
     else
