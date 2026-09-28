@@ -31,6 +31,10 @@ function MoverFrameMixin:Init()
   self.bg:SetColorTexture(0, 1, 0, 0.5)
   self.bg:SetAllPoints()
 
+  self.label = self:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  self.label:SetPoint("CENTER")
+  self.label:SetText("Main")
+
   self.resizeHandle = CreateFrame("Button", nil, self)
   self.resizeHandle:SetSize(20, 20)
   self.resizeHandle:SetPoint("BOTTOMRIGHT")
@@ -61,6 +65,7 @@ function MoverFrameMixin:Init()
   if self.subscriptions == nil then
     self.subscriptions = {
       Core:Subscribe(LOCK_MOVER, function ()
+        self:StopMovingOrSizing()
         self:Hide()
         self:EnableMouse(false)
         self:SetMovable(false)

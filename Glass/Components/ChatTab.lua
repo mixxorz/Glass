@@ -32,11 +32,11 @@ function ChatTabMixin:Init(slidingMessageFrame)
     self[texName]:SetTexture(nil)
   end
 
-  self:SetHeight(Constants.DOCK_HEIGHT)
+  self:SetHeight(Utils.getDockHeight(Core.db.profile))
   self:SetNormalFontObject("GlassChatDockFont")
   self.Text:ClearAllPoints()
-  self.Text:SetPoint("LEFT", Utils.getContentXPadding(), 0)
-  self:SetWidth(self.Text:GetStringWidth() + Utils.getContentXPadding() * 2)
+  self.Text:SetPoint("LEFT", 0, 0)
+  self:SetWidth(self.Text:GetStringWidth())
 
   if not self:IsHooked(self, "SetAlpha") then
     self:RawHook(self, "SetAlpha", function (alpha)
@@ -47,7 +47,7 @@ function ChatTabMixin:Init(slidingMessageFrame)
   -- Set width dynamically based on text width
   if not self:IsHooked(self, "SetWidth") then
     self:RawHook(self, "SetWidth", function (_, width)
-      self.hooks[self].SetWidth(self, self:GetTextWidth() + Utils.getContentXPadding() * 2)
+      self.hooks[self].SetWidth(self, self.Text:GetStringWidth())
     end, true)
   end
 
@@ -65,7 +65,7 @@ function ChatTabMixin:Init(slidingMessageFrame)
   -- Don't highlight when frame is already visible
   if not self:IsHooked(self.glow, "Show") then
     self:RawHook(self.glow, "Show", function ()
-      if not slidingMessageFrame:IsVisible() then
+      if not self.slidingMessageFrame:IsVisible() then
         self.hooks[self.glow].Show(self.glow)
       end
     end, true)
@@ -83,11 +83,18 @@ function ChatTabMixin:Init(slidingMessageFrame)
     self:RegisterForDrag()
   end
 
-  if self.chatFrame == DEFAULT_CHAT_FRAME then
+  if not self.menuRegistered then
+    self.menuRegistered = true
     _G.Menu.ModifyMenu("MENU_FCF_TAB", function (owner, rootDescription)
-      if owner == self then
+      if owner ~= self then return end
+      if self.chatFrame == DEFAULT_CHAT_FRAME then
         rootDescription:CreateButton(UNLOCK_WINDOW, function ()
           Core:Dispatch(UnlockMover())
+        end)
+      end
+      if not IsCombatLog(self.chatFrame) then
+        rootDescription:CreateButton("Create Glass window", function ()
+          Core:GetModule("ExtraWindows"):AddWindow(self.chatFrame:GetName())
         end)
       end
     end)
@@ -97,13 +104,18 @@ function ChatTabMixin:Init(slidingMessageFrame)
   if self.subscriptions == nil then
     self.subscriptions = {
       Core:Subscribe(UPDATE_CONFIG, function (key)
-        if key == "frameWidth" or key == "contentXPadding" then
+        if key == "frameWidth" or key == "contentXPadding" or key == "tabXPadding" then
           self.Text:ClearAllPoints()
-          self.Text:SetPoint("LEFT", Utils.getContentXPadding(), 0)
+          self.Text:SetPoint("LEFT", 0, 0)
         end
 
+        if key == "tabFontSize" or key == "tabYPadding" then
+          self:SetHeight(Utils.getDockHeight(Core.db.profile))
+        end
         if key == "frameWidth" or key == "frameHeight" or key == "font" or
-          key == "messageFontSize" or key == "contentXPadding" then
+          key == "fontFlags" or key == "messageFontSize" or
+          key == "tabFont" or key == "tabFontFlags" or key == "tabFontSize" or
+          key == "tabXPadding" or key == "contentXPadding" then
           self:SetWidth()
         end
       end)

@@ -1,512 +1,439 @@
-local Core, Constants = unpack(select(2, ...))
-local TP = Core:GetModule("TextProcessing")
+local Core, Constants, Utils = unpack(select(2, ...))
 local UIManager = Core:GetModule("UIManager")
-
+local MessageRouter = Core:GetModule("MessageRouter")
 local AceHook = Core.Libs.AceHook
-
 local LibEasing = Core.Libs.LibEasing
-local lodash = Core.Libs.lodash
-local drop, reduce, take = lodash.drop, lodash.reduce, lodash.take
-
-local CreateMessageLinePool = Core.Components.CreateMessageLinePool
-local CreateScrollOverlayFrame = Core.Components.CreateScrollOverlayFrame
-
-local EDIT_BOX_FOCUS_GAINED = Constants.EVENTS.EDIT_BOX_FOCUS_GAINED
-local EDIT_BOX_FOCUS_LOST = Constants.EVENTS.EDIT_BOX_FOCUS_LOST
-local LOCK_MOVER = Constants.EVENTS.LOCK_MOVER
-local MOUSE_ENTER = Constants.EVENTS.MOUSE_ENTER
-local MOUSE_LEAVE = Constants.EVENTS.MOUSE_LEAVE
-local UNLOCK_MOVER = Constants.EVENTS.UNLOCK_MOVER
-local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
-
--- luacheck: push ignore 113
-local CreateFrame = CreateFrame
-local CreateObjectPool = CreateObjectPool
-local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME
-local Mixin = Mixin
--- luacheck: pop
-
-----
--- SlidingMessageFrameMixin
---
--- Custom frame for displaying pretty sliding messages
+local E = Constants.EVENTS
 local SlidingMessageFrameMixin = {}
 
-function SlidingMessageFrameMixin:Init(chatFrame)
-  self.config = {
-    height = Core.db.profile.frameHeight - Constants.DOCK_HEIGHT - 5,
-    width = Core.db.profile.frameWidth,
-    overflowHeight = 60,
-  }
-  self.state = {
-    mouseOver = false,
-    showingTooltip = false,
-    prevEasingHandle = nil,
-    incomingScrollbackMessages = {},
-    incomingMessages = {},
-    messages = {},
-    head = nil,
-    tail = nil,
-    isCombatLog = false,
-    editBoxFocused = _G.ChatFrame1EditBox:HasFocus(),
-    moverUnlocked = UIManager.moverFrame:IsShown(),
-    scrollAtBottom = true,
-    unreadMessages = false,
-  }
+function SlidingMessageFrameMixin:GetSettings()
+  return self.window and self.window.settings or Core.db.profile
+end
+
+function SlidingMessageFrameMixin:IsInteractive(setting)
+  if not self.window then return true end
+  local settings = self:GetSettings()
+  return not settings.nonInteractive and settings[setting] ~= false
+end
+
+function SlidingMessageFrameMixin:GetContentOffset()
+  if self.window and not self:GetSettings().showTabBar then return 0 end
+  local offset = Utils.getDockHeight(self:GetSettings()) + 5
+  if self.state.isCombatLog then
+    -- Blizzard anchors the filter toolbar 3px above Combat Log; leave it below our tabs.
+    local toolbar = self.chatFrame.CombatLogQuickButtonFrame or _G.CombatLogQuickButtonFrame_Custom
+      or _G.CombatLogQuickButtonFrame
+    local toolbarHeight = toolbar and toolbar:GetHeight() or 0
+    -- Combat Log is load-on-demand, so its toolbar may not exist on first initialization.
+    offset = offset + (toolbarHeight > 0 and toolbarHeight or 24) + 3
+  end
+  return offset
+end
+
+function SlidingMessageFrameMixin:Init(chatFrame, window)
+  self.window = window
   self.chatFrame = chatFrame
+  self.state = {
+    mouseOver = false, editBoxFocused = not window and _G.ChatFrame1EditBox:HasFocus() or false,
+    moverUnlocked = not window and UIManager.moverFrame:IsShown() or false,
+    incomingScrollbackMessages = {}, incomingMessages = {}, messages = {},
+    scrollAtBottom = true, jumpingToBottom = false, unreadMessages = false, scrollOffset = 0,
+    isCombatLog = not window and chatFrame == _G.ChatFrame2,
+  }
+  self.config = { overflowHeight = 60 }
 
-  -- Override Blizzard UI
-  _G[chatFrame:GetName().."ButtonFrame"]:Hide()
-
-  chatFrame:SetClampRectInsets(0,0,0,0)
-  chatFrame:SetClampedToScreen(false)
-  chatFrame:SetResizable(false)
-  chatFrame:SetParent(self:GetParent())
-  chatFrame:ClearAllPoints()
-
-  -- Skip combat log
-  if chatFrame == _G.ChatFrame2 then
-    self.state.isCombatLog = true
+  if not window then
+    _G[chatFrame:GetName().."ButtonFrame"]:Hide()
+    chatFrame:SetClampRectInsets(0, 0, 0, 0)
+    chatFrame:SetClampedToScreen(false)
+    chatFrame:SetResizable(false)
+    chatFrame:SetParent(self:GetParent())
+    chatFrame:ClearAllPoints()
     self:RawHook(chatFrame, "SetPoint", function ()
-      self.hooks[chatFrame].SetPoint(chatFrame, "TOPLEFT", self:GetParent(), "TOPLEFT", 0, -45)
-      self.hooks[chatFrame].SetPoint(chatFrame, "BOTTOMRIGHT", self:GetParent(), "BOTTOMRIGHT", 0, 0)
+      local offset = self:GetContentOffset()
+      self.hooks[chatFrame].SetPoint(chatFrame, "TOPLEFT", self:GetParent(), "TOPLEFT", 0, -offset)
+      if self.state.isCombatLog then
+        self.hooks[chatFrame].SetPoint(chatFrame, "BOTTOMRIGHT", self:GetParent(), "BOTTOMRIGHT", 0, 0)
+      end
     end, true)
-    return
-  end
-
-  self:RawHook(chatFrame, "SetPoint", function ()
-    self.hooks[chatFrame].SetPoint(chatFrame, "TOPLEFT", self:GetParent(), "TOPLEFT", 0, -45)
-  end, true)
-
-  -- Chat scroll frame
-  self:SetHeight(self.config.height + self.config.overflowHeight)
-  self:SetWidth(self.config.width)
-  self:SetPoint("TOPLEFT", 0, (Constants.DOCK_HEIGHT + 5) * -1)
-
-  -- Set initial scroll position
-  self:SetVerticalScroll(self.config.overflowHeight)
-
-  -- Overlay
-  if self.overlay == nil then
-    self.overlay = CreateScrollOverlayFrame(self)
-    self.overlay:QuickHide()
-
-    -- Snap to bottom on click
-    self.overlay:SetScript("OnClickSnapFrame", function ()
-      self.state.scrollAtBottom = true
-      self.state.unreadMessages = false
-      self.overlay:Hide()
-      self.overlay:HideNewMessageAlert()
-
-      local startOffset = math.max(
-        self:GetVerticalScrollRange() - self.config.height * 2,
-        self:GetVerticalScroll()
-      )
-      local endOffset = self:GetVerticalScrollRange()
-
-      LibEasing:Ease(
-        function (offset) self:SetVerticalScroll(offset) end,
-        startOffset,
-        endOffset,
-        0.3,
-        LibEasing.OutCubic,
-        function ()
-          self:SetHeight(self.config.height + self.config.overflowHeight)
+    if self.state.isCombatLog then
+      chatFrame:SetPoint()
+      self.subscriptions = { Core:Subscribe(E.UPDATE_CONFIG, function (key)
+        if key == "frameWidth" or key == "frameHeight" or key == "tabFontSize" or key == "tabYPadding" then
+          chatFrame:SetPoint()
         end
-      )
-    end)
+      end) }
+      return
+    end
   end
 
-  -- Scrolling
-  self:SetScript("OnMouseWheel", function (frame, delta)
-    local maxScroll = (
-      self.state.scrollAtBottom and
-      self:GetVerticalScrollRange() + self.config.overflowHeight
-      or self:GetVerticalScrollRange()
-    )
-    local minScroll = self.config.height + self.config.overflowHeight
-    local scrollValue
-
-    if delta < 0 then
-      -- Scroll down
-      scrollValue = math.min(self:GetVerticalScroll() + 20, maxScroll)
-    else
-      -- Scroll up
-      scrollValue = math.max(self:GetVerticalScroll() - 20, math.min(minScroll, maxScroll))
+  if not self.viewport then
+    self.viewport = _G.CreateFrame("Frame", nil, self)
+    self.viewport:SetAllPoints()
+    self.viewport:SetClipsChildren(true)
+    if self.viewport.SetAlphaGradient and self.viewport.SetFlattensRenderLayers then
+      -- Frame alpha gradients require flattened render layers.
+      self.viewport:SetFlattensRenderLayers(true)
     end
-
-    self:UpdateScrollChildRect()
-    self:SetVerticalScroll(scrollValue)
-
+    self.viewport:EnableMouse(false)
+    self.viewport:EnableMouseWheel(false)
+  end
+  if not self.slider then self.slider = _G.CreateFrame("Frame", nil, self.viewport) end
+  self.slider:SetFrameLevel(self.viewport:GetFrameLevel())
+  self.slider:ClearAllPoints()
+  self:SetScrollOffset(0)
+  if not self.messageFramePool then
+    self.messageFramePool = Core.Components.CreateMessageLinePool(self.slider, self)
+  end
+  if not self.overlay then
+    self.overlay = Core.Components.CreateScrollOverlayFrame(self)
+    self.overlay:SetScript("OnClickSnapFrame", function () self:SnapToBottom(true) end)
+  end
+  -- The jump button is a sibling of the faded viewport, not part of its content.
+  self.overlay:SetFrameLevel(self.slider:GetFrameLevel() + 2)
+  self.overlay.snapToBottomFrame:SetFrameLevel(self.overlay:GetFrameLevel() + 2)
+  self.overlay:QuickHide()
+  self:EnableMouse(false)
+  self:SetScript("OnMouseWheel", function (_, delta)
+    if not self:IsInteractive("scrollEnabled") then return end
+    local minScroll, maxScroll = self:GetScrollBounds()
+    local scrollValue = math.max(minScroll, math.min(self.state.scrollOffset - delta * 20, maxScroll))
+    self:StopScrollAnimation()
+    self:SetScrollOffset(scrollValue)
     self.state.scrollAtBottom = scrollValue == maxScroll
-
-    -- Adjust height of scroll frame when scrolling
     if self.state.scrollAtBottom then
-      -- If scrolled to the bottom, the height of the scroll frame should
-      -- include overflow to account for slide up animations
-      self:SetHeight(self.config.height + self.config.overflowHeight)
-      self.overlay:Hide()
-      self.overlay:HideNewMessageAlert()
-      self.state.unreadMessages = false
+      self:SnapToBottom()
     else
-      -- If not, the height should fit the frame exactly so messages don't spill
-      -- under the edit box area
       self:SetHeight(self.config.height)
+      self:UpdateEdgeFades()
       self.overlay:Show()
     end
-
-    -- Show hidden messages
-    for _, message in ipairs(self.state.messages) do
-      message:Show()
-    end
+    self:RevealMessages()
+    self:ScheduleFade()
   end)
+  self:RefreshSettings()
 
-  -- Mouse clickthrough
-  self:EnableMouse(false)
-
-  -- ScrollChild
-  if self.slider == nil then
-    self.slider = CreateFrame("Frame", nil, self)
-  end
-  self.slider:SetHeight(self.config.height + self.config.overflowHeight)
-  self.slider:SetWidth(self.config.width)
-  self:SetScrollChild(self.slider)
-
-  if self.slider.bg == nil then
-    self.slider.bg = self.slider:CreateTexture(nil, "BACKGROUND")
-  end
-  self.slider.bg:SetAllPoints()
-  self.slider.bg:SetColorTexture(0, 0, 1, 0)
-
-  -- Pool for the message frames
-  if self.messageFramePool == nil then
-    self.messageFramePool = CreateMessageLinePool(self.slider)
-  end
-
-  self:Hook(chatFrame, "AddMessage", function (...)
-    self:AddMessage(...)
-  end, true)
-
-  self:Hook(chatFrame.historyBuffer, "PushBack", function (_, message)
-    self:BackFillMessage(nil, message.message, message.r, message.g, message.b)
-  end, true)
-
-  -- Hide the default chat frame and show the sliding message frame instead
-  self:RawHook(chatFrame, "Show", function ()
-    self:Show()
-  end, true)
-
-  self:RawHook(chatFrame, "Hide", function (f)
-    self.hooks[chatFrame].Hide(f)
-    self:Hide()
-  end, true)
-
-  chatFrame:Hide()
-
-  -- Load any messages already in the chat frame to Glass
-  if chatFrame == DEFAULT_CHAT_FRAME then
-    for i = 1, chatFrame:GetNumMessages() do
-        local text, r, g, b = chatFrame:GetMessageInfo(i);
-        self:AddMessage(chatFrame, text, r, g, b);
+  local events = window or Core
+  self.subscriptions = {
+    events:Subscribe(E.MOUSE_ENTER, function ()
+      self.state.mouseOver = true
+      if not self.state.scrollAtBottom and self:IsInteractive("scrollEnabled") then self.overlay:Show() end
+      if self.state.moverUnlocked or self.state.editBoxFocused or self:GetSettings().chatShowOnMouseOver then
+        self:RevealMessages()
       end
-  end
-
-  -- Listeners
-  if self.subscriptions == nil then
-    self.subscriptions = {
-      Core:Subscribe(MOUSE_ENTER, function ()
-        -- Don't hide chats when mouse is over
-        self.state.mouseOver = true
-
-        if not self.state.scrollAtBottom then
-          self.overlay:Show()
-        end
-
+    end),
+    events:Subscribe(E.MOUSE_LEAVE, function ()
+      self.state.mouseOver = false
+      self.overlay:HideDelay(self:GetSettings().chatHoldTime)
+      self:ScheduleFade()
+    end),
+    events:Subscribe(E.UNLOCK_MOVER, function ()
+      self.state.moverUnlocked = true
+      self:RevealMessages()
+    end),
+    events:Subscribe(E.LOCK_MOVER, function ()
+      self.state.moverUnlocked = false
+      self:ScheduleFade()
+    end),
+    events:Subscribe(E.UPDATE_CONFIG, function (key)
+      if key == "messageTopFade" or key == "messageBottomFade" then
+        self:UpdateEdgeFades()
+        return
+      end
+      if key == "chatBackgroundOpacity" or key == "leftGradientWidth" or key == "rightGradientWidth" then
+        for _, message in ipairs(self.state.messages) do message:UpdateTextures() end
+        return
+      end
+      if key == "tabBarBackgroundOpacity" or key == "tabLeftGradientWidth" or
+        key == "tabRightGradientWidth" or key == "editBoxBackgroundOpacity" or key == "editBoxXPadding" then
+        return
+      end
+      if key == "iconTextureYOffset" then
         for _, message in ipairs(self.state.messages) do
-          if self.state.moverUnlocked or self.state.editBoxFocused or Core.db.profile.chatShowOnMouseOver then
-            message:Show()
-          end
+          message.text:SetText(Core:GetModule("TextProcessing"):ProcessText(message.rawText, self:GetSettings()))
         end
-      end),
-      Core:Subscribe(MOUSE_LEAVE, function ()
-        -- Hide chats when mouse leaves
-        self.state.mouseOver = false
+      end
+      self:RefreshSettings()
+    end),
+  }
 
-        self.overlay:HideDelay(Core.db.profile.chatHoldTime)
-
-        if not self.state.moverUnlocked and not self.state.editBoxFocused then
-          for _, message in ipairs(self.state.messages) do
-            message:HideDelay(Core.db.profile.chatHoldTime)
-          end
-        end
-      end),
-      Core:Subscribe(EDIT_BOX_FOCUS_GAINED, function ()
-        self.state.editBoxFocused = true
-        for _, message in ipairs(self.state.messages) do
-          message:Show()
-        end
-      end),
-      Core:Subscribe(EDIT_BOX_FOCUS_LOST, function ()
-        self.state.editBoxFocused = false
-        if not self.state.moverUnlocked and not self.state.mouseOver then
-          for _, message in ipairs(self.state.messages) do
-            message:HideDelay(Core.db.profile.chatHoldTime)
-          end
-        end
-      end),
-      Core:Subscribe(UNLOCK_MOVER, function ()
-        self.state.moverUnlocked = true
-        for _, message in ipairs(self.state.messages) do
-          message:Show()
-        end
-      end),
-      Core:Subscribe(LOCK_MOVER, function ()
-        self.state.moverUnlocked = false
-        if not self.state.mouseOver and not self.state.editBoxFocused then
-          for _, message in ipairs(self.state.messages) do
-            message:HideDelay(Core.db.profile.chatHoldTime)
-          end
-        end
-      end),
-      Core:Subscribe(UPDATE_CONFIG, function (key)
-        if self.state.isCombatLog == false then
-          if (
-            key == "font" or
-            key == "messageFontSize" or
-            key == "frameWidth" or
-            key == "frameHeight" or
-            key == "contentXPadding" or
-            key == "messageLeading" or
-            key == "messageLinePadding" or
-            key == "indentWordWrap"
-          ) then
-            -- Adjust frame dimensions first
-            self.config.height = Core.db.profile.frameHeight - Constants.DOCK_HEIGHT - 5
-            self.config.width = Core.db.profile.frameWidth
-
-            self:SetHeight(self.config.height + self.config.overflowHeight)
-            self:SetWidth(self.config.width)
-
-            -- Then adjust message line dimensions
-            for _, message in ipairs(self.state.messages) do
-                message:UpdateFrame()
-            end
-
-            -- Then update scroll values
-            local contentHeight = reduce(self.state.messages, function (acc, message)
-              return acc + message:GetHeight()
-            end, 0)
-            self.slider:SetHeight(self.config.height + self.config.overflowHeight + contentHeight)
-            self.slider:SetWidth(self.config.width)
-
-            self.state.scrollAtBottom = true
-            self.state.unreadMessages = false
-            self:UpdateScrollChildRect()
-            self:SetVerticalScroll(self:GetVerticalScrollRange() + self.config.overflowHeight)
-            self.overlay:Hide()
-            self.overlay:HideNewMessageAlert()
-          end
-
-          if key == "chatBackgroundOpacity" or
-            key == "leftGradientWidth" or key == "rightGradientWidth" then
-            for _, message in ipairs(self.state.messages) do
-              message:UpdateTextures()
-            end
-          end
-        end
-      end)
-    }
+  if not window then
+    table.insert(self.subscriptions, Core:Subscribe(E.EDIT_BOX_FOCUS_GAINED, function ()
+      self.state.editBoxFocused = true
+      self:RevealMessages()
+    end))
+    table.insert(self.subscriptions, Core:Subscribe(E.EDIT_BOX_FOCUS_LOST, function ()
+      self.state.editBoxFocused = false
+      self:ScheduleFade()
+    end))
+    self:RawHook(chatFrame, "Show", function ()
+      local wasShown = self:IsShown()
+      self:Show()
+      if not wasShown then
+        self.state.mouseOver = UIManager.container:IsMouseOver()
+        self:RevealMessages()
+        self:ScheduleFade()
+      end
+    end, true)
+    self:RawHook(chatFrame, "Hide", function (frame)
+      self.hooks[chatFrame].Hide(frame)
+      self:Hide()
+    end, true)
+    -- Blizzard's dock uses SetShown, whose native implementation bypasses Lua Show/Hide hooks.
+    self:RawHook(chatFrame, "SetShown", function (frame, shown)
+      if shown then frame:Show() else frame:Hide() end
+    end, true)
+    chatFrame:Hide()
   end
 end
 
-function SlidingMessageFrameMixin:CreateMessageFrame(frame, text, red, green, blue, messageId, holdTime)
-  red = red or 1
-  green = green or 1
-  blue = blue or 1
-
-  local message = self.messageFramePool:Acquire()
-
-  message.text:SetTextColor(red, green, blue, 1)
-  message.text:SetText(TP:ProcessText(text))
-
-  -- Adjust height to contain text
-  message:UpdateFrame()
-
-  return message
+function SlidingMessageFrameMixin:UpdateEdgeFades()
+  local viewport = self.viewport
+  if not viewport or not viewport.SetAlphaGradient or not viewport.SetFlattensRenderLayers
+    or not _G.CreateVector2D then return end
+  -- Keep the lower edge soft through the jump, then reveal the newest line fully.
+  local atBottom = self.state.scrollAtBottom and not self.state.jumpingToBottom
+  local top, bottom = Utils.getMessageEdgeFades(self:GetSettings(), self.config.height, atBottom)
+  if self.state.topEdgeFade ~= top or self.state.bottomEdgeFade ~= bottom then
+    viewport:SetAlphaGradient(0, _G.CreateVector2D(0, top))
+    viewport:SetAlphaGradient(1, _G.CreateVector2D(0, bottom))
+    self.state.topEdgeFade, self.state.bottomEdgeFade = top, bottom
+  end
 end
 
-function SlidingMessageFrameMixin:AddMessage(...)
-  -- Enqueue messages to be displayed
-  local args = {...}
-  table.insert(self.state.incomingMessages, args)
+function SlidingMessageFrameMixin:SetScrollOffset(offset)
+  self.state.scrollOffset = math.max(0, offset)
+  -- Keep messages in the clipped frame's render layers, as Blizzard's ScrollBox does.
+  self.slider:SetPoint("TOPLEFT", self.viewport, "TOPLEFT", 0, self.state.scrollOffset)
 end
 
-function SlidingMessageFrameMixin:BackFillMessage(...)
-  local args = {...}
-  table.insert(self.state.incomingScrollbackMessages, args)
+function SlidingMessageFrameMixin:GetScrollBounds()
+  return Utils.getMessageScrollBounds(self.slider:GetHeight(), self.config.height, self.config.overflowHeight)
+end
+
+function SlidingMessageFrameMixin:GetBottomOffset()
+  local _, bottom = self:GetScrollBounds()
+  return bottom
+end
+
+function SlidingMessageFrameMixin:StopScrollAnimation()
+  if self.state.prevEasingHandle then
+    LibEasing:StopEasing(self.state.prevEasingHandle)
+    self.state.prevEasingHandle = nil
+  end
+  self.state.jumpingToBottom = false
+end
+
+function SlidingMessageFrameMixin:RefreshSettings()
+  if self.state.isCombatLog then return end
+  self:StopScrollAnimation()
+  local settings = self:GetSettings()
+  self.config.height = math.max(1, settings.frameHeight - self:GetContentOffset())
+  self.config.width = settings.frameWidth
+  self:SetWidth(self.config.width)
+  self:ClearAllPoints()
+  self:SetPoint("TOPLEFT", 0, -self:GetContentOffset())
+  self:EnableMouseWheel(self:IsInteractive("scrollEnabled"))
+  self.slider:SetWidth(self.config.width)
+  local contentHeight = 0
+  for _, message in ipairs(self.state.messages) do
+    message:UpdateFrame()
+    contentHeight = contentHeight + message:GetHeight()
+  end
+  self.slider:SetHeight(self.config.height + self.config.overflowHeight + contentHeight)
+  self.overlay:RefreshLayout(self.config.height, self.window and self.window.fonts.message)
+  self.overlay.snapToBottomFrame:EnableMouse(self:IsInteractive("scrollEnabled"))
+  self:SetHeight(self.config.height + (self.state.scrollAtBottom and self.config.overflowHeight or 0))
+  local minScroll, maxScroll = self:GetScrollBounds()
+  local offset = math.max(minScroll, math.min(self.state.scrollOffset, maxScroll))
+  if self.state.scrollAtBottom or not self:IsInteractive("scrollEnabled") or offset == maxScroll then
+    self:SnapToBottom()
+  else
+    self:SetScrollOffset(offset)
+  end
+  self:UpdateEdgeFades()
+end
+
+function SlidingMessageFrameMixin:SnapToBottom(animated)
+  self:StopScrollAnimation()
+  self.state.scrollAtBottom = true
+  self.state.unreadMessages = false
+  local target = self:GetBottomOffset()
+  if animated then
+    -- Keep history clipped while jumping. The extra viewport space is only for new-message animations.
+    self.state.jumpingToBottom = true
+    self:SetHeight(self.config.height)
+    local start = math.min(target, math.max(self.state.scrollOffset, target - self.config.height * 2))
+    self.state.prevEasingHandle = LibEasing:Ease(
+      function (offset) self:SetScrollOffset(offset) end, start, target, 0.3, LibEasing.OutCubic,
+      function ()
+        self.state.jumpingToBottom = false
+        self.state.prevEasingHandle = nil
+        self:SetHeight(self.config.height + self.config.overflowHeight)
+        self:SetScrollOffset(self:GetBottomOffset())
+        self:UpdateEdgeFades()
+      end
+    )
+  else
+    self:SetHeight(self.config.height + self.config.overflowHeight)
+    self:SetScrollOffset(target)
+  end
+  self:UpdateEdgeFades()
+  self.overlay:QuickHide()
+  self.overlay:HideNewMessageAlert()
+end
+
+function SlidingMessageFrameMixin:RevealMessages()
+  for _, message in ipairs(self.state.messages) do message:Show() end
+end
+
+function SlidingMessageFrameMixin:ScheduleFade()
+  if self.state.mouseOver or self.state.moverUnlocked or self.state.editBoxFocused then return end
+  for _, message in ipairs(self.state.messages) do message:HideDelay(self:GetSettings().chatHoldTime) end
+end
+
+function SlidingMessageFrameMixin:AppendMessages(messages)
+  for _, message in ipairs(messages) do
+    table.insert(self.state.incomingMessages, message)
+  end
+end
+
+function SlidingMessageFrameMixin:PrependMessages(messages)
+  -- Update inserts each history record at the front, so queue each batch newest first.
+  for index = #messages, 1, -1 do
+    table.insert(self.state.incomingScrollbackMessages, messages[index])
+  end
 end
 
 function SlidingMessageFrameMixin:OnFrame()
+  if self.state.isCombatLog then return end
   if #self.state.incomingMessages > 0 then
-    local incoming = {}
-    for _, message in ipairs(self.state.incomingMessages) do
-      table.insert(incoming, message)
-    end
+    local incoming = self.state.incomingMessages
     self.state.incomingMessages = {}
     self:Update(incoming, false)
   end
-
   if #self.state.incomingScrollbackMessages > 0 then
-    local incoming = {}
-    for _, message in ipairs(self.state.incomingScrollbackMessages) do
-      table.insert(incoming, message)
-    end
+    local incoming = self.state.incomingScrollbackMessages
     self.state.incomingScrollbackMessages = {}
     self:Update(incoming, true)
   end
 end
 
-function SlidingMessageFrameMixin:Update(incoming, reverse)
-  -- Create new message frame for each message
+function SlidingMessageFrameMixin:ClearMessages()
+  self:StopScrollAnimation()
+  self.state.messages = {}
+  self.state.incomingMessages = {}
+  self.state.incomingScrollbackMessages = {}
+  self.state.head, self.state.tail = nil, nil
+  self.state.scrollAtBottom = true
+  self.state.unreadMessages = false
+  if self.messageFramePool then self.messageFramePool:ReleaseAll() end
+  if self.slider then
+    self.slider:SetHeight(self.config.height + self.config.overflowHeight)
+    self:SnapToBottom()
+  end
+end
+
+function SlidingMessageFrameMixin:ReplaceMessages(messages)
+  self:ClearMessages()
+  if #messages > 0 then self:Update(messages, false, true) end
+end
+
+function SlidingMessageFrameMixin:Update(incoming, reverse, immediate)
+  local settings = self:GetSettings()
   local newMessages = {}
-
-  for _, message in ipairs(incoming) do
-    local messageFrame = self:CreateMessageFrame(unpack(message))
-    messageFrame:SetPoint("BOTTOMLEFT")
-
-    -- Attach previous messageFrame to this one
+  local oldHeight = self.slider:GetHeight()
+  for _, record in ipairs(incoming) do
+    local message = self.messageFramePool:Acquire()
+    message:SetMessage(record)
+    message:ClearAllPoints()
+    message:SetPoint("BOTTOMLEFT")
     if reverse then
       if self.state.tail then
-        messageFrame:ClearAllPoints()
-        messageFrame:SetPoint("BOTTOMLEFT", self.state.tail, "TOPLEFT")
+        message:ClearAllPoints()
+        message:SetPoint("BOTTOMLEFT", self.state.tail, "TOPLEFT")
       end
-    else
-      if self.state.head then
-        self.state.head:ClearAllPoints()
-        self.state.head:SetPoint("BOTTOMLEFT", messageFrame, "TOPLEFT")
-      end
+    elseif self.state.head then
+      self.state.head:ClearAllPoints()
+      self.state.head:SetPoint("BOTTOMLEFT", message, "TOPLEFT")
     end
-
-    if self.state.tail == nil then
-      self.state.tail = messageFrame
-    end
-
-    if self.state.head == nil then
-      self.state.head = messageFrame
-    end
-
-    if reverse then
-      self.state.tail = messageFrame
-    else
-      self.state.head = messageFrame
-    end
-
-    table.insert(newMessages, messageFrame)
+    self.state.tail = self.state.tail or message
+    self.state.head = self.state.head or message
+    if reverse then self.state.tail = message else self.state.head = message end
+    table.insert(newMessages, message)
+    if reverse then table.insert(self.state.messages, 1, message) else table.insert(self.state.messages, message) end
   end
-
-  -- Update slider offsets animation
-  local offset = reduce(newMessages, function (acc, message)
-    return acc + message:GetHeight()
-  end, 0)
-
-  local newHeight = self.slider:GetHeight() + offset
+  local removedHeight = 0
+  while #self.state.messages > Constants.MESSAGE_HISTORY_LIMIT do
+    local old = table.remove(self.state.messages, 1)
+    removedHeight = removedHeight + old:GetHeight()
+    self.messageFramePool:Release(old)
+  end
+  self.state.tail = self.state.messages[1]
+  local retained = {}
+  local newHeight = self.config.height + self.config.overflowHeight
+  for _, message in ipairs(self.state.messages) do
+    retained[message] = true
+    newHeight = newHeight + message:GetHeight()
+  end
   self.slider:SetHeight(newHeight)
-
-  -- Display and run everything
-  if self.state.scrollAtBottom then
-    -- Only play slide up if not scrolling
-    if self.state.prevEasingHandle ~= nil then
-      LibEasing:StopEasing(self.state.prevEasingHandle)
-    end
-
-    local startOffset = self:GetVerticalScroll()
-    local endOffset = newHeight - self:GetHeight() + self.config.overflowHeight
-
-    if Core.db.profile.chatSlideInDuration > 0 then
+  local scrollAdjustment = reverse and newHeight - oldHeight or -removedHeight
+  self:SetScrollOffset(self.state.scrollOffset + scrollAdjustment)
+  if self.state.jumpingToBottom then
+    self:SnapToBottom(not immediate)
+  elseif self.state.scrollAtBottom then
+    self:StopScrollAnimation()
+    local endOffset = self:GetBottomOffset()
+    if not immediate and settings.chatSlideInDuration > 0 then
       self.state.prevEasingHandle = LibEasing:Ease(
-        function (n) self:SetVerticalScroll(n) end,
-        startOffset,
-        endOffset,
-        Core.db.profile.chatSlideInDuration,
-        LibEasing.OutCubic
+        function (value) self:SetScrollOffset(value) end,
+        self.state.scrollOffset, endOffset, settings.chatSlideInDuration, LibEasing.OutCubic
       )
     else
-      self:SetVerticalScroll(endOffset)
+      self:SetScrollOffset(endOffset)
     end
-  else
-    -- Otherwise show "Unread messages" notification
+  elseif self:IsInteractive("scrollEnabled") then
     self.state.unreadMessages = true
     self.overlay:Show()
     self.overlay:ShowNewMessageAlert()
-    if not self.state.mouseOver then
-      self.overlay:HideDelay(Core.db.profile.chatHoldTime)
-    end
+    if not self.state.mouseOver then self.overlay:HideDelay(settings.chatHoldTime) end
   end
-
   for _, message in ipairs(newMessages) do
-    message:Show()
-    if not self.state.mouseOver and not self.state.moverUnlocked and not self.state.editBoxFocused then
-      message:HideDelay(Core.db.profile.chatHoldTime)
-    end
-    if reverse then
-      table.insert(self.state.messages, 1, message)
-    else
-      table.insert(self.state.messages, message)
+    if retained[message] then
+      if immediate then message:QuickShow() else message:Show() end
+      if not self.state.mouseOver and not self.state.moverUnlocked and not self.state.editBoxFocused then
+        message:HideDelay(settings.chatHoldTime)
+      end
     end
   end
+end
 
-  -- Release old messages
-  local historyLimit = 128
-  if #self.state.messages > historyLimit then
-    local overflow = #self.state.messages - historyLimit
-    local oldMessages = take(self.state.messages, overflow)
-    self.state.messages = drop(self.state.messages, overflow)
-
-    for _, message in ipairs(oldMessages) do
-      self.messageFramePool:Release(message)
-    end
-  end
+function SlidingMessageFrameMixin:Dispose()
+  MessageRouter:Unbind(self)
+  if self.state then self:ClearMessages() end
+  for _, unsubscribe in ipairs(self.subscriptions or {}) do unsubscribe() end
+  self.subscriptions = nil
+  self:UnhookAll()
+  self:Hide()
+  self:SetScript("OnMouseWheel", nil)
+  self:EnableMouseWheel(false)
+  if self.viewport and self.viewport.ClearAlphaGradient then self.viewport:ClearAlphaGradient() end
+  self.chatFrame, self.window = nil, nil
 end
 
 local function CreateSlidingMessageFrame(name, parent, chatFrame)
-  local frame = CreateFrame("ScrollFrame", name, parent)
-  local object = Mixin(frame, SlidingMessageFrameMixin)
-  AceHook:Embed(object)
-
-  if chatFrame then
-    object:Init(chatFrame)
-  end
-  object:Hide()
-  return object
-end
-
-local function CreateSlidingMessageFramePool(parent)
-  return CreateObjectPool(
-    function () return CreateSlidingMessageFrame(nil, parent) end,
-    function (_, smf)
-      smf:Hide()
-
-      if smf.chatFrame then
-        smf:Unhook(smf.chatFrame, "SetPoint")
-        smf:Unhook(smf.chatFrame, "AddMessage")
-        smf:Unhook(smf.chatFrame, "Show")
-        smf:Unhook(smf.chatFrame, "Hide")
-      end
-
-      if smf.state ~= nil then
-        smf.state.head = nil
-        smf.state.tail = nil
-        smf.state.messages = {}
-        smf.state.incomingMessages = {}
-        smf.state.incomingScrollbackMessages = {}
-      end
-
-      if smf.messageFramePool ~= nil then
-        smf.messageFramePool:ReleaseAll()
-      end
-    end
-  )
+  local frame = _G.CreateFrame("Frame", name, parent)
+  _G.Mixin(frame, SlidingMessageFrameMixin)
+  AceHook:Embed(frame)
+  if chatFrame then frame:Init(chatFrame) end
+  frame:Hide()
+  return frame
 end
 
 Core.Components.CreateSlidingMessageFrame = CreateSlidingMessageFrame
-Core.Components.CreateSlidingMessageFramePool = CreateSlidingMessageFramePool
+Core.Components.CreateSlidingMessageFramePool = function (parent)
+  return _G.CreateObjectPool(
+    function () return CreateSlidingMessageFrame(nil, parent) end,
+    function (_, frame) frame:Dispose() end
+  )
+end

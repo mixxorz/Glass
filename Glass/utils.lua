@@ -11,9 +11,46 @@ Utils.super = function (obj)
   return getmetatable(obj).__index
 end
 
-Utils.getContentXPadding = function ()
+Utils.getEditBoxXPadding = function ()
   local profile = Core.db.profile
-  return math.min(profile.contentXPadding, math.floor((profile.frameWidth - 1) / 2))
+  return math.max(0, math.min(profile.editBoxXPadding, math.floor((profile.frameWidth - 1) / 2)))
+end
+
+Utils.getMessagePadding = function (settings)
+  local profile = settings or Core.db.profile
+  -- Unset sides inherit the old shared padding so existing profiles keep their layout.
+  local left = math.max(0, profile.contentLeftPadding or profile.contentXPadding)
+  local right = math.max(0, profile.contentRightPadding or profile.contentXPadding)
+  local available = math.max(0, profile.frameWidth - 1)
+  if left + right > available then
+    local scale = available / (left + right)
+    left, right = math.floor(left * scale), math.floor(right * scale)
+  end
+  return left, right
+end
+
+Utils.getMessageScrollBounds = function (scrollHeight, paneHeight, overflowHeight)
+  local last = math.max(0, scrollHeight - paneHeight)
+  local first = math.min(paneHeight + overflowHeight, last)
+  return first, last
+end
+
+Utils.getMessageEdgeFades = function (settings, height, atBottom)
+  local limit = math.max(0, height / 2)
+  local top = math.max(0, math.min(settings.messageTopFade or 0, limit))
+  local bottom = atBottom and 0 or math.max(0, math.min(settings.messageBottomFade or 0, limit))
+  return top, bottom
+end
+
+Utils.getDockHeight = function (settings)
+  local profile = settings or Core.db.profile
+  return (profile.tabFontSize or 12) + (profile.tabYPadding or 4) * 2
+end
+
+Utils.getTabXPadding = function (settings)
+  local profile = settings or Core.db.profile
+  return math.max(0, math.min(profile.tabXPadding or profile.contentXPadding,
+    math.floor((profile.frameWidth - 1) / 2)))
 end
 
 ---

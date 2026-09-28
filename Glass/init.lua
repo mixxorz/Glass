@@ -35,11 +35,19 @@ Core:NewModule("Fonts")
 Core:NewModule("Hyperlinks")
 Core:NewModule("News")
 Core:NewModule("TextProcessing")
+Core:NewModule("MessageRouter", "AceHook-3.0")
+Core:NewModule("Demo")
 Core:NewModule("UIManager", "AceHook-3.0")
+Core:NewModule("ExtraWindows")
 
 -- Default settings
 Core.defaults = {
+  char = { extraWindowSources = {} },
   profile = {
+    extraWindows = {},
+    tabFontSize = 12,
+    tabYPadding = 4,
+    tabSpacing = 0,
     -- General
     font = "Friz Quadrata TT",
     fontFlags = "",
@@ -68,6 +76,8 @@ Core.defaults = {
     chatBackgroundOpacity = 0.4,
     messageLeading = 3,
     messageLinePadding = 0.25,
+    messageTopFade = 14,
+    messageBottomFade = 14,
 
     chatHoldTime = 10,
     chatShowOnMouseOver = true,

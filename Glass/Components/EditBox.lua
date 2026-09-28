@@ -19,7 +19,7 @@ local EditBoxMixin = {}
 
 local function GetEditBoxPadding(self)
   local available = self:GetWidth() - self.header:GetStringWidth() - 20
-  return math.min(Utils.getContentXPadding(), math.max(0, math.floor(available / 2)))
+  return math.min(Utils.getEditBoxXPadding(), math.max(0, math.floor(available / 2)))
 end
 
 function EditBoxMixin:Init(parent)
@@ -131,7 +131,7 @@ function EditBoxMixin:Init(parent)
   end)
 
   Core:Subscribe(UPDATE_CONFIG, function (key)
-    if key == "font" or key == "editBoxFontSize" then
+    if key == "font" or key == "fontFlags" or key == "editBoxFontSize" then
       Ypadding = self.header:GetLineHeight() * 0.66
       self:SetHeight(self.header:GetLineHeight() + Ypadding * 2)
       self:SetTextInsets()
@@ -141,7 +141,7 @@ function EditBoxMixin:Init(parent)
       self:SetWidth(Core.db.profile.frameWidth)
     end
 
-    if key == "frameWidth" or key == "contentXPadding" then
+    if key == "frameWidth" or key == "editBoxXPadding" then
       self:SetTextInsets()
     end
 

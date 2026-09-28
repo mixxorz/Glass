@@ -6,9 +6,8 @@ local WOW_PROJECT_ID = WOW_PROJECT_ID
 -- luacheck: pop
 
 -- Constants
-Constants.DOCK_HEIGHT = 20
-
 Constants.ENV = "retail"
+Constants.MESSAGE_HISTORY_LIMIT = 128
 
 if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
   Constants.ENV = "classic"
