@@ -8,7 +8,7 @@ local strsplit = strsplit
 
 ---
 --Takes a texture escape string and adjusts its yOffset
-local function adjustTextureYOffset(texture)
+local function adjustTextureYOffset(texture, settings)
   -- Texture has 14 parts
   -- path, height, width, offsetX, offsetY,
   -- texWidth, texHeight
@@ -18,7 +18,7 @@ local function adjustTextureYOffset(texture)
   -- Strip escape characters
   -- Split into parts
   local parts = {strsplit(':', strsub(texture, 3, -3))}
-  local yOffset = Core.db.profile.iconTextureYOffset
+  local yOffset = (settings or Core.db.profile).iconTextureYOffset
 
   if #parts < 5 then
     -- Pad out ommitted attributes
@@ -44,7 +44,7 @@ end
 
 ---
 -- Gets all inline textures found in the string and adjusts their yOffset
-local function textureProcessor(text)
+local function textureProcessor(text, settings)
   local cursor = 1
   local origLen = strlen(text)
 
@@ -55,7 +55,7 @@ local function textureProcessor(text)
 
     if mStart then
       table.insert(parts, strsub(text, cursor, mStart - 1))
-      table.insert(parts, adjustTextureYOffset(strsub(text, mStart, mEnd)))
+      table.insert(parts, adjustTextureYOffset(strsub(text, mStart, mEnd), settings))
       cursor = mEnd + 1
     else
       -- No more matches
@@ -80,12 +80,12 @@ local TEXT_PROCESSORS = {
   pratTimestampProcessor
 }
 
-function TP:ProcessText(text)
+function TP:ProcessText(text, settings)
   local result = text
 
   for _, processor in ipairs(TEXT_PROCESSORS) do
     -- Prevent failing processors from bringing down the whole pipeline
-    local retOk, retVal = pcall(processor, result)
+    local retOk, retVal = pcall(processor, result, settings)
 
     if retOk then
       result = retVal

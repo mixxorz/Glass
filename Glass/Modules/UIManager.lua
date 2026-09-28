@@ -1,5 +1,7 @@
 local Core, Constants, Utils = unpack(select(2, ...))
 local UIManager = Core:GetModule("UIManager")
+local ExtraWindows = Core:GetModule("ExtraWindows")
+local MessageRouter = Core:GetModule("MessageRouter")
 
 local CreateChatDock = Core.Components.CreateChatDock
 local CreateChatTab = Core.Components.CreateChatTab
@@ -15,12 +17,20 @@ local ChatAlertFrame = ChatAlertFrame
 local ChatFrameChannelButton = ChatFrameChannelButton
 local ChatFrameMenuButton = ChatFrameMenuButton
 local CreateFrame = CreateFrame
+local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME
+local FCF_DockUpdate = FCF_DockUpdate
+local FCF_GetCurrentChatFrame = FCF_GetCurrentChatFrame
+local FCF_SelectDockFrame = FCF_SelectDockFrame
+local FCFDock_GetSelectedWindow = FCFDock_GetSelectedWindow
+local GENERAL_CHAT_DOCK = GENERAL_CHAT_DOCK
 local GetCVar = C_CVar and C_CVar.GetCVar or GetCVar
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
 local QuickJoinToastButton = QuickJoinToastButton
 local SetCVar = C_CVar and C_CVar.SetCVar or SetCVar
 local UIParent = UIParent
 -- luacheck: pop
+
+local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 ----
 -- UIManager Module
@@ -54,6 +64,7 @@ function UIManager:OnEnable()
     local chatFrame = _G["ChatFrame"..i]
     local smf = self.slidingMessageFramePool:Acquire()
     smf:Init(chatFrame)
+    if not smf.state.isCombatLog then MessageRouter:BindChat(smf, chatFrame) end
 
     self.state.frames[i] = smf
     self.state.tabs[i] = CreateChatTab(smf)
@@ -61,6 +72,16 @@ function UIManager:OnEnable()
 
   -- Edit box
   self.editBox = CreateEditBox(self.container)
+
+  FCF_SelectDockFrame(FCFDock_GetSelectedWindow(GENERAL_CHAT_DOCK) or DEFAULT_CHAT_FRAME)
+
+  Core:Subscribe(UPDATE_CONFIG, function (key)
+    if key == "contentXPadding" or key == "font" or key == "fontFlags" or
+      key == "frameWidth" or key == "tabFont" or key == "tabFontFlags" or
+      key == "tabFontSize" or key == "tabXPadding" or key == "tabYPadding" or key == "tabSpacing" then
+      FCF_DockUpdate()
+    end
+  end)
 
   -- Fix Battle.net Toast frame position
   BNToastFrame:ClearAllPoints()
@@ -100,20 +121,36 @@ function UIManager:OnEnable()
     local chatFrame = self.hooks["FCF_OpenTemporaryWindow"](...)
     local smf = self.slidingMessageFramePool:Acquire()
     smf:Init(chatFrame)
+    if not smf.state.isCombatLog then MessageRouter:BindChat(smf, chatFrame) end
 
     self.state.temporaryFrames[chatFrame:GetName()] = smf
     self.state.temporaryTabs[chatFrame:GetName()] = CreateChatTab(smf)
+    -- The native window may have been selected before its Glass renderer was initialized.
+    FCF_DockUpdate()
+    ExtraWindows:RefreshSources()
     return chatFrame
   end, true)
 
   -- Close window
-  self:RawHook("FCF_Close", function (chatFrame)
-    self.hooks["FCF_Close"](chatFrame)
+  self:RawHook("FCF_Close", function (chatFrame, fallback)
+    local closedFrame = fallback or chatFrame or FCF_GetCurrentChatFrame()
+    self.hooks["FCF_Close"](chatFrame, fallback)
 
-    self.slidingMessageFramePool:Release(self.state.temporaryFrames[chatFrame:GetName()])
-    self.state.temporaryFrames[chatFrame:GetName()] = nil
-    self.state.temporaryTabs[chatFrame:GetName()] = nil
+    if closedFrame then
+      if closedFrame ~= DEFAULT_CHAT_FRAME then ExtraWindows:SourceClosed(closedFrame) end
+      local name = closedFrame:GetName()
+      local smf = self.state.temporaryFrames[name]
+      if smf then
+        self.state.temporaryFrames[name] = nil
+        self.state.temporaryTabs[name] = nil
+        self.slidingMessageFramePool:Release(smf)
+      end
+    end
   end, true)
+
+  self:SecureHook("FCF_SetWindowName", function () ExtraWindows:RefreshSources() end)
+  self:SecureHook("FCF_OpenNewWindow", function () ExtraWindows:RefreshSources() end)
+  ExtraWindows:Start()
 
   -- Start rendering
   self.timeElapsed = 0
@@ -132,6 +169,7 @@ function UIManager:OnEnable()
       for _, smf in pairs(self.state.temporaryFrames) do
         smf:OnFrame()
       end
+      ExtraWindows:OnFrame()
     end
   end)
 end
