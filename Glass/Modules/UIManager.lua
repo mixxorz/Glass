@@ -76,7 +76,7 @@ function UIManager:OnEnable()
   FCF_SelectDockFrame(FCFDock_GetSelectedWindow(GENERAL_CHAT_DOCK) or DEFAULT_CHAT_FRAME)
 
   Core:Subscribe(UPDATE_CONFIG, function (key)
-    if key == "contentXPadding" or key == "font" or key == "fontFlags" or
+    if key == "font" or key == "fontFlags" or
       key == "frameWidth" or key == "tabFont" or key == "tabFontFlags" or
       key == "tabFontSize" or key == "tabXPadding" or key == "tabYPadding" or key == "tabSpacing" then
       FCF_DockUpdate()

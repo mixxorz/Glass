@@ -239,7 +239,7 @@ function ChatDockMixin:Init(parent)
           self.scrollFrame:SetHeight(height)
           self.scrollFrame.child:SetHeight(height)
         end
-        if key == "tabSpacing" or key == "tabXPadding" or key == "contentXPadding" then
+        if key == "tabSpacing" or key == "tabXPadding" then
           FCF_DockUpdate()
         end
 

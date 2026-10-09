@@ -104,7 +104,7 @@ function ChatTabMixin:Init(slidingMessageFrame)
   if self.subscriptions == nil then
     self.subscriptions = {
       Core:Subscribe(UPDATE_CONFIG, function (key)
-        if key == "frameWidth" or key == "contentXPadding" or key == "tabXPadding" then
+        if key == "frameWidth" or key == "tabXPadding" then
           self.Text:ClearAllPoints()
           self.Text:SetPoint("LEFT", 0, 0)
         end
@@ -115,7 +115,7 @@ function ChatTabMixin:Init(slidingMessageFrame)
         if key == "frameWidth" or key == "frameHeight" or key == "font" or
           key == "fontFlags" or key == "messageFontSize" or
           key == "tabFont" or key == "tabFontFlags" or key == "tabFontSize" or
-          key == "tabXPadding" or key == "contentXPadding" then
+          key == "tabXPadding" then
           self:SetWidth()
         end
       end)

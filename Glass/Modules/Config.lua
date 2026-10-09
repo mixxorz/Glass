@@ -39,8 +39,8 @@ local function initializeProfileSettings(profile)
     -- Keep the old appearance once, rather than inheriting future changes to Messages.
     if settings.tabLeftGradientWidth == nil then settings.tabLeftGradientWidth = settings.leftGradientWidth end
     if settings.tabRightGradientWidth == nil then settings.tabRightGradientWidth = settings.rightGradientWidth end
-    if settings.editBoxXPadding == nil then settings.editBoxXPadding = settings.contentXPadding end
-    for _, key in ipairs({"messageTopFade", "messageBottomFade"}) do
+    for _, key in ipairs({"contentLeftPadding", "contentRightPadding", "tabXPadding", "editBoxXPadding",
+      "messageTopFade", "messageBottomFade"}) do
       if settings[key] == nil then settings[key] = Core.defaults.profile[key] end
     end
   end
@@ -59,10 +59,7 @@ local function field(id, key, name, kind, order, min, max, step, values, fallbac
     local settings = id and extra():GetWindows()[id] or Core.db.profile
     local value = settings[key]
     if value == nil and fallback then value = settings[fallback] end
-    if value == nil then
-      local defaults = { tabFontSize = 12, tabYPadding = 4, tabSpacing = 0 }
-      value = defaults[key]
-    end
+    if value == nil then value = Core.defaults.profile[key] end
     return value
   end
   option.set = function(_, value)
@@ -186,8 +183,8 @@ local function windowOptions(id)
   add(messageText, "messageFontSize", "Font size", "range", 3, 1, 100, 1)
   add(messageText, "messageLeading", "Leading", "range", 4, 0, 10, 1)
   add(messageLayout, "messageLinePadding", "Line padding", "range", 5, 0, 5, 0.05)
-  add(messageLayout, "contentLeftPadding", "Left padding", "range", 6, 0, 100, 1, nil, "contentXPadding")
-  add(messageLayout, "contentRightPadding", "Right padding", "range", 7, 0, 100, 1, nil, "contentXPadding")
+  add(messageLayout, "contentLeftPadding", "Left padding", "range", 6, 0, 100, 1)
+  add(messageLayout, "contentRightPadding", "Right padding", "range", 7, 0, 100, 1)
   add(messageLayout, "messageTopFade", "Top edge fade", "range", 8, 0, 40, 1)
   add(messageLayout, "messageBottomFade", "Bottom edge fade", "range", 9, 0, 40, 1)
   messageLayout.args.messageTopFade.desc =
@@ -212,7 +209,7 @@ local function windowOptions(id)
   add(tabText, "tabFont", "Font", "select", 2, nil, nil, nil, nil, "font")
   add(tabText, "tabFontSize", "Font size", "range", 3, 1, 100, 1)
   add(tabText, "tabFontFlags", "Font flags", "select", 4, nil, nil, nil, FLAGS, "fontFlags")
-  add(tabLayout, "tabXPadding", "Horizontal padding", "range", 5, 0, 100, 1, nil, "contentXPadding")
+  add(tabLayout, "tabXPadding", "Horizontal padding", "range", 5, 0, 100, 1)
   tabLayout.args.tabXPadding.desc = "Padding at the left and right edges of the tab bar."
   add(tabLayout, "tabYPadding", "Vertical padding", "range", 6, 0, 100, 1)
   add(tabBackground, "tabBarBackgroundOpacity", "Background opacity", "range", 7, 0, 1, 0.01)
@@ -393,7 +390,7 @@ end
 function C:RefreshConfig()
   initializeProfileSettings(Core.db.profile)
   Demo:SetActive(false)
-  for _, key in ipairs({ "font", "frameHeight", "frameWidth", "framePosition", "contentXPadding",
+  for _, key in ipairs({ "font", "frameHeight", "frameWidth", "framePosition",
     "contentLeftPadding", "contentRightPadding", "leftGradientWidth", "rightGradientWidth",
     "tabBarBackgroundOpacity", "editBoxFontSize", "editBoxXPadding",
     "editBoxBackgroundOpacity", "editBoxAnchor", "messageFontSize", "chatBackgroundOpacity",

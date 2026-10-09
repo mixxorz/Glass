@@ -47,13 +47,13 @@ Core.defaults = {
     extraWindows = {},
     tabFontSize = 12,
     tabYPadding = 4,
+    tabXPadding = 12,
     tabSpacing = 24,
     -- General
     font = "Friz Quadrata TT",
     fontFlags = "",
     frameWidth = 550,
     frameHeight = 250,
-    contentXPadding = 12,
     contentLeftPadding = 12,
     contentRightPadding = 72,
     leftGradientWidth = 12,
@@ -67,6 +67,7 @@ Core.defaults = {
 
     -- Edit box
     editBoxFontSize = 12,
+    editBoxXPadding = 12,
     editBoxBackgroundOpacity = 0.9,
     editBoxAnchor = {
       position = "BELOW",

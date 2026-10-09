@@ -109,7 +109,7 @@ function ExtraWindows:AddWindow(sourceName)
   settings.nonInteractive = false
   settings.tabFont = Core.db.profile.tabFont or settings.font
   settings.tabFontFlags = Core.db.profile.tabFontFlags or settings.fontFlags
-  settings.tabXPadding = Core.db.profile.tabXPadding or settings.contentXPadding
+  settings.tabXPadding = Core.db.profile.tabXPadding
   settings.tabLeftGradientWidth = Core.db.profile.tabLeftGradientWidth
   settings.tabRightGradientWidth = Core.db.profile.tabRightGradientWidth
   self:GetWindows()[id] = settings

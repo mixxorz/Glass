@@ -18,9 +18,8 @@ end
 
 Utils.getMessagePadding = function (settings)
   local profile = settings or Core.db.profile
-  -- Unset sides inherit the old shared padding so existing profiles keep their layout.
-  local left = math.max(0, profile.contentLeftPadding or profile.contentXPadding)
-  local right = math.max(0, profile.contentRightPadding or profile.contentXPadding)
+  local left = math.max(0, profile.contentLeftPadding)
+  local right = math.max(0, profile.contentRightPadding)
   local available = math.max(0, profile.frameWidth - 1)
   if left + right > available then
     local scale = available / (left + right)
@@ -49,7 +48,7 @@ end
 
 Utils.getTabXPadding = function (settings)
   local profile = settings or Core.db.profile
-  return math.max(0, math.min(profile.tabXPadding or profile.contentXPadding,
+  return math.max(0, math.min(profile.tabXPadding,
     math.floor((profile.frameWidth - 1) / 2)))
 end
 
