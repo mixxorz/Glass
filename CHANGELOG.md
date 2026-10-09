@@ -22,7 +22,6 @@
 * Reflow existing messages when changing wrapped-line indentation
 * Keep live settings sliders responsive and improve clipping during jumps to the latest message
 * Standardize message records and independent source subscriptions for Main, extra windows, and demo mode
-* Document message delivery and in-game verification; add focused routing checks
 
 ## 1.9.0-alpha1 (2026-09-26)
 
