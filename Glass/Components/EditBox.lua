@@ -1,9 +1,14 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 
 local AceHook = Core.Libs.AceHook
 
 local Colors = Constants.COLORS
 
+local EditBoxFocusGained = Constants.ACTIONS.EditBoxFocusGained
+local EditBoxFocusLost = Constants.ACTIONS.EditBoxFocusLost
+
+local LOCK_MOVER = Constants.EVENTS.LOCK_MOVER
+local UNLOCK_MOVER = Constants.EVENTS.UNLOCK_MOVER
 local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 
 -- luacheck: push ignore 113
@@ -11,6 +16,11 @@ local Mixin = Mixin
 -- luacheck: pop
 
 local EditBoxMixin = {}
+
+local function GetEditBoxPadding(self)
+  local available = self:GetWidth() - self.header:GetStringWidth() - 20
+  return math.min(Utils.getEditBoxXPadding(), math.max(0, math.floor(available / 2)))
+end
 
 function EditBoxMixin:Init(parent)
   -- Hide default styling
@@ -22,29 +32,23 @@ function EditBoxMixin:Init(parent)
   self:RawHook(_G[self:GetName().."Mid"], "Show", function () end, true)
   self:RawHook(_G[self:GetName().."Right"], "Show", function () end, true)
 
-  if Constants.ENV == "retail" then
-    _G[self:GetName().."FocusLeft"]:Hide()
-    _G[self:GetName().."FocusMid"]:Hide()
-    _G[self:GetName().."FocusRight"]:Hide()
-    self:RawHook(_G[self:GetName().."FocusLeft"], "Show", function () end, true)
-    self:RawHook(_G[self:GetName().."FocusMid"], "Show", function () end, true)
-    self:RawHook(_G[self:GetName().."FocusRight"], "Show", function () end, true)
-  end
+  self.focusLeft:SetTexture(nil)
+  self.focusMid:SetTexture(nil)
+  self.focusRight:SetTexture(nil)
 
   -- New styling
   self:ClearAllPoints()
 
-  self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+  self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 0, Core.db.profile.editBoxAnchor.yOfs)
 
   if Core.db.profile.editBoxAnchor.position == "ABOVE" then
     self:ClearAllPoints()
-    self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+    self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 0, Core.db.profile.editBoxAnchor.yOfs)
   end
 
   self:SetFontObject("GlassEditBoxFont")
-  self:SetWidth(Core.db.profile.frameWidth - 8 * 2)
+  self:SetWidth(Core.db.profile.frameWidth)
   self.header:SetFontObject("GlassEditBoxFont")
-  self.header:SetPoint("LEFT", 8, 0)
 
   local bg = self:CreateTexture(nil, "BACKGROUND")
   bg:SetColorTexture(
@@ -57,11 +61,11 @@ function EditBoxMixin:Init(parent)
 
   self:RawHook(self, "SetTextInsets", function ()
     Ypadding = self.header:GetLineHeight() * 0.66
-    self.hooks[self].SetTextInsets(
-      self,
-      self.header:GetStringWidth() + 8,
-      8, Ypadding, Ypadding
-    )
+    local padding = GetEditBoxPadding(self)
+    self.header:ClearAllPoints()
+    self.header:SetPoint("LEFT", padding, 0)
+    local leftInset = math.min(self.header:GetStringWidth() + padding, self:GetWidth() - padding - 20)
+    self.hooks[self].SetTextInsets(self, leftInset, padding, Ypadding, Ypadding)
   end, true)
 
   self:SetTextInsets()
@@ -99,19 +103,46 @@ function EditBoxMixin:Init(parent)
     end
   end)
 
+  local moverUnlocked = false
   self:RawHook(self, "Hide", function ()
-    outroAg:Play()
+    if not moverUnlocked then
+      outroAg:Play()
+    end
   end, true)
 
+  self:HookScript(self, "OnEditFocusGained", function ()
+    Core:Dispatch(EditBoxFocusGained())
+  end)
+  self:HookScript(self, "OnEditFocusLost", function ()
+    Core:Dispatch(EditBoxFocusLost())
+  end)
+
+  Core:Subscribe(UNLOCK_MOVER, function ()
+    moverUnlocked = true
+    outroAg:Stop()
+    self:Show()
+  end)
+
+  Core:Subscribe(LOCK_MOVER, function ()
+    moverUnlocked = false
+    if not self:HasFocus() then
+      self:Hide()
+    end
+  end)
+
   Core:Subscribe(UPDATE_CONFIG, function (key)
-    if key == "font" or key == "editBoxFontSize" then
+    if key == "font" or key == "fontFlags" or key == "editBoxFontSize" then
       Ypadding = self.header:GetLineHeight() * 0.66
       self:SetHeight(self.header:GetLineHeight() + Ypadding * 2)
       self:SetTextInsets()
     end
 
     if key == "frameWidth" then
-      self:SetWidth(Core.db.profile.frameWidth - 8 * 2)
+      self:SetWidth(Core.db.profile.frameWidth)
+    end
+
+    if key == "frameWidth" or key == "editBoxXPadding" then
+      self:SetTextInsets()
     end
 
     if key == "editBoxBackgroundOpacity" then
@@ -123,10 +154,10 @@ function EditBoxMixin:Init(parent)
     if key == "editBoxAnchor" then
       if Core.db.profile.editBoxAnchor.position == "ABOVE" then
         self:ClearAllPoints()
-        self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+        self:SetPoint("BOTTOMLEFT", parent, "TOPLEFT", 0, Core.db.profile.editBoxAnchor.yOfs)
       else
         self:ClearAllPoints()
-        self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, Core.db.profile.editBoxAnchor.yOfs)
+        self:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 0, Core.db.profile.editBoxAnchor.yOfs)
       end
     end
   end)

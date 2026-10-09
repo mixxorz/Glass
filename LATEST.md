@@ -1,7 +1,23 @@
-# 1.9.0-alpha1 (2026-09-26)
+# 2.0.0-alpha1 (2026-10-10)
 
-What's new
+New features
 
-- Updated Glass for WoW Forever (1.60) and Midnight (12.1).
-- Adapted chat tabs, gradients, fonts, mover controls, and hover behavior to current UI APIs.
-- This is an alpha release. WoW Forever has been tested in-game; Midnight has not.
+- Add extra chat windows with independent source tabs, styles, layout, scrollback, and mouse-interaction settings.
+- Add drag-to-resize controls while windows are unlocked with `/glass lock`.
+- Add configurable top and bottom fades to transparent for messages.
+- Add global demo mode on Home and `/glass demo` to preview styles and animations with sample chat without changing real history.
+
+Improvements
+
+- Add separate message and tab gradient controls, left/right message padding, and chat-input padding.
+- Add configurable tab fonts, padding, and spacing.
+- Reorganize settings around Home and individual windows, with grouped controls and practical slider drag ranges.
+- Redesign the jump-to-latest button with an unread glow.
+
+Bug fixes
+
+- Fixed custom chat tabs appearing empty despite having message history.
+- Fixed Combat Log's filter toolbar overlapping the chat tabs.
+- Fixed existing messages not rewrapping when changing wrapped-line indentation.
+- Fixed settings sliders stopping mid-drag while applying changes.
+- Fixed messages briefly appearing below the window when jumping to the latest message.

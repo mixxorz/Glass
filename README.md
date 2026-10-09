@@ -6,8 +6,8 @@ This project is the original Glass addon by me. I no longer play the game so thi
 
 i_lightspark has been kind enough to keep the spirit of Glass alive by releasing their own version. Please use that instead.
 
-* [LS: Glass on CurseForge](https://www.curseforge.com/wow/addons/ls-glass)
-* [LS: Glass on Wago](https://addons.wago.io/addons/ls-glass)
+- [LS: Glass on CurseForge](https://www.curseforge.com/wow/addons/ls-glass)
+- [LS: Glass on Wago](https://addons.wago.io/addons/ls-glass)
 
 **Original description follows**
 
@@ -41,18 +41,20 @@ You may also download the latest release on [GitHub](https://github.com/mixxorz/
 
 ## Commands
 
-* `/glass` - open the settings window
-* `/glass lock` - unlock the chat frame
+- `/glass` - open the Home page
+- `/glass lock` - unlock all Glass windows for moving and resizing
+- `/glass demo` - turn demo mode on or off
 
 ## Customization
 
 Not everyone likes the same look. Glass tries to accommodate your own
 preferences by giving you options to change the:
 
-* Chat frame width, height, and location
-* Font and font size
-* Message fade out delay
-* Background opacity
+- Chat frame width, height, and location
+- Message and tab fonts, padding, and spacing
+- Message fade out delay
+- Background opacity, gradients, and fades to transparent at message-pane edges
+- Hover, scrolling, and link interactions
 
 Moreover, unlike the default chat UI, these settings may be shared between
 characters.

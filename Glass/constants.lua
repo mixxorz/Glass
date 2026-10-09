@@ -6,10 +6,8 @@ local WOW_PROJECT_ID = WOW_PROJECT_ID
 -- luacheck: pop
 
 -- Constants
-Constants.DOCK_HEIGHT = 20
-Constants.TEXT_XPADDING = 15
-
 Constants.ENV = "retail"
+Constants.MESSAGE_HISTORY_LIMIT = 128
 
 if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
   Constants.ENV = "classic"
@@ -28,6 +26,8 @@ Constants.COLORS = {
 
 -- Events
 Constants.EVENTS = {
+  EDIT_BOX_FOCUS_GAINED = "Glass/EDIT_BOX_FOCUS_GAINED",
+  EDIT_BOX_FOCUS_LOST = "Glass/EDIT_BOX_FOCUS_LOST",
   HYPERLINK_CLICK = "Glass/HYPERLINK_CLICK",
   HYPERLINK_ENTER = "Glass/HYPERLINK_ENTER",
   HYPERLINK_LEAVE = "Glass/HYPERLINK_LEAVE",
@@ -42,6 +42,12 @@ Constants.EVENTS = {
 }
 
 Constants.ACTIONS = {
+  EditBoxFocusGained = function ()
+    return Constants.EVENTS.EDIT_BOX_FOCUS_GAINED
+  end,
+  EditBoxFocusLost = function ()
+    return Constants.EVENTS.EDIT_BOX_FOCUS_LOST
+  end,
   HyperlinkClick = function (payload)
     return Constants.EVENTS.HYPERLINK_CLICK, payload
   end,

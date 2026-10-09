@@ -1,583 +1,405 @@
 local Core, Constants = unpack(select(2, ...))
 local C = Core:GetModule("Config")
-
-local AceConfig = Core.Libs.AceConfig
-local AceConfigDialog = Core.Libs.AceConfigDialog
-local AceDBOptions = Core.Libs.AceDBOptions
+local Demo = Core:GetModule("Demo")
+local Dialog = Core.Libs.AceConfigDialog
+local DBOptions = Core.Libs.AceDBOptions
 local LSM = Core.Libs.LSM
-
-local OpenNews = Constants.ACTIONS.OpenNews
-local RefreshConfig = Constants.ACTIONS.RefreshConfig
-local UnlockMover = Constants.ACTIONS.UnlockMover
-local UpdateConfig = Constants.ACTIONS.UpdateConfig
-
-local SAVE_FRAME_POSITION = Constants.EVENTS.SAVE_FRAME_POSITION
-
+local Actions = Constants.ACTIONS
 local ANCHORS = {
-  ["TOPLEFT"] = "Top left",
-  ["TOPRIGHT"] = "Top right",
-  ["BOTTOMLEFT"] = "Bottom left",
-  ["BOTTOMRIGHT"] = "Bottom right"
+  TOPLEFT = "Top left", TOPRIGHT = "Top right",
+  BOTTOMLEFT = "Bottom left", BOTTOMRIGHT = "Bottom right",
 }
-local FLAGS = { [""] = "None", ["OUTLINE"] = "Outline", ["OUTLINE, MONOCHROME"] = "Outline Monochrome" }
+local FLAGS = { [""] = "None", OUTLINE = "Outline", ["OUTLINE, MONOCHROME"] = "Outline Monochrome" }
+
+local SLIDER_BOUNDS = {
+  frameWidth = {100, 1200}, frameHeight = {60, 600},
+  xOfs = {-2000, 2000}, yOfs = {-1000, 1000}, editBoxAnchorYOfs = {-100, 100},
+  messageFontSize = {8, 32}, tabFontSize = {8, 32}, editBoxFontSize = {8, 32},
+  messageLinePadding = {0, 1}, tabYPadding = {0, 20}, tabSpacing = {0, 50},
+  leftGradientWidth = {1, 300}, rightGradientWidth = {1, 300},
+  tabLeftGradientWidth = {1, 300}, tabRightGradientWidth = {1, 300},
+  chatHoldTime = {1, 60}, chatFadeInDuration = {0, 3}, chatFadeOutDuration = {0, 3},
+  chatSlideInDuration = {0, 1},
+}
+
+local function setSliderBounds(option, key)
+  local bounds = SLIDER_BOUNDS[key]
+  if not bounds then return end
+  -- Limit dragging without discarding saved values or preventing precise manual entry.
+  option.softMin = math.max(option.min or bounds[1], bounds[1])
+  option.softMax = math.max(option.softMin, math.min(option.max or bounds[2], bounds[2]))
+end
+
+local function extra()
+  return Core:GetModule("ExtraWindows")
+end
+
+local function initializeProfileSettings(profile)
+  local function initialize(settings)
+    for _, key in ipairs({"contentLeftPadding", "contentRightPadding", "tabXPadding", "editBoxXPadding",
+      "messageTopFade", "messageBottomFade", "tabFont", "tabFontFlags",
+      "tabLeftGradientWidth", "tabRightGradientWidth"}) do
+      if settings[key] == nil then settings[key] = Core.defaults.profile[key] end
+    end
+  end
+  initialize(profile)
+  for _, settings in pairs(profile.extraWindows) do initialize(settings) end
+end
+
+local function field(id, key, name, kind, order, min, max, step, values, event)
+  local option = { name = name, type = kind, order = order, min = min, max = max, step = step, values = values }
+  if kind == "range" then setSliderBounds(option, key) end
+  if key == "font" or key == "tabFont" then
+    option.dialogControl = "LSM30_Font"
+    option.values = LSM:HashTable("font")
+  end
+  option.get = function()
+    local settings = id and extra():GetWindows()[id] or Core.db.profile
+    local value = settings[key]
+    if value == nil then value = Core.defaults.profile[key] end
+    return value
+  end
+  option.set = function(_, value)
+    local settings = id and extra():GetWindows()[id] or Core.db.profile
+    settings[key] = value
+    if id then extra():UpdateWindowSettings(id, key)
+    elseif event ~= false then Core:Dispatch(Actions.UpdateConfig(event or key)) end
+  end
+  return option
+end
+
+local function section(name, order)
+  return { name = name, type = "group", order = order, args = {} }
+end
+
+local function inlineSection(parent, key, name, order)
+  local group = section(name, order)
+  group.inline = true
+  parent.args[key] = group
+  return group
+end
+
+local function windowOptions(id)
+  local isExtra = id ~= nil
+  local group = {
+    name = isExtra and (extra():GetWindows()[id].name or tostring(id)) or "Main",
+    type = "group", order = 1, childGroups = "tab", args = {},
+  }
+  local window = section("Window", 1)
+  local messages = section("Messages", 2)
+  local tabs = section("Tab bar", 3)
+  local behavior = section("Behavior", isExtra and 4 or 5)
+  group.args.window = window
+  group.args.messages = messages
+  group.args.tabs = tabs
+  group.args.behavior = behavior
+  local size = inlineSection(window, "size", "Size", 2)
+  local position = inlineSection(window, "position", "Position", 3)
+  local management = inlineSection(window, "management", "Window actions", 4)
+  management.args.unlock = {
+    name = "Unlock all windows", type = "execute", order = 1,
+    func = function() Core:Dispatch(Actions.UnlockMover()) end,
+  }
+  local function add(target, key, name, kind, order, min, max, step, values, event)
+    target.args[key] = field(id, key, name, kind, order, min, max, step, values, event)
+  end
+  if isExtra then
+    local general = inlineSection(window, "general", "General", 1)
+    add(general, "name", "Name", "input", 1)
+    add(general, "enabled", "Enabled", "toggle", 2)
+    general.args.source = {
+      name = "Source", type = "select", order = 3,
+      desc =
+        "Choose a source tab for this character. Its Glass window’s style and layout are saved with your profile.",
+      values = function()
+        local values = extra():GetSources()
+        if extra():GetSource(id) == "" then values[""] = "Source tab unavailable" end
+        return values
+      end,
+      get = function() return extra():GetSource(id) end,
+      set = function(_, value) extra():SetSource(id, value) end,
+    }
+    management.args.delete = {
+      name = "Delete window", type = "execute", order = 20,
+      confirm = true, confirmText = "Delete this window?",
+      func = function()
+        extra():DeleteWindow(id)
+        C:RefreshOptions()
+        Dialog:SelectGroup("Glass", "windows", "main")
+      end,
+    }
+  end
+  if isExtra then
+    add(size, "frameWidth", "Width", "range", 4, 100, 9999, 1)
+    add(size, "frameHeight", "Height", "range", 5, 40, 9999, 1)
+    local settings = extra():GetWindows()[id]
+    size.args.frameHeight.min = settings.showTabBar
+      and math.max(40, settings.tabFontSize + settings.tabYPadding * 2 + 35) or 40
+    setSliderBounds(size.args.frameHeight, "frameHeight")
+    size.args.frameHeight.desc = "The window needs enough height to fit the tab bar and messages."
+    local function positionField(key, name, kind, order, min, max, values)
+      position.args[key] = {
+        name = name, type = kind, order = order, min = min, max = max, step = kind == "range" and 1 or nil,
+        values = values,
+        get = function() return extra():GetWindows()[id].positionAnchor[key] end,
+        set = function(_, value)
+          extra():GetWindows()[id].positionAnchor[key] = value
+          extra():UpdateWindowSettings(id, "framePosition")
+        end,
+      }
+      if kind == "range" then setSliderBounds(position.args[key], key) end
+    end
+    positionField("point", "Anchor", "select", 6, nil, nil, ANCHORS)
+    positionField("xOfs", "X offset", "range", 7, -9999, 9999)
+    positionField("yOfs", "Y offset", "range", 8, -9999, 9999)
+  else
+    position.args.anchor = { name = "Anchor", type = "select", order = 6, values = ANCHORS,
+      get = function() return Core.db.profile.positionAnchor.point end,
+      set = function(_, v)
+        Core.db.profile.positionAnchor.point = v
+        Core:Dispatch(Actions.UpdateConfig("framePosition"))
+      end }
+    for _, spec in ipairs({ { "xOfs", "X offset", 7 }, { "yOfs", "Y offset", 8 } }) do
+      local key = spec[1]
+      position.args[key] = { name = spec[2], type = "range", order = spec[3], min = -9999, max = 9999, step = 1,
+        get = function() return Core.db.profile.positionAnchor[key] end,
+        set = function(_, v)
+          Core.db.profile.positionAnchor[key] = v
+          Core:Dispatch(Actions.UpdateConfig("framePosition"))
+        end }
+      setSliderBounds(position.args[key], key)
+    end
+    add(size, "frameWidth", "Width", "range", 4, 100, 9999, 1)
+    add(size, "frameHeight", "Height", "range", 5, 1, 9999, 1)
+  end
+  local messageText = inlineSection(messages, "text", "Text", 1)
+  local messageBackground = inlineSection(messages, "background", "Background", 2)
+  local messageLayout = inlineSection(messages, "layout", "Layout", 3)
+  add(messageText, "font", "Font", "select", 1)
+  add(messageText, "fontFlags", "Font flags", "select", 2, nil, nil, nil, FLAGS, "font")
+  add(messageText, "messageFontSize", "Font size", "range", 3, 1, 100, 1)
+  add(messageText, "messageLeading", "Leading", "range", 4, 0, 10, 1)
+  add(messageLayout, "messageLinePadding", "Line padding", "range", 5, 0, 5, 0.05)
+  add(messageLayout, "contentLeftPadding", "Left padding", "range", 6, 0, 100, 1)
+  add(messageLayout, "contentRightPadding", "Right padding", "range", 7, 0, 100, 1)
+  add(messageLayout, "messageTopFade", "Top edge fade", "range", 8, 0, 40, 1)
+  add(messageLayout, "messageBottomFade", "Bottom edge fade", "range", 9, 0, 40, 1)
+  messageLayout.args.messageTopFade.desc =
+    "Fade messages over this many pixels at the top of the pane. Set this to 0 to turn off the fade."
+  messageLayout.args.messageBottomFade.desc =
+    "Fade the bottom edge over this many pixels when you scroll up. Set this to 0 to turn off the fade."
+  for _, key in ipairs({"messageTopFade", "messageBottomFade"}) do
+    messageLayout.args[key].disabled = function()
+      return not _G.UIParent.SetAlphaGradient or not _G.UIParent.SetFlattensRenderLayers or not _G.CreateVector2D
+    end
+  end
+  add(messageText, "indentWordWrap", "Indent on line wrap", "toggle", 8)
+  add(messageText, "iconTextureYOffset", "Text icons Y offset", "range", 9, 0, 12, 1)
+  add(messageBackground, "chatBackgroundOpacity", "Background opacity", "range", 10, 0, 1, 0.01)
+  add(messageBackground, "leftGradientWidth", "Left gradient width", "range", 11, 1, 9999, 1)
+  add(messageBackground, "rightGradientWidth", "Right gradient width", "range", 12, 1, 9999, 1)
+
+  if isExtra then add(tabs, "showTabBar", "Show tab bar", "toggle", 1) end
+  local tabText = inlineSection(tabs, "text", "Text", 2)
+  local tabBackground = inlineSection(tabs, "background", "Background", 3)
+  local tabLayout = inlineSection(tabs, "layout", "Layout", 4)
+  add(tabText, "tabFont", "Font", "select", 2)
+  add(tabText, "tabFontSize", "Font size", "range", 3, 1, 100, 1)
+  add(tabText, "tabFontFlags", "Font flags", "select", 4, nil, nil, nil, FLAGS)
+  add(tabLayout, "tabXPadding", "Horizontal padding", "range", 5, 0, 100, 1)
+  tabLayout.args.tabXPadding.desc = "Padding at the left and right edges of the tab bar."
+  add(tabLayout, "tabYPadding", "Vertical padding", "range", 6, 0, 100, 1)
+  add(tabBackground, "tabBarBackgroundOpacity", "Background opacity", "range", 7, 0, 1, 0.01)
+  add(tabBackground, "tabLeftGradientWidth", "Left gradient width", "range", 8, 1, 9999, 1)
+  add(tabBackground, "tabRightGradientWidth", "Right gradient width", "range", 9, 1, 9999, 1)
+  if not isExtra then
+    add(tabLayout, "tabSpacing", "Tab spacing", "range", 10, 0, 100, 1)
+    tabLayout.args.tabSpacing.desc = "The space between tab labels. Set this to 0 to place them next to each other."
+  end
+
+  local fading = inlineSection(behavior, "fading", "Fading and animation", 1)
+  local interaction = inlineSection(behavior, "interaction", "Mouse interaction", 2)
+  add(fading, "chatHoldTime", "Fade out delay", "range", 1, 1, 180, 1, nil, false)
+  add(fading, "chatFadeInDuration", "Fade in duration", "range", 2, 0, 30, 0.05)
+  add(fading, "chatFadeOutDuration", "Fade out duration", "range", 3, 0, 30, 0.05)
+  add(fading, "chatSlideInDuration", "Slide in duration", "range", 4, 0, 30, 0.05, nil, false)
+  add(interaction, "chatShowOnMouseOver", "Show on mouse over", "toggle", 5, nil, nil, nil, nil, false)
+  add(interaction, "mouseOverTooltips", "Mouse over tooltips", "toggle", 6)
+  if isExtra then
+    add(interaction, "nonInteractive", "Non-interactive", "toggle", 7)
+    add(interaction, "hoverEnabled", "Hover enabled", "toggle", 8)
+    add(interaction, "scrollEnabled", "Scrolling enabled", "toggle", 9)
+    add(interaction, "linksEnabled", "Links enabled", "toggle", 10)
+    interaction.args.hoverEnabled.desc = "Show faded messages and tooltips when hovering over the window."
+    for _, key in ipairs({ "hoverEnabled", "scrollEnabled", "linksEnabled" }) do
+      interaction.args[key].disabled = function() return extra():GetWindows()[id].nonInteractive end
+    end
+  else
+    local input = section("Chat input", 4)
+    group.args.input = input
+    local inputText = inlineSection(input, "text", "Text", 1)
+    local inputBackground = inlineSection(input, "background", "Background", 2)
+    local placement = inlineSection(input, "layout", "Layout", 3)
+    add(inputText, "editBoxFontSize", "Font size", "range", 1, 1, 100, 1)
+    add(inputBackground, "editBoxBackgroundOpacity", "Background opacity", "range", 2, 0, 1, 0.01)
+    add(placement, "editBoxXPadding", "Horizontal padding", "range", 1, 0, 100, 1)
+    placement.args.editBoxXPadding.desc =
+      "Adds space on both sides of the chat input, including before the channel or whisper label."
+    placement.args.editBoxAnchorPosition = {
+      name = "Position", type = "select", order = 3, values = { ABOVE = "Above", BELOW = "Below" },
+      get = function() return Core.db.profile.editBoxAnchor.position end,
+      set = function(_, v)
+        Core.db.profile.editBoxAnchor.position = v
+        Core.db.profile.editBoxAnchor.yOfs = v == "ABOVE" and 5 or -5
+        Core:Dispatch(Actions.UpdateConfig("editBoxAnchor"))
+      end }
+    placement.args.editBoxAnchorYOfs = {
+      name = "Vertical offset", type = "range", order = 4,
+      min = -9999, max = 9999, step = 1,
+      get = function() return Core.db.profile.editBoxAnchor.yOfs end,
+      set = function(_, v)
+        Core.db.profile.editBoxAnchor.yOfs = v
+        Core:Dispatch(Actions.UpdateConfig("editBoxAnchor"))
+      end }
+    setSliderBounds(placement.args.editBoxAnchorYOfs, "editBoxAnchorYOfs")
+  end
+  return group
+end
+
+local options
+
+function C:UpdateWindowOptions(id)
+  if not options or not options.args.windows then return end
+  local entry = options.args.windows.args["extra_" .. tostring(id)]
+  local settings = extra():GetWindows()[id]
+  if not entry or not settings then return end
+  -- Update metadata in place; AceConfig refreshes range controls after mouse-up.
+  entry.name = settings.name or tostring(id)
+  local height = entry.args.window.args.size.args.frameHeight
+  height.min = settings.showTabBar
+    and math.max(40, settings.tabFontSize + settings.tabYPadding * 2 + 35) or 40
+  setSliderBounds(height, "frameHeight")
+end
+
+function C:RefreshOptions()
+  if not options then return end
+  local windows = {
+    name = "Windows", type = "group", order = 1, childGroups = "tree", args = { main = windowOptions() },
+  }
+  local function unlock() Core:Dispatch(Actions.UnlockMover()) end
+  windows.args.unlock = { name = "Unlock all windows", type = "execute", order = 0, func = unlock }
+  local module = extra()
+  if module then
+    local ids = {}
+    for id in pairs(module:GetWindows()) do ids[#ids + 1] = id end
+    table.sort(ids, function(a, b) return tonumber(a) < tonumber(b) end)
+    for i, id in ipairs(ids) do
+      local entry = windowOptions(id)
+      entry.order = i + 1
+      windows.args["extra_" .. tostring(id)] = entry
+    end
+  end
+  local source = ""
+  windows.args.add = { name = "Add window", type = "group", order = 10000, args = {
+    source = { name = "Source", type = "select", order = 1,
+      values = function() return extra():GetSources() end,
+      get = function() return source end,
+      set = function(_, value) source = value end },
+    create = { name = "Add", type = "execute", order = 2,
+      disabled = function() return source == "" end,
+      func = function() extra():AddWindow(source); source = "" end },
+  } }
+  options.args.windows = windows
+  _G.LibStub("AceConfigRegistry-3.0"):NotifyChange("Glass")
+end
+
+function C:OpenWindow(id)
+  self:RefreshOptions()
+  Dialog:Open("Glass")
+  Dialog:SelectGroup("Glass", "windows", "extra_" .. tostring(id))
+end
+
+local function homeOptions()
+  local home = section("Home", 0)
+  local info = inlineSection(home, "info", "Info", 1)
+  info.args.version = {
+    name = " |cffffd100Version:|r  " .. Core.Version,
+    type = "description", width = "double", fontSize = "medium", order = 1,
+  }
+  info.args.news = {
+    name = "What’s New", type = "execute", order = 2,
+    desc = "Read the latest Glass release notes.",
+    func = function() Core:Dispatch(Actions.OpenNews()) end,
+  }
+  info.args.commands = {
+    name = "|cFFDFBA69/glass|r  |cff808080...............|r  Open Home\n" ..
+      "|cFFDFBA69/glass lock|r  |cff808080.......|r  Unlock all windows\n" ..
+      "|cFFDFBA69/glass demo|r  |cff808080......|r  Toggle demo mode\n",
+    type = "description", width = "double", order = 3,
+  }
+  info.args.unlock = {
+    name = "Unlock", type = "execute", order = 4,
+    desc = "Move and resize your Glass windows. Click Lock when you are finished.",
+    func = function() Core:Dispatch(Actions.UnlockMover()) end,
+  }
+  home.args.demo = {
+    name = "Demo mode", type = "toggle", order = 2, width = "full",
+    desc = "Fill Glass windows with sample chat to preview styles, scrolling, and animations. " ..
+      "Your chat input still sends real messages. Turn this off to return to real chat. " ..
+      "Demo mode also ends when you reload or change profiles.",
+    get = function() return Demo:IsActive() end,
+    set = function(_, value) Demo:SetActive(value) end,
+  }
+  return home
+end
 
 function C:OnEnable()
-  local options = {
-      name = "Glass",
-      handler = C,
-      type = "group",
-      args = {
-        general = {
-          name = "General",
-          type = "group",
-          order = 1,
-          args = {
-            section1 = {
-              name = "Info",
-              type = "group",
-              inline = true,
-              order = 2,
-              args = {
-                version = {
-                  name = " |cffffd100Version:|r  "..Core.Version,
-                  type = "description",
-                  width = "double",
-                  fontSize = "medium",
-                  order = 2.1,
-                },
-                whatsNew = {
-                  name = "What’s new",
-                  type = "execute",
-                  func = function()
-                    Core:Dispatch(OpenNews())
-                  end,
-                  order = 2.2,
-                },
-                slashCmd = {
-                  name = "|c00DFBA69/glass|r  |cff808080...............|r  Open config window\n"..
-                         "|c00DFBA69/glass lock|r  |cff808080.......|r  Unlock Glass frame\n",
-                  type = "description",
-                  width = "double",
-                  order = 2.3,
-                },
-                unlockFrame = {
-                  name = "Unlock frame",
-                  type = "execute",
-                  func = function()
-                    Core:Dispatch(UnlockMover())
-                  end,
-                  order = 2.4,
-                },
-              }
-            },
-            section2 = {
-              name = "Appearance",
-              type = "group",
-              inline = true,
-              order = 3,
-              args = {
-                font = {
-                  name = "Font",
-                  desc = "Font to use throughout Glass",
-                  type = "select",
-                  order = 3.1,
-                  dialogControl = "LSM30_Font",
-                  values = LSM:HashTable("font"),
-                  get = function()
-                    return Core.db.profile.font
-                  end,
-                  set = function(info, input)
-                    Core.db.profile.font = input
-                    Core:Dispatch(UpdateConfig("font"))
-                  end,
-                },
-                fontFlags = {
-                  name = "Font flag",
-                  type = "select",
-                  order = 3.2,
-                  values = FLAGS,
-                  get = function ()
-                    return Core.db.profile.fontFlags
-                  end,
-                  set = function (_, input)
-                    Core.db.profile.fontFlags = input
-                    Core:Dispatch(UpdateConfig("font"))
-                  end
-                }
-              },
-            },
-            section3 = {
-              name = "Frame",
-              type = "group",
-              inline = true,
-              order = 4,
-              args = {
-                frameWidth = {
-                  name = "Width",
-                  desc = "Default: "..Core.defaults.profile.frameWidth..
-                    "\nMin: 100",
-                  type = "range",
-                  order = 4.1,
-                  min = 100,
-                  max = 9999,
-                  softMin = 300,
-                  softMax = 800,
-                  step = 1,
-                  get = function ()
-                    return Core.db.profile.frameWidth
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.frameWidth = input
-                    Core:Dispatch(UpdateConfig("frameWidth"))
-                  end
-                },
-                frameHeight = {
-                  name = "Height",
-                  desc = "Default: "..Core.defaults.profile.frameHeight,
-                  type = "range",
-                  order = 4.2,
-                  min = 1,
-                  max = 9999,
-                  softMin = 200,
-                  softMax = 800,
-                  step = 1,
-                  get = function ()
-                    return Core.db.profile.frameHeight
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.frameHeight = input
-                    Core:Dispatch(UpdateConfig("frameHeight"))
-                  end
-                },
-                frameXOfs = {
-                  name = "X offset",
-                  desc = "Default: "..Core.defaults.profile.positionAnchor.xOfs,
-                  type = "range",
-                  order = 4.3,
-                  min = -9999,
-                  max = 9999,
-                  softMin = -2000,
-                  softMax = 2000,
-                  step = 1,
-                  get = function ()
-                    return Core.db.profile.positionAnchor.xOfs
-                  end,
-                  set = function (_, input)
-                    Core.db.profile.positionAnchor.xOfs = input
-                    Core:Dispatch(UpdateConfig("framePosition"))
-                  end
-                },
-                frameYOfs = {
-                  name = "Y offset",
-                  desc = "Default: "..Core.defaults.profile.positionAnchor.yOfs,
-                  type = "range",
-                  order = 4.4,
-                  min = -9999,
-                  max = 9999,
-                  softMin = -2000,
-                  softMax = 2000,
-                  step = 1,
-                  get = function ()
-                    return Core.db.profile.positionAnchor.yOfs
-                  end,
-                  set = function (_, input)
-                    Core.db.profile.positionAnchor.yOfs = input
-                    Core:Dispatch(UpdateConfig("framePosition"))
-                  end
-                },
-                frameAnchor = {
-                  name = "Anchor",
-                  desc = "Default: "..Core.db.profile.positionAnchor.point,
-                  type = "select",
-                  order = 4.5,
-                  values = ANCHORS,
-                  get = function ()
-                    return Core.db.profile.positionAnchor.point
-                  end,
-                  set = function (_, input)
-                    Core.db.profile.positionAnchor.point = input
-                    Core:Dispatch(UpdateConfig("framePosition"))
-                  end
-                },
-              }
-            }
-          }
-        },
-        editBox = {
-          name = "Edit box",
-          type = "group",
-          order = 2,
-          args = {
-            section1 = {
-              name = "Appearance",
-              type = "group",
-              inline = true,
-              order = 1,
-              args = {
-                editBoxFontSize = {
-                  name = "Font size",
-                  desc = "Default: "..Core.defaults.profile.editBoxFontSize.."\nMin: 1\nMax: 100",
-                  type = "range",
-                  min = 1,
-                  max = 100,
-                  softMin = 6,
-                  softMax = 24,
-                  step = 1,
-                  get = function ()
-                    return Core.db.profile.editBoxFontSize
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.editBoxFontSize = input
-                    Core:Dispatch(UpdateConfig("editBoxFontSize"))
-                  end,
-                  order = 1.1,
-                },
-                editBoxBackgroundOpacity = {
-                  name = "Background opacity",
-                  desc = "Default: "..Core.defaults.profile.editBoxBackgroundOpacity,
-                  type = "range",
-                  order = 1.3,
-                  min = 0,
-                  max = 1,
-                  softMin = 0,
-                  softMax = 1,
-                  step = 0.01,
-                  get = function ()
-                    return Core.db.profile.editBoxBackgroundOpacity
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.editBoxBackgroundOpacity = input
-                    Core:Dispatch(UpdateConfig("editBoxBackgroundOpacity"))
-                  end,
-                },
-              }
-            },
-            section2 = {
-              name = "Position",
-              type = "group",
-              inline = true,
-              order = 2,
-              args = {
-                editBoxAnchorPosition = {
-                  name = "Position",
-                  desc = "Default: "..Core.defaults.profile.editBoxAnchor.position,
-                  type = "select",
-                  order = 2.1,
-                  values = {
-                    ABOVE = "Above",
-                    BELOW = "Below",
-                  },
-                  get = function ()
-                    return Core.db.profile.editBoxAnchor.position
-                  end,
-                  set = function (_, input)
-                    Core.db.profile.editBoxAnchor.position = input
-                    if input == "ABOVE" then
-                      Core.db.profile.editBoxAnchor.yOfs = 5
-                    else
-                      Core.db.profile.editBoxAnchor.yOfs = -5
-                    end
-                    Core:Dispatch(UpdateConfig("editBoxAnchor"))
-                  end
-                },
-                editBoxAnchorYOfs = {
-                  name = "Vertical offset",
-                  desc = "Default: 5 or -5",
-                  type = "range",
-                  order = 2.2,
-                  min = -9999,
-                  max = 9999,
-                  softMin = -10,
-                  softMax = 10,
-                  step = 1,
-                  get = function ()
-                    return Core.db.profile.editBoxAnchor.yOfs
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.editBoxAnchor.yOfs = input
-                    Core:Dispatch(UpdateConfig("editBoxAnchor"))
-                  end
-                }
-              },
-            }
-          },
-        },
-        messages = {
-          name = "Messages",
-          type = "group",
-          order = 3,
-          args = {
-            section1 = {
-              name = "Appearance",
-              type = "group",
-              inline = true,
-              order = 1,
-              args = {
-                messageFontSize = {
-                  name = "Font size",
-                  desc = "Default: "..Core.defaults.profile.messageFontSize.."\nMin: 1\nMax: 100",
-                  type = "range",
-                  min = 1,
-                  max = 100,
-                  softMin = 6,
-                  softMax = 24,
-                  step = 1,
-                  get = function ()
-                    return Core.db.profile.messageFontSize
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.messageFontSize = input
-                    Core:Dispatch(UpdateConfig("messageFontSize"))
-                  end,
-                  order = 1.2,
-                },
-                chatBackgroundOpacity = {
-                  name = "Background opacity",
-                  desc = "Default: "..Core.defaults.profile.chatBackgroundOpacity,
-                  type = "range",
-                  order = 1.3,
-                  min = 0,
-                  max = 1,
-                  softMin = 0,
-                  softMax = 1,
-                  step = 0.01,
-                  get = function ()
-                    return Core.db.profile.chatBackgroundOpacity
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.chatBackgroundOpacity = input
-                    Core:Dispatch(UpdateConfig("chatBackgroundOpacity"))
-                  end,
-                },
-                messageLeading = {
-                  name = "Leading",
-                  desc = "Default: "..Core.defaults.profile.messageLeading.."\nMin: 0\nMax: 10",
-                  type = "range",
-                  min = 0,
-                  max = 10,
-                  softMin = 0,
-                  softMax = 5,
-                  step = 1,
-                  get = function ()
-                    return Core.db.profile.messageLeading
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.messageLeading = input
-                    Core:Dispatch(UpdateConfig("messageLeading"))
-                  end,
-                  order = 1.4,
-                },
-                messageLinePadding = {
-                  name = "Line padding",
-                  desc = "Default: "..Core.defaults.profile.messageLinePadding.."\nMin: 0\nMax: 5",
-                  type = "range",
-                  min = 0,
-                  max = 5,
-                  softMin = 0,
-                  softMax = 1,
-                  step = 0.05,
-                  get = function ()
-                    return Core.db.profile.messageLinePadding
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.messageLinePadding = input
-                    Core:Dispatch(UpdateConfig("messageLinePadding"))
-                  end,
-                  order = 1.5,
-                },
-              },
-            },
-            section2 = {
-              name = "Animations",
-              type = "group",
-              inline = true,
-              order = 2,
-              args = {
-                chatHoldTime = {
-                  name = "Fade out delay",
-                  desc = "Default: "..Core.defaults.profile.chatHoldTime..
-                    "\nMin: 1\nMax: 180",
-                  type = "range",
-                  order = 2.1,
-                  min = 1,
-                  max = 180,
-                  softMin = 1,
-                  softMax = 20,
-                  step = 1,
-                  get = function ()
-                    return Core.db.profile.chatHoldTime
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.chatHoldTime = input
-                  end,
-                },
-                chatShowOnMouseOver = {
-                  name = "Show on mouse over",
-                  desc = "Default: "..tostring(Core.defaults.profile.chatShowOnMouseOver),
-                  type = "toggle",
-                  order = 2.2,
-                  get = function ()
-                    return Core.db.profile.chatShowOnMouseOver
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.chatShowOnMouseOver = input
-                  end,
-                },
-                fadeInDuration = {
-                  name = "Fade in duration",
-                  desc = "Default: "..Core.defaults.profile.chatFadeInDuration..
-                    "\nMin: 0\nMax:30",
-                  type = "range",
-                  order = 2.3,
-                  min = 0,
-                  max = 30,
-                  softMin = 0,
-                  softMax = 10,
-                  step = 0.05,
-                  get = function ()
-                    return Core.db.profile.chatFadeInDuration
-                  end,
-                  set = function (_, input)
-                    Core.db.profile.chatFadeInDuration = input
-                    Core:Dispatch(UpdateConfig("chatFadeInDuration"))
-                  end
-                },
-                fadeOutDuration = {
-                  name = "Fade out duration",
-                  desc = "Default: "..Core.defaults.profile.chatFadeOutDuration..
-                    "\nMin: 0\nMax:30",
-                  type = "range",
-                  order = 2.3,
-                  min = 0,
-                  max = 30,
-                  softMin = 0,
-                  softMax = 10,
-                  step = 0.05,
-                  get = function ()
-                    return Core.db.profile.chatFadeOutDuration
-                  end,
-                  set = function (_, input)
-                    Core.db.profile.chatFadeOutDuration = input
-                    Core:Dispatch(UpdateConfig("chatFadeOutDuration"))
-                  end
-                },
-                slideInDuration = {
-                  name = "Slide in duration",
-                  desc = "Default: "..Core.defaults.profile.chatSlideInDuration,
-                  type = "range",
-                  order = 2.4,
-                  min = 0,
-                  max = 30,
-                  softMin = 0,
-                  softMax = 5,
-                  step = 0.05,
-                  get = function ()
-                    return Core.db.profile.chatSlideInDuration
-                  end,
-                  set = function (_, input)
-                    Core.db.profile.chatSlideInDuration = input
-                  end
-                }
-              }
-            },
-            section3 = {
-              name = "Misc",
-              type = "group",
-              inline = true,
-              order = 3,
-              args = {
-                indentWordWrap = {
-                  name = "Indent on line wrap",
-                  desc = "Adds an indent when a message wraps beyond a single line.",
-                  type = "toggle",
-                  order = 3.1,
-                  get = function ()
-                    return Core.db.profile.indentWordWrap
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.indentWordWrap = input
-                    Core:Dispatch(UpdateConfig("indentWordWrap"))
-                  end,
-                },
-                mouseOverTooltips = {
-                  name = "Mouse over tooltips",
-                  desc = "Should tooltips appear when hovering over chat links.",
-                  type = "toggle",
-                  order = 3.2,
-                  get = function ()
-                    return Core.db.profile.mouseOverTooltips
-                  end,
-                  set = function (info, input)
-                    Core.db.profile.mouseOverTooltips = input
-                  end,
-                },
-                iconTextureYOffset = {
-                  type = "range",
-                  name = "Text icons Y offset",
-                  desc = "Default: "..Core.defaults.profile.iconTextureYOffset..
-                    "\nAdjust this if text icons aren't centered.",
-                  order = 3.3,
-                  min = 0,
-                  max = 12,
-                  softMin = 0,
-                  softMax = 12,
-                  step = 3.1,
-                  get = function ()
-                    return Core.db.profile.iconTextureYOffset
-                  end,
-                  set = function (info, input)
-                    -- TODO: Update messages dynamically
-                    Core.db.profile.iconTextureYOffset = input
-                  end,
-                },
-              }
-            },
-          },
-        },
-        profile = AceDBOptions:GetOptionsTable(Core.db)
-      }
-  }
-
-  AceConfig:RegisterOptionsTable("Glass", options)
-  AceConfigDialog:SetDefaultSize("Glass", 780, 500)
-
+  initializeProfileSettings(Core.db.profile)
+  options = { name = "Glass", type = "group", handler = C, args = {
+    home = homeOptions(),
+    profile = DBOptions:GetOptionsTable(Core.db),
+  } }
+  options.args.profile.name = "Profiles"
+  options.args.profile.order = 2
+  Core.Libs.AceConfig:RegisterOptionsTable("Glass", options)
+  self:RefreshOptions()
+  Dialog:SetDefaultSize("Glass", 780, 500)
   self:RegisterChatCommand("glass", "OnSlashCommand")
-
   Core.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
   Core.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
   Core.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
-
-  Core:Subscribe(SAVE_FRAME_POSITION, function (position)
+  Core:Subscribe(Constants.EVENTS.SAVE_FRAME_POSITION, function(position)
     Core.db.profile.positionAnchor = position
   end)
 end
 
 function C:OnSlashCommand(input)
-  if input == "lock" then
-    Core:Dispatch(UnlockMover())
+  if input == "lock" or input == "unlock" then
+    Core:Dispatch(Actions.UnlockMover())
+  elseif input == "demo" then
+    Demo:SetActive(not Demo:IsActive())
   else
-    AceConfigDialog:Open("Glass")
+    Dialog:SelectGroup("Glass", "home")
+    Dialog:Open("Glass")
   end
 end
 
 function C:RefreshConfig()
-  -- General
-  Core:Dispatch(UpdateConfig("font"))
-  Core:Dispatch(UpdateConfig("frameHeight"))
-  Core:Dispatch(UpdateConfig("frameWidth"))
-  Core:Dispatch(UpdateConfig("framePosition"))
-
-  -- Edit box
-  Core:Dispatch(UpdateConfig("editBoxFontSize"))
-  Core:Dispatch(UpdateConfig("editBoxBackgroundOpacity"))
-  Core:Dispatch(UpdateConfig("editBoxAnchor"))
-
-  -- Messages
-  Core:Dispatch(UpdateConfig("messageFontSize"))
-  Core:Dispatch(UpdateConfig("chatBackgroundOpacity"))
-  Core:Dispatch(UpdateConfig("chatFadeInDuration"))
-  Core:Dispatch(UpdateConfig("chatFadeOutDuration"))
-
-  -- For things that don't update using the config frame e.g. frame position
-  Core:Dispatch(RefreshConfig())
+  initializeProfileSettings(Core.db.profile)
+  Demo:SetActive(false)
+  for _, key in ipairs({ "font", "frameHeight", "frameWidth", "framePosition",
+    "contentLeftPadding", "contentRightPadding", "leftGradientWidth", "rightGradientWidth",
+    "tabBarBackgroundOpacity", "editBoxFontSize", "editBoxXPadding",
+    "editBoxBackgroundOpacity", "editBoxAnchor", "messageFontSize", "chatBackgroundOpacity",
+    "chatFadeInDuration", "chatFadeOutDuration", "messageLeading", "messageLinePadding",
+    "indentWordWrap", "iconTextureYOffset", "messageTopFade", "messageBottomFade",
+    "mouseOverTooltips", "tabFont", "tabFontSize",
+    "tabFontFlags", "tabXPadding", "tabYPadding",
+    "tabLeftGradientWidth", "tabRightGradientWidth", "tabSpacing" }) do
+    Core:Dispatch(Actions.UpdateConfig(key))
+  end
+  Core:Dispatch(Actions.RefreshConfig())
+  local module = extra()
+  if module then module:Rebuild() end
+  self:RefreshOptions()
 end

@@ -9,8 +9,46 @@ local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 local CreateFont = CreateFont
 -- luacheck: pop
 
+local function ConfigureMessage(font, settings)
+  font:SetFont(LSM:Fetch(LSM.MediaType.FONT, settings.font), settings.messageFontSize, settings.fontFlags)
+  font:SetShadowColor(0, 0, 0, 1)
+  font:SetShadowOffset(1, -1)
+  font:SetJustifyH("LEFT")
+  font:SetJustifyV("MIDDLE")
+  font:SetSpacing(settings.messageLeading)
+end
+
+local function ConfigureTab(font, settings)
+  font:SetFont(LSM:Fetch(LSM.MediaType.FONT, settings.tabFont), settings.tabFontSize, settings.tabFontFlags)
+  font:SetShadowColor(0, 0, 0, 0)
+  font:SetShadowOffset(1, -1)
+  font:SetJustifyH("LEFT")
+  font:SetJustifyV("MIDDLE")
+  font:SetSpacing(3)
+end
+
+function Fonts:CreateWindowFonts(id, settings)
+  self.windowFonts = self.windowFonts or {}
+  local pair = self.windowFonts[id]
+  if not pair then
+    pair = {
+      message = CreateFont("GlassWindowMessageFont" .. tostring(id)),
+      tab = CreateFont("GlassWindowTabFont" .. tostring(id))
+    }
+    self.windowFonts[id] = pair
+  end
+  ConfigureMessage(pair.message, settings)
+  ConfigureTab(pair.tab, settings)
+  return pair
+end
+
+function Fonts:UpdateWindowFonts(id, settings)
+  return self:CreateWindowFonts(id, settings)
+end
+
 function Fonts:OnInitialize()
   self.fonts = {}
+  self.windowFonts = {}
 end
 
 function Fonts:OnEnable()
@@ -29,11 +67,7 @@ function Fonts:OnEnable()
 
   -- GlassChatDockFont
   self.fonts.GlassChatDockFont = CreateFont("GlassChatDockFont")
-  self.fonts.GlassChatDockFont:SetFont(
-    LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
-    12,
-    Core.db.profile.fontFlags
-  )
+  ConfigureTab(self.fonts.GlassChatDockFont, Core.db.profile)
   self.fonts.GlassChatDockFont:SetShadowColor(0, 0, 0, 0)
   self.fonts.GlassChatDockFont:SetShadowOffset(1, -1)
   self.fonts.GlassChatDockFont:SetJustifyH("LEFT")
@@ -54,7 +88,7 @@ function Fonts:OnEnable()
   self.fonts.GlassEditBoxFont:SetSpacing(3)
 
   Core:Subscribe(UPDATE_CONFIG, function (key)
-    if key == "font" or key == "messageFontSize" then
+    if key == "font" or key == "fontFlags" or key == "messageFontSize" then
       self.fonts.GlassMessageFont:SetFont(
         LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
         Core.db.profile.messageFontSize,
@@ -66,15 +100,11 @@ function Fonts:OnEnable()
       self.fonts.GlassMessageFont:SetSpacing(Core.db.profile.messageLeading)
     end
 
-    if key == "font" then
-      self.fonts.GlassChatDockFont:SetFont(
-        LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
-        12,
-        Core.db.profile.fontFlags
-      )
+    if key == "tabFont" or key == "tabFontFlags" or key == "tabFontSize" then
+      ConfigureTab(self.fonts.GlassChatDockFont, Core.db.profile)
     end
 
-    if key == "font" or key == "editBoxFontSize" then
+    if key == "font" or key == "fontFlags" or key == "editBoxFontSize" then
       self.fonts.GlassEditBoxFont:SetFont(
         LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
         Core.db.profile.editBoxFontSize,

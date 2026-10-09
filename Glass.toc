@@ -44,6 +44,7 @@ Glass\Components\MoverFrame.lua
 Glass\Components\NewMessageAlertFrame.lua
 Glass\Components\ScrollOverlayFrame.lua
 Glass\Components\SlidingMessageFrame.lua
+Glass\Components\ExtraWindow.lua
 
 # Modules
 Glass\Modules\Config.lua
@@ -51,4 +52,7 @@ Glass\Modules\Fonts.lua
 Glass\Modules\Hyperlinks.lua
 Glass\Modules\News.lua
 Glass\Modules\TextProcessing.lua
+Glass\Modules\MessageRouter.lua
+Glass\Modules\Demo.lua
 Glass\Modules\UIManager.lua
+Glass\Modules\ExtraWindows.lua

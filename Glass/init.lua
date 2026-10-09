@@ -35,25 +35,44 @@ Core:NewModule("Fonts")
 Core:NewModule("Hyperlinks")
 Core:NewModule("News")
 Core:NewModule("TextProcessing")
+Core:NewModule("MessageRouter", "AceHook-3.0")
+Core:NewModule("Demo")
 Core:NewModule("UIManager", "AceHook-3.0")
+Core:NewModule("ExtraWindows")
 
 -- Default settings
 Core.defaults = {
+  char = { extraWindowSources = {} },
   profile = {
+    extraWindows = {},
+    tabFont = "Friz Quadrata TT",
+    tabFontFlags = "",
+    tabFontSize = 12,
+    tabYPadding = 4,
+    tabXPadding = 12,
+    tabSpacing = 24,
+    tabLeftGradientWidth = 12,
+    tabRightGradientWidth = 96,
     -- General
     font = "Friz Quadrata TT",
     fontFlags = "",
-    frameWidth = 450,
-    frameHeight = 230,
+    frameWidth = 550,
+    frameHeight = 250,
+    contentLeftPadding = 12,
+    contentRightPadding = 72,
+    leftGradientWidth = 12,
+    rightGradientWidth = 96,
+    tabBarBackgroundOpacity = 0.6,
     positionAnchor = {
       point = "BOTTOMLEFT",
       xOfs = 20,
-      yOfs = 230
+      yOfs = 120
     },
 
     -- Edit box
     editBoxFontSize = 12,
-    editBoxBackgroundOpacity = 0.6,
+    editBoxXPadding = 12,
+    editBoxBackgroundOpacity = 0.9,
     editBoxAnchor = {
       position = "BELOW",
       yOfs = -5
@@ -61,9 +80,11 @@ Core.defaults = {
 
     -- Messages
     messageFontSize = 12,
-    chatBackgroundOpacity = 0.4,
+    chatBackgroundOpacity = 0.7,
     messageLeading = 3,
     messageLinePadding = 0.25,
+    messageTopFade = 16,
+    messageBottomFade = 16,
 
     chatHoldTime = 10,
     chatShowOnMouseOver = true,
