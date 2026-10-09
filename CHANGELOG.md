@@ -18,10 +18,11 @@
 
 ### Bug fixes
 
-* Restore custom chat-tab history and visibility
-* Keep Combat Log's filter toolbar below the Glass tabs
-* Reflow existing messages when changing wrapped-line indentation
-* Keep live settings sliders responsive and messages clipped during jumps to the latest message
+* Fixed custom chat tabs appearing empty despite having message history
+* Fixed Combat Log's filter toolbar overlapping the chat tabs
+* Fixed existing messages not rewrapping when changing wrapped-line indentation
+* Fixed settings sliders stopping mid-drag while applying changes
+* Fixed messages briefly appearing below the window when jumping to the latest message
 
 ## 1.9.0-alpha1 (2026-09-26)
 
