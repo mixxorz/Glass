@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased
+
+### What's new
+
+* Add display-only extra windows that mirror Blizzard chat tabs, including Loot, with independent styles, layout, and scrollback
+* Create extra windows from settings or a chat tab's right-click menu; optionally show the source tab's name above messages
+* Move and resize Main and extra windows together with `/glass lock`, including disabled and non-interactive windows
+* Add per-window hover, scrolling, and link controls, plus a fully non-interactive mode
+* Add independent message and tab gradients, left/right message padding, chat-input padding, and tab fonts and spacing
+* Fade message text, icons, and backgrounds to transparent at the pane edges, with separate top and bottom controls
+* Reorganize settings around Home and individual windows, with grouped controls and practical slider drag ranges
+* Redesign the jump-to-latest button with an unread glow
+* Add a global Demo mode checkbox on Home and `/glass demo` to preview styles and animations with sample chat without changing real history
+
+### Fixes and internal changes
+
+* Restore custom chat-tab history and keep extra windows updating when their source tab is not selected
+* Handle source renames, closed or reused chat tabs, and temporary conversation windows without silently retargeting extra windows
+* Keep Combat Log's filter toolbar below the Glass tabs
+* Reflow existing messages when changing wrapped-line indentation
+* Keep live settings sliders responsive and improve clipping during jumps to the latest message
+* Standardize message records and independent source subscriptions for Main, extra windows, and demo mode
+* Document message delivery and in-game verification; add focused routing checks
+
 ## 1.9.0-alpha1 (2026-09-26)
 
 * Update Glass for WoW Forever (1.60) and Midnight (12.1)
