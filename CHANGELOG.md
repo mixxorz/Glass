@@ -2,26 +2,26 @@
 
 ## Unreleased
 
-### What's new
+### New features
 
-* Add display-only extra windows that mirror Blizzard chat tabs, including Loot, with independent styles, layout, and scrollback
-* Create extra windows from settings or a chat tab's right-click menu; optionally show the source tab's name above messages
-* Move and resize Main and extra windows together with `/glass lock`, including disabled and non-interactive windows
-* Add per-window hover, scrolling, and link controls, plus a fully non-interactive mode
-* Add independent message and tab gradients, left/right message padding, chat-input padding, and tab fonts and spacing
-* Fade message text, icons, and backgrounds to transparent at the pane edges, with separate top and bottom controls
+* Add extra chat windows with independent source tabs, styles, layout, scrollback, and mouse-interaction settings
+* Add drag-to-resize controls while windows are unlocked with `/glass lock`
+* Add configurable top and bottom fades to transparent for messages
+* Add global demo mode on Home and `/glass demo` to preview styles and animations with sample chat without changing real history
+
+### Improvements
+
+* Add separate message and tab gradient controls, left/right message padding, and chat-input padding
+* Add configurable tab fonts, padding, and spacing
 * Reorganize settings around Home and individual windows, with grouped controls and practical slider drag ranges
 * Redesign the jump-to-latest button with an unread glow
-* Add a global Demo mode checkbox on Home and `/glass demo` to preview styles and animations with sample chat without changing real history
 
-### Fixes and internal changes
+### Bug fixes
 
-* Restore custom chat-tab history and keep extra windows updating when their source tab is not selected
-* Handle source renames, closed or reused chat tabs, and temporary conversation windows without silently retargeting extra windows
+* Restore custom chat-tab history and visibility
 * Keep Combat Log's filter toolbar below the Glass tabs
 * Reflow existing messages when changing wrapped-line indentation
-* Keep live settings sliders responsive and improve clipping during jumps to the latest message
-* Standardize message records and independent source subscriptions for Main, extra windows, and demo mode
+* Keep live settings sliders responsive and messages clipped during jumps to the latest message
 
 ## 1.9.0-alpha1 (2026-09-26)
 
