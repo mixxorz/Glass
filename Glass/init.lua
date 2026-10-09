@@ -47,25 +47,27 @@ Core.defaults = {
     extraWindows = {},
     tabFontSize = 12,
     tabYPadding = 4,
-    tabSpacing = 0,
+    tabSpacing = 24,
     -- General
     font = "Friz Quadrata TT",
     fontFlags = "",
-    frameWidth = 450,
-    frameHeight = 230,
-    contentXPadding = 25,
-    leftGradientWidth = 50,
-    rightGradientWidth = 250,
-    tabBarBackgroundOpacity = 0.4,
+    frameWidth = 550,
+    frameHeight = 250,
+    contentXPadding = 12,
+    contentLeftPadding = 12,
+    contentRightPadding = 72,
+    leftGradientWidth = 12,
+    rightGradientWidth = 96,
+    tabBarBackgroundOpacity = 0.6,
     positionAnchor = {
       point = "BOTTOMLEFT",
       xOfs = 20,
-      yOfs = 230
+      yOfs = 120
     },
 
     -- Edit box
     editBoxFontSize = 12,
-    editBoxBackgroundOpacity = 0.6,
+    editBoxBackgroundOpacity = 0.9,
     editBoxAnchor = {
       position = "BELOW",
       yOfs = -5
@@ -73,11 +75,11 @@ Core.defaults = {
 
     -- Messages
     messageFontSize = 12,
-    chatBackgroundOpacity = 0.4,
+    chatBackgroundOpacity = 0.7,
     messageLeading = 3,
     messageLinePadding = 0.25,
-    messageTopFade = 14,
-    messageBottomFade = 14,
+    messageTopFade = 16,
+    messageBottomFade = 16,
 
     chatHoldTime = 10,
     chatShowOnMouseOver = true,
