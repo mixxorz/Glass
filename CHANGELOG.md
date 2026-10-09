@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha1 (2026-10-10)
 
 ### New features
 
