@@ -45,10 +45,14 @@ Core.defaults = {
   char = { extraWindowSources = {} },
   profile = {
     extraWindows = {},
+    tabFont = "Friz Quadrata TT",
+    tabFontFlags = "",
     tabFontSize = 12,
     tabYPadding = 4,
     tabXPadding = 12,
     tabSpacing = 24,
+    tabLeftGradientWidth = 12,
+    tabRightGradientWidth = 96,
     -- General
     font = "Friz Quadrata TT",
     fontFlags = "",

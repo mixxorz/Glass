@@ -19,8 +19,7 @@ local function ConfigureMessage(font, settings)
 end
 
 local function ConfigureTab(font, settings)
-  font:SetFont(LSM:Fetch(LSM.MediaType.FONT, settings.tabFont or settings.font),
-    settings.tabFontSize or 12, settings.tabFontFlags or settings.fontFlags)
+  font:SetFont(LSM:Fetch(LSM.MediaType.FONT, settings.tabFont), settings.tabFontSize, settings.tabFontFlags)
   font:SetShadowColor(0, 0, 0, 0)
   font:SetShadowOffset(1, -1)
   font:SetJustifyH("LEFT")
@@ -101,8 +100,7 @@ function Fonts:OnEnable()
       self.fonts.GlassMessageFont:SetSpacing(Core.db.profile.messageLeading)
     end
 
-    if key == "font" or key == "fontFlags" or key == "tabFont" or
-      key == "tabFontFlags" or key == "tabFontSize" then
+    if key == "tabFont" or key == "tabFontFlags" or key == "tabFontSize" then
       ConfigureTab(self.fonts.GlassChatDockFont, Core.db.profile)
     end
 

@@ -36,11 +36,9 @@ end
 
 local function initializeProfileSettings(profile)
   local function initialize(settings)
-    -- Keep the old appearance once, rather than inheriting future changes to Messages.
-    if settings.tabLeftGradientWidth == nil then settings.tabLeftGradientWidth = settings.leftGradientWidth end
-    if settings.tabRightGradientWidth == nil then settings.tabRightGradientWidth = settings.rightGradientWidth end
     for _, key in ipairs({"contentLeftPadding", "contentRightPadding", "tabXPadding", "editBoxXPadding",
-      "messageTopFade", "messageBottomFade"}) do
+      "messageTopFade", "messageBottomFade", "tabFont", "tabFontFlags",
+      "tabLeftGradientWidth", "tabRightGradientWidth"}) do
       if settings[key] == nil then settings[key] = Core.defaults.profile[key] end
     end
   end
@@ -48,7 +46,7 @@ local function initializeProfileSettings(profile)
   for _, settings in pairs(profile.extraWindows) do initialize(settings) end
 end
 
-local function field(id, key, name, kind, order, min, max, step, values, fallback, event)
+local function field(id, key, name, kind, order, min, max, step, values, event)
   local option = { name = name, type = kind, order = order, min = min, max = max, step = step, values = values }
   if kind == "range" then setSliderBounds(option, key) end
   if key == "font" or key == "tabFont" then
@@ -58,7 +56,6 @@ local function field(id, key, name, kind, order, min, max, step, values, fallbac
   option.get = function()
     local settings = id and extra():GetWindows()[id] or Core.db.profile
     local value = settings[key]
-    if value == nil and fallback then value = settings[fallback] end
     if value == nil then value = Core.defaults.profile[key] end
     return value
   end
@@ -103,8 +100,8 @@ local function windowOptions(id)
     name = "Unlock all windows", type = "execute", order = 1,
     func = function() Core:Dispatch(Actions.UnlockMover()) end,
   }
-  local function add(target, key, name, kind, order, min, max, step, values, fallback, event)
-    target.args[key] = field(id, key, name, kind, order, min, max, step, values, fallback, event)
+  local function add(target, key, name, kind, order, min, max, step, values, event)
+    target.args[key] = field(id, key, name, kind, order, min, max, step, values, event)
   end
   if isExtra then
     local general = inlineSection(window, "general", "General", 1)
@@ -179,7 +176,7 @@ local function windowOptions(id)
   local messageBackground = inlineSection(messages, "background", "Background", 2)
   local messageLayout = inlineSection(messages, "layout", "Layout", 3)
   add(messageText, "font", "Font", "select", 1)
-  add(messageText, "fontFlags", "Font flags", "select", 2, nil, nil, nil, FLAGS, nil, "font")
+  add(messageText, "fontFlags", "Font flags", "select", 2, nil, nil, nil, FLAGS, "font")
   add(messageText, "messageFontSize", "Font size", "range", 3, 1, 100, 1)
   add(messageText, "messageLeading", "Leading", "range", 4, 0, 10, 1)
   add(messageLayout, "messageLinePadding", "Line padding", "range", 5, 0, 5, 0.05)
@@ -206,9 +203,9 @@ local function windowOptions(id)
   local tabText = inlineSection(tabs, "text", "Text", 2)
   local tabBackground = inlineSection(tabs, "background", "Background", 3)
   local tabLayout = inlineSection(tabs, "layout", "Layout", 4)
-  add(tabText, "tabFont", "Font", "select", 2, nil, nil, nil, nil, "font")
+  add(tabText, "tabFont", "Font", "select", 2)
   add(tabText, "tabFontSize", "Font size", "range", 3, 1, 100, 1)
-  add(tabText, "tabFontFlags", "Font flags", "select", 4, nil, nil, nil, FLAGS, "fontFlags")
+  add(tabText, "tabFontFlags", "Font flags", "select", 4, nil, nil, nil, FLAGS)
   add(tabLayout, "tabXPadding", "Horizontal padding", "range", 5, 0, 100, 1)
   tabLayout.args.tabXPadding.desc = "Padding at the left and right edges of the tab bar."
   add(tabLayout, "tabYPadding", "Vertical padding", "range", 6, 0, 100, 1)
@@ -222,11 +219,11 @@ local function windowOptions(id)
 
   local fading = inlineSection(behavior, "fading", "Fading and animation", 1)
   local interaction = inlineSection(behavior, "interaction", "Mouse interaction", 2)
-  add(fading, "chatHoldTime", "Fade out delay", "range", 1, 1, 180, 1, nil, nil, false)
+  add(fading, "chatHoldTime", "Fade out delay", "range", 1, 1, 180, 1, nil, false)
   add(fading, "chatFadeInDuration", "Fade in duration", "range", 2, 0, 30, 0.05)
   add(fading, "chatFadeOutDuration", "Fade out duration", "range", 3, 0, 30, 0.05)
-  add(fading, "chatSlideInDuration", "Slide in duration", "range", 4, 0, 30, 0.05, nil, nil, false)
-  add(interaction, "chatShowOnMouseOver", "Show on mouse over", "toggle", 5, nil, nil, nil, nil, nil, false)
+  add(fading, "chatSlideInDuration", "Slide in duration", "range", 4, 0, 30, 0.05, nil, false)
+  add(interaction, "chatShowOnMouseOver", "Show on mouse over", "toggle", 5, nil, nil, nil, nil, false)
   add(interaction, "mouseOverTooltips", "Mouse over tooltips", "toggle", 6)
   if isExtra then
     add(interaction, "nonInteractive", "Non-interactive", "toggle", 7)

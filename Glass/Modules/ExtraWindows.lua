@@ -107,11 +107,6 @@ function ExtraWindows:AddWindow(sourceName)
   settings.showTabBar = false
   settings.hoverEnabled, settings.scrollEnabled, settings.linksEnabled = true, true, true
   settings.nonInteractive = false
-  settings.tabFont = Core.db.profile.tabFont or settings.font
-  settings.tabFontFlags = Core.db.profile.tabFontFlags or settings.fontFlags
-  settings.tabXPadding = Core.db.profile.tabXPadding
-  settings.tabLeftGradientWidth = Core.db.profile.tabLeftGradientWidth
-  settings.tabRightGradientWidth = Core.db.profile.tabRightGradientWidth
   self:GetWindows()[id] = settings
   self:SetSource(id, sourceName)
   Core:Dispatch(Constants.ACTIONS.UnlockMover())
