@@ -79,6 +79,37 @@ local function inlineSection(parent, key, name, order)
   return group
 end
 
+local function editBoxOptions()
+  local group = section("Edit box", 2)
+  local text = inlineSection(group, "text", "Text", 1)
+  local background = inlineSection(group, "background", "Background", 2)
+  local layout = inlineSection(group, "layout", "Layout", 3)
+  text.args.editBoxFontSize = field(nil, "editBoxFontSize", "Font size", "range", 1, 1, 100, 1)
+  background.args.editBoxBackgroundOpacity =
+    field(nil, "editBoxBackgroundOpacity", "Background opacity", "range", 2, 0, 1, 0.01)
+  layout.args.editBoxXPadding = field(nil, "editBoxXPadding", "Horizontal padding", "range", 1, 0, 100, 1)
+  layout.args.editBoxXPadding.desc =
+    "Adds space on both sides of the chat input, including before the channel or whisper label."
+  layout.args.editBoxAnchorPosition = {
+    name = "Position", type = "select", order = 3, values = { ABOVE = "Above", BELOW = "Below" },
+    get = function() return Core.db.profile.editBoxAnchor.position end,
+    set = function(_, v)
+      Core.db.profile.editBoxAnchor.position = v
+      Core.db.profile.editBoxAnchor.yOfs = v == "ABOVE" and 5 or -5
+      Core:Dispatch(Actions.UpdateConfig("editBoxAnchor"))
+    end }
+  layout.args.editBoxAnchorYOfs = {
+    name = "Vertical offset", type = "range", order = 4,
+    min = -9999, max = 9999, step = 1,
+    get = function() return Core.db.profile.editBoxAnchor.yOfs end,
+    set = function(_, v)
+      Core.db.profile.editBoxAnchor.yOfs = v
+      Core:Dispatch(Actions.UpdateConfig("editBoxAnchor"))
+    end }
+  setSliderBounds(layout.args.editBoxAnchorYOfs, "editBoxAnchorYOfs")
+  return group
+end
+
 local function windowOptions(id)
   local isExtra = id ~= nil
   local group = {
@@ -88,18 +119,13 @@ local function windowOptions(id)
   local window = section("Window", 1)
   local messages = section("Messages", 2)
   local tabs = section("Tab bar", 3)
-  local behavior = section("Behavior", isExtra and 4 or 5)
+  local behavior = section("Behavior", 4)
   group.args.window = window
   group.args.messages = messages
   group.args.tabs = tabs
   group.args.behavior = behavior
   local size = inlineSection(window, "size", "Size", 2)
   local position = inlineSection(window, "position", "Position", 3)
-  local management = inlineSection(window, "management", "Window actions", 4)
-  management.args.unlock = {
-    name = "Unlock all windows", type = "execute", order = 1,
-    func = function() Core:Dispatch(Actions.UnlockMover()) end,
-  }
   local function add(target, key, name, kind, order, min, max, step, values, event)
     target.args[key] = field(id, key, name, kind, order, min, max, step, values, event)
   end
@@ -119,6 +145,7 @@ local function windowOptions(id)
       get = function() return extra():GetSource(id) end,
       set = function(_, value) extra():SetSource(id, value) end,
     }
+    local management = inlineSection(window, "management", "Window actions", 4)
     management.args.delete = {
       name = "Delete window", type = "execute", order = 20,
       confirm = true, confirmText = "Delete this window?",
@@ -243,34 +270,6 @@ local function windowOptions(id)
     for _, key in ipairs({ "hoverEnabled", "scrollEnabled", "linksEnabled" }) do
       interaction.args[key].disabled = function() return extra():GetWindows()[id].nonInteractive end
     end
-  else
-    local input = section("Chat input", 4)
-    group.args.input = input
-    local inputText = inlineSection(input, "text", "Text", 1)
-    local inputBackground = inlineSection(input, "background", "Background", 2)
-    local placement = inlineSection(input, "layout", "Layout", 3)
-    add(inputText, "editBoxFontSize", "Font size", "range", 1, 1, 100, 1)
-    add(inputBackground, "editBoxBackgroundOpacity", "Background opacity", "range", 2, 0, 1, 0.01)
-    add(placement, "editBoxXPadding", "Horizontal padding", "range", 1, 0, 100, 1)
-    placement.args.editBoxXPadding.desc =
-      "Adds space on both sides of the chat input, including before the channel or whisper label."
-    placement.args.editBoxAnchorPosition = {
-      name = "Position", type = "select", order = 3, values = { ABOVE = "Above", BELOW = "Below" },
-      get = function() return Core.db.profile.editBoxAnchor.position end,
-      set = function(_, v)
-        Core.db.profile.editBoxAnchor.position = v
-        Core.db.profile.editBoxAnchor.yOfs = v == "ABOVE" and 5 or -5
-        Core:Dispatch(Actions.UpdateConfig("editBoxAnchor"))
-      end }
-    placement.args.editBoxAnchorYOfs = {
-      name = "Vertical offset", type = "range", order = 4,
-      min = -9999, max = 9999, step = 1,
-      get = function() return Core.db.profile.editBoxAnchor.yOfs end,
-      set = function(_, v)
-        Core.db.profile.editBoxAnchor.yOfs = v
-        Core:Dispatch(Actions.UpdateConfig("editBoxAnchor"))
-      end }
-    setSliderBounds(placement.args.editBoxAnchorYOfs, "editBoxAnchorYOfs")
   end
   return group
 end
@@ -368,10 +367,11 @@ function C:OnEnable()
   initializeProfileSettings(Core.db.profile)
   options = { name = "Glass", type = "group", handler = C, args = {
     home = homeOptions(),
+    editBox = editBoxOptions(),
     profile = DBOptions:GetOptionsTable(Core.db),
   } }
   options.args.profile.name = "Profiles"
-  options.args.profile.order = 2
+  options.args.profile.order = 3
   Core.Libs.AceConfig:RegisterOptionsTable("Glass", options)
   self:RefreshOptions()
   Dialog:SetDefaultSize("Glass", 780, 500)
