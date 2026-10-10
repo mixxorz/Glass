@@ -2,9 +2,12 @@
 
 #### An immersive and minimalistic chat UI for World of Warcraft
 
+_Now with support for Retail (Midnight), WoW Forever, Classic Era/Hardcore,
+Burning Crusade Anniversary, and Mists of Pandaria Classic._
+
 ## Demo
 
-https://github.com/user-attachments/assets/dd78970b-4d3d-49aa-9b12-8c7bec1fd54f
+https://github.com/user-attachments/assets/7f218129-6529-436d-aee4-ccfb3227a0ec
 
 ## Why?
 
@@ -30,19 +33,12 @@ You may also download the latest release on [GitHub](https://github.com/mixxorz/
 - `/glass lock` - unlock all Glass windows for moving and resizing
 - `/glass demo` - turn demo mode on or off
 
-## Customization
+## Features
 
-Not everyone likes the same look. Glass tries to accommodate your own
-preferences by giving you options to change the:
-
-- Chat frame width, height, and location
-- Message and tab fonts, padding, and spacing
-- Message fade out delay
-- Background opacity, gradients, and fades to transparent at message-pane edges
-- Hover, scrolling, and link interactions
-
-Moreover, unlike the default chat UI, these settings may be shared between
-characters.
+- Adds smooth animations to incoming chat messages.
+- Lets you add extra Glass panes that track other chat tabs.
+- Allows you to customize fonts, spacing, backgrounds, and layout.
+- Works alongside addons like Prat, ElvUI, and Leatrix Plus.
 
 ## Addon compatibility
 
