@@ -54,7 +54,7 @@ function MoverDialogMixin:Init()
   self.desc:SetJustifyH("LEFT")
   self.desc:SetPoint("TOPLEFT", 18, -32)
   self.desc:SetPoint("BOTTOMRIGHT", -18, 48)
-  self.desc:SetText("Glass windows unlocked. Drag any window to move it, or drag its corner to resize it.")
+  self.desc:SetText("Drag windows or the Social button to move them. Drag a window's corner to resize it.")
 
   self.lockButton = CreateFrame("Button", nil, self, "UIPanelButtonTemplate")
   self.lockButton:SetSize(80, 22)

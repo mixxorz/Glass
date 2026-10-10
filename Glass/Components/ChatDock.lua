@@ -24,17 +24,64 @@ local UIParent = UIParent
 -- luacheck: pop
 
 local ChatDockMixin = {}
-local MENU_BUTTON_MAX_SIZE = 24
-local MENU_BUTTON_GAP = 8
+local BUTTON_MAX_SIZE = 24
+local BUTTON_GAP = 4
+local BUTTON_TAB_GAP = 8
+local BUTTONS = {
+  { field = "chatMenuButton", global = "ChatFrameMenuButton", setting = "showChatMenuButton" },
+  { field = "chatChannelButton", global = "ChatFrameChannelButton", setting = "showChatChannelButton" },
+}
 
-local function UpdateMenuButton(dock, padding)
-  local button = dock.chatMenuButton
-  if not button then return 0 end
-  local size = math.max(1, math.min(MENU_BUTTON_MAX_SIZE, dock:GetHeight(), dock:GetWidth() - padding * 2))
-  button:SetSize(size, size)
-  button:ClearAllPoints()
-  button:SetPoint("LEFT", dock, "LEFT", padding, 0)
-  return size
+local function UpdateButtons(dock, padding)
+  local profile = Core.db.profile
+  local count = 0
+  for _, spec in ipairs(BUTTONS) do
+    local button = dock[spec.field]
+    if button then
+      if profile[spec.setting] then
+        count = count + 1
+      else
+        if button == dock.chatMenuButton and button:IsMenuOpen() then button:CloseMenu() end
+        button:Hide()
+      end
+    end
+  end
+  if count == 0 then return 0, padding end
+
+  local gaps = BUTTON_GAP * (count - 1) + BUTTON_TAB_GAP
+  padding = math.min(padding, math.max(0, (dock:GetWidth() - gaps - count - 1) / 2))
+  local available = dock:GetWidth() - padding * 2 - gaps - 1
+  local size = math.max(1, math.min(BUTTON_MAX_SIZE, dock:GetHeight(), available / count))
+  local width = 0
+  for _, spec in ipairs(BUTTONS) do
+    local button = dock[spec.field]
+    if button and profile[spec.setting] then
+      if width > 0 then width = width + BUTTON_GAP end
+      button:SetSize(size, size)
+      if button.Icon then
+        local iconSize = math.min(15, size)
+        button.Icon:SetSize(iconSize, iconSize)
+        if button == dock.chatChannelButton then
+          local inset = (size - iconSize) / 2
+          button.iconPushedOffsetX = math.max(-inset, math.min(inset, dock.channelIconPushedOffsetX))
+          button.iconPushedOffsetY = math.max(-inset, math.min(inset, dock.channelIconPushedOffsetY))
+        end
+      end
+      if button.Flash then
+        button.Flash:ClearAllPoints()
+        button.Flash:SetAllPoints(button)
+      end
+      button:ClearAllPoints()
+      button:SetPoint("LEFT", dock, "LEFT", padding + width, 0)
+      if button == dock.chatChannelButton and button.UpdateVisibleState then
+        button:UpdateVisibleState()
+      else
+        button:Show()
+      end
+      width = width + size
+    end
+  end
+  return width, padding
 end
 
 local function UpdateBackground(self)
@@ -65,8 +112,9 @@ local function UpdateTabSpacing(dock)
   local spacing = Core.db.profile.tabSpacing or 0
   -- Horizontal padding belongs at the bar's outer edges, not between labels.
   local padding = Utils.getTabXPadding(Core.db.profile)
-  local menuWidth = UpdateMenuButton(dock, padding)
-  local firstTabPadding = padding + (menuWidth > 0 and menuWidth + MENU_BUTTON_GAP or 0)
+  local buttonWidth
+  buttonWidth, padding = UpdateButtons(dock, padding)
+  local firstTabPadding = padding + (buttonWidth > 0 and buttonWidth + BUTTON_TAB_GAP or 0)
   local staticTab, dynamicTab
   local dynamicWidth, dynamicCount = 0, 0
   local selected = dock.selected
@@ -186,20 +234,33 @@ function ChatDockMixin:Init(parent)
   self:SetFadeInDuration(0.6)
   self:SetFadeOutDuration(0.6)
 
-  self.chatMenuButton = _G.ChatFrameMenuButton
+  for _, spec in ipairs(BUTTONS) do
+    local button = _G[spec.global]
+    self[spec.field] = button
+    if button then
+      button:SetParent(self)
+      button:SetFrameStrata(self:GetFrameStrata())
+      button:SetFrameLevel(self:GetFrameLevel() + 1)
+    end
+  end
+  if self.chatChannelButton then
+    self.channelIconPushedOffsetX = self.chatChannelButton.iconPushedOffsetX or -1
+    self.channelIconPushedOffsetY = self.chatChannelButton.iconPushedOffsetY or -1
+    if self.chatChannelButton.SetVisibilityQueryFunction then
+      self.chatChannelButton:SetVisibilityQueryFunction(function()
+        return Core.db.profile.showChatChannelButton
+      end)
+    end
+  end
   if self.chatMenuButton then
     local button = self.chatMenuButton
-    button:SetParent(self)
-    button:SetFrameStrata(self:GetFrameStrata())
-    button:SetFrameLevel(self:GetFrameLevel() + 1)
     local function OnMenuChanged()
       if button:IsMenuOpen() then self:Show() else HideWhenInactive(self) end
     end
     button:RegisterCallback(button.Event.OnMenuOpen, OnMenuChanged, self)
     button:RegisterCallback(button.Event.OnMenuClose, OnMenuChanged, self)
-    UpdateMenuButton(self, Utils.getTabXPadding(Core.db.profile))
-    button:Show()
   end
+  UpdateButtons(self, Utils.getTabXPadding(Core.db.profile))
 
   self.scrollFrame:SetHeight(Utils.getDockHeight(Core.db.profile))
   self.scrollFrame:SetPoint("TOPLEFT", _G.ChatFrame2Tab, "TOPRIGHT")
@@ -269,7 +330,8 @@ function ChatDockMixin:Init(parent)
           self.scrollFrame:SetHeight(height)
           self.scrollFrame.child:SetHeight(height)
         end
-        if key == "tabFontSize" or key == "tabYPadding" or key == "tabSpacing" or key == "tabXPadding" then
+        if key == "tabFontSize" or key == "tabYPadding" or key == "tabSpacing" or key == "tabXPadding"
+          or key == "showChatMenuButton" or key == "showChatChannelButton" then
           FCF_DockUpdate()
         end
 

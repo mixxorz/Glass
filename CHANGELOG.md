@@ -4,7 +4,9 @@
 
 ### New features
 
-* Add Blizzard's chat/language menu to the left of the first Main chat tab, sized to fit the tab bar and kept visible while its menu is open
+* Add Blizzard's chat/language menu and Chat Channels button to the left of the first Main chat tab, sized to fit the tab bar and kept visible while the chat menu is open
+* Add independent show/hide settings for the chat menu, Chat Channels, and Social buttons under Main's Tab bar settings
+* Restore Blizzard's Social/Friends and Quick Join widget with an independent position saved per profile; move it with `/glass lock` (#142)
 
 ### Improvements
 

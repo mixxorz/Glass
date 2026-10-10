@@ -51,6 +51,10 @@ Core.defaults = {
     tabYPadding = 4,
     tabXPadding = 12,
     tabSpacing = 24,
+    showChatMenuButton = true,
+    showChatChannelButton = false,
+    showSocialButton = true,
+    socialButtonPosition = {},
     tabLeftGradientWidth = 12,
     tabRightGradientWidth = 96,
     -- General

@@ -215,6 +215,15 @@ local function windowOptions(id)
   if not isExtra then
     add(tabLayout, "tabSpacing", "Tab spacing", "range", 10, 0, 100, 1)
     tabLayout.args.tabSpacing.desc = "The space between tab labels. Set this to 0 to place them next to each other."
+    local buttons = inlineSection(tabs, "buttons", "Buttons", 5)
+    add(buttons, "showChatMenuButton", "Show chat menu button", "toggle", 1)
+    add(buttons, "showChatChannelButton", "Show chat channels button", "toggle", 2)
+    add(buttons, "showSocialButton", "Show social button", "toggle", 3)
+    buttons.args.showSocialButton.desc =
+      "Show Blizzard's Friends and Quick Join widget. Move it independently with /glass lock."
+    buttons.args.showChatMenuButton.disabled = function() return not _G.ChatFrameMenuButton end
+    buttons.args.showChatChannelButton.disabled = function() return not _G.ChatFrameChannelButton end
+    buttons.args.showSocialButton.disabled = function() return not _G.QuickJoinToastButton end
   end
 
   local fading = inlineSection(behavior, "fading", "Fading and animation", 1)
@@ -395,7 +404,8 @@ function C:RefreshConfig()
     "indentWordWrap", "iconTextureYOffset", "messageTopFade", "messageBottomFade",
     "mouseOverTooltips", "tabFont", "tabFontSize",
     "tabFontFlags", "tabXPadding", "tabYPadding",
-    "tabLeftGradientWidth", "tabRightGradientWidth", "tabSpacing" }) do
+    "tabLeftGradientWidth", "tabRightGradientWidth", "tabSpacing",
+    "showChatMenuButton", "showChatChannelButton", "showSocialButton", "socialButtonPosition" }) do
     Core:Dispatch(Actions.UpdateConfig(key))
   end
   Core:Dispatch(Actions.RefreshConfig())
