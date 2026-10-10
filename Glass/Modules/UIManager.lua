@@ -14,8 +14,6 @@ local CreateSlidingMessageFramePool = Core.Components.CreateSlidingMessageFrameP
 -- luacheck: push ignore 113
 local BNToastFrame = BNToastFrame
 local ChatAlertFrame = ChatAlertFrame
-local ChatFrameChannelButton = ChatFrameChannelButton
-local ChatFrameMenuButton = ChatFrameMenuButton
 local CreateFrame = CreateFrame
 local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME
 local FCF_DockUpdate = FCF_DockUpdate
@@ -25,7 +23,6 @@ local FCFDock_GetSelectedWindow = FCFDock_GetSelectedWindow
 local GENERAL_CHAT_DOCK = GENERAL_CHAT_DOCK
 local GetCVar = C_CVar and C_CVar.GetCVar or GetCVar
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS
-local QuickJoinToastButton = QuickJoinToastButton
 local SetCVar = C_CVar and C_CVar.SetCVar or SetCVar
 local UIParent = UIParent
 -- luacheck: pop
@@ -93,10 +90,7 @@ function UIManager:OnEnable()
     end
   end
 
-  -- Classic clients do not all create the same chat buttons and toast frames.
-  if QuickJoinToastButton then QuickJoinToastButton:Hide() end
-  if ChatFrameChannelButton then ChatFrameChannelButton:Hide() end
-  if ChatFrameMenuButton then ChatFrameMenuButton:Hide() end
+  self.socialButtonMover = Core.Components.CreateSocialButton(self.dock)
 
   -- New version alert
   --[===[@non-debug@

@@ -5,6 +5,7 @@
 
 ## Title: |c00DFBA69Glass|r
 ## Notes: Immersive and minimalistic chat UI.
+## IconTexture: Interface\AddOns\Glass\Glass\Assets\icon.tga
 
 ## SavedVariables: GlassDB
 
@@ -44,6 +45,7 @@ Glass\Components\MoverFrame.lua
 Glass\Components\NewMessageAlertFrame.lua
 Glass\Components\ScrollOverlayFrame.lua
 Glass\Components\SlidingMessageFrame.lua
+Glass\Components\SocialButton.lua
 Glass\Components\ExtraWindow.lua
 
 # Modules
