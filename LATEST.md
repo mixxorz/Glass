@@ -1,23 +1,16 @@
-# 2.0.0-alpha1 (2026-10-10)
-
-New features
-
-- Add extra chat windows with independent source tabs, styles, layout, scrollback, and mouse-interaction settings.
-- Add drag-to-resize controls while windows are unlocked with `/glass lock`.
-- Add configurable top and bottom fades to transparent for messages.
-- Add global demo mode on Home and `/glass demo` to preview styles and animations with sample chat without changing real history.
+# 2.0.0-alpha2 (2026-10-10)
 
 Improvements
 
-- Add separate message and tab gradient controls, left/right message padding, and chat-input padding.
-- Add configurable tab fonts, padding, and spacing.
-- Reorganize settings around Home and individual windows, with grouped controls and practical slider drag ranges.
-- Redesign the jump-to-latest button with an unread glow.
+- Add Classic Era/Hardcore, Burning Crusade Anniversary, and Mists of Pandaria Classic interface versions.
 
 Bug fixes
 
-- Fixed custom chat tabs appearing empty despite having message history.
-- Fixed Combat Log's filter toolbar overlapping the chat tabs.
-- Fixed existing messages not rewrapping when changing wrapped-line indentation.
-- Fixed settings sliders stopping mid-drag while applying changes.
-- Fixed messages briefly appearing below the window when jumping to the latest message.
+- Fixed a Lua error when Prat's Editbox module hooks the chat input (#160). The module must still be disabled to avoid layout and visibility conflicts.
+- Fixed chat tabs failing to initialize because of Classic texture names and native script-hook collisions.
+- Fixed startup errors when optional chat buttons or toast frames are absent.
+- Fixed Glass replacing Blizzard's chat-input show handler.
+- Fixed duplicate temporary-window allocation when Blizzard returns an existing conversation window.
+- Reduced repeated message layout work during profile changes and unnecessary render passes after frame hitches.
+- Fixed large history restorations and message bursts laying out all queued lines in one update.
+- Fixed missing or invalid fonts leaving chat text without a usable font.

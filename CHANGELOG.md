@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha2 (2026-10-10)
 
 ### Improvements
 
@@ -9,7 +9,7 @@
 ### Bug fixes
 
 * Fixed a Lua error when Prat's Editbox module hooks the chat input (#160). The module must still be disabled to avoid layout and visibility conflicts.
-* Fixed Classic chat tabs failing to initialize because their artwork uses different texture names
+* Fixed chat tabs failing to initialize because of Classic texture names and native script-hook collisions
 * Fixed startup errors when optional chat buttons or toast frames are absent
 * Fixed Glass replacing Blizzard's chat-input show handler
 * Fixed duplicate temporary-window allocation when Blizzard returns an existing conversation window
