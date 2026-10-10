@@ -332,8 +332,10 @@ local function homeOptions()
   local home = section("Home", 0)
   local info = inlineSection(home, "info", "Info", 1)
   info.args.version = {
-    name = " |cffffd100Version:|r  " .. Core.Version,
+    name = "|cFFDFBA69Glass|r\n|cffffd100Version:|r  " .. Core.Version,
     type = "description", width = "double", fontSize = "medium", order = 1,
+    image = "Interface\\AddOns\\Glass\\Glass\\Assets\\icon.tga",
+    imageWidth = 32, imageHeight = 32,
   }
   info.args.news = {
     name = "What’s New", type = "execute", order = 2,
