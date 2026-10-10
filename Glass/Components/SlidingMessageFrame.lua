@@ -255,7 +255,7 @@ function SlidingMessageFrameMixin:RefreshSettings()
     contentHeight = contentHeight + message:GetHeight()
   end
   self.slider:SetHeight(self.config.height + self.config.overflowHeight + contentHeight)
-  self.overlay:RefreshLayout(self.config.height, self.window and self.window.fonts.message)
+  self.overlay:RefreshLayout(self.config.height)
   self.overlay.snapToBottomFrame:EnableMouse(self:IsInteractive("scrollEnabled"))
   self:SetHeight(self.config.height + (self.state.scrollAtBottom and self.config.overflowHeight or 0))
   local minScroll, maxScroll = self:GetScrollBounds()
