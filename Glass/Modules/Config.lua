@@ -84,6 +84,12 @@ local function editBoxOptions()
   local text = inlineSection(group, "text", "Text", 1)
   local background = inlineSection(group, "background", "Background", 2)
   local layout = inlineSection(group, "layout", "Layout", 3)
+  local behavior = inlineSection(group, "behavior", "Behavior", 4)
+  behavior.args.editBoxAltArrowKeyMode =
+    field(nil, "editBoxAltArrowKeyMode", "Alt-arrow editing", "toggle", 1)
+  behavior.args.editBoxAltArrowKeyMode.desc =
+    "Require Alt for Left/Right arrow-key editing. Turn this off to move the cursor and select text without Alt. " ..
+      "Chat history still uses Alt+Up/Down."
   text.args.editBoxFontSize = field(nil, "editBoxFontSize", "Font size", "range", 1, 1, 100, 1)
   background.args.editBoxBackgroundOpacity =
     field(nil, "editBoxBackgroundOpacity", "Background opacity", "range", 2, 0, 1, 0.01)
@@ -401,7 +407,8 @@ function C:RefreshConfig()
   for _, key in ipairs({ "font", "frameHeight", "frameWidth", "framePosition",
     "contentLeftPadding", "contentRightPadding", "leftGradientWidth", "rightGradientWidth",
     "tabBarBackgroundOpacity", "editBoxFontSize", "editBoxXPadding",
-    "editBoxBackgroundOpacity", "editBoxAnchor", "messageFontSize", "chatBackgroundOpacity",
+    "editBoxBackgroundOpacity", "editBoxAnchor", "editBoxAltArrowKeyMode",
+    "messageFontSize", "chatBackgroundOpacity",
     "chatFadeInDuration", "chatFadeOutDuration", "messageLeading", "messageLinePadding",
     "indentWordWrap", "iconTextureYOffset", "messageTopFade", "messageBottomFade",
     "mouseOverTooltips", "tabFont", "tabFontSize",

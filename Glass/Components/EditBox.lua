@@ -37,6 +37,7 @@ end
 function EditBoxMixin:Init(parent)
   -- Keep AceHook off the Blizzard frame so its native HookScript API stays intact.
   local hooks = AceHook:Embed({})
+  self:SetAltArrowKeyMode(Core.db.profile.editBoxAltArrowKeyMode)
   HideNativeBackgrounds(self)
   for _, suffix in ipairs({"Left", "Mid", "Right"}) do
     local texture = _G[self:GetName() .. suffix]
@@ -139,6 +140,10 @@ function EditBoxMixin:Init(parent)
   end)
 
   Core:Subscribe(UPDATE_CONFIG, function (key)
+    if key == "editBoxAltArrowKeyMode" then
+      self:SetAltArrowKeyMode(Core.db.profile.editBoxAltArrowKeyMode)
+    end
+
     if key == "font" or key == "fontFlags" or key == "editBoxFontSize" then
       Ypadding = self.header:GetLineHeight() * 0.66
       self:SetHeight(self.header:GetLineHeight() + Ypadding * 2)

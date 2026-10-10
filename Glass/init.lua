@@ -74,6 +74,7 @@ Core.defaults = {
     },
 
     -- Edit box
+    editBoxAltArrowKeyMode = true,
     editBoxFontSize = 12,
     editBoxXPadding = 12,
     editBoxBackgroundOpacity = 0.9,
