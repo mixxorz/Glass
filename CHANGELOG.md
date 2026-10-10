@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+* Fixed a Lua error when Prat's Editbox module hooks the chat input (#160). The module must still be disabled to avoid layout and visibility conflicts.
+
 ## 2.0.0-alpha1 (2026-10-10)
 
 ### New features
