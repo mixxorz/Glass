@@ -84,7 +84,7 @@ function EditBoxMixin:Init(parent)
   local fadeIn = introAg:CreateAnimation("Alpha")
   fadeIn:SetFromAlpha(0)
   fadeIn:SetToAlpha(1)
-  fadeIn:SetDuration(0.2)
+  fadeIn:SetDuration(Core.db.profile.editBoxFadeInDuration)
   fadeIn:SetSmoothing("OUT")
 
   -- Outro animations
@@ -92,30 +92,41 @@ function EditBoxMixin:Init(parent)
   local fadeOut = outroAg:CreateAnimation("Alpha")
   fadeOut:SetFromAlpha(1)
   fadeOut:SetToAlpha(0)
-  fadeOut:SetDuration(0.05)
+  fadeOut:SetDuration(Core.db.profile.editBoxFadeOutDuration)
 
   -- Workaround for editbox being open on login
   self.glassInitialized = false
 
+  -- Reopening during the outro does not fire OnShow while the frame is still visible.
+  hooks:RawHook(self, "Show", function ()
+    outroAg:Stop()
+    hooks.hooks[self].Show(self)
+  end, true)
+
   self:HookScript("OnShow", function ()
     HideNativeBackgrounds(self)
-    if self.glassInitialized then
+    outroAg:Stop()
+    introAg:Stop()
+    if self.glassInitialized and Core.db.profile.editBoxFadeInDuration > 0 then
       introAg:Play()
-    else
-      self.glassInitialized = true
     end
+    self.glassInitialized = true
   end)
 
   outroAg:SetScript("OnFinished", function ()
-    if not introAg:IsPlaying() then
-      hooks.hooks[self].Hide(self)
-    end
+    hooks.hooks[self].Hide(self)
   end)
 
   local moverUnlocked = false
   hooks:RawHook(self, "Hide", function ()
     if not moverUnlocked then
-      outroAg:Play()
+      introAg:Stop()
+      outroAg:Stop()
+      if Core.db.profile.editBoxFadeOutDuration > 0 then
+        outroAg:Play()
+      else
+        hooks.hooks[self].Hide(self)
+      end
     end
   end, true)
 
@@ -142,6 +153,17 @@ function EditBoxMixin:Init(parent)
   Core:Subscribe(UPDATE_CONFIG, function (key)
     if key == "editBoxAltArrowKeyMode" then
       self:SetAltArrowKeyMode(Core.db.profile.editBoxAltArrowKeyMode)
+    end
+    if key == "editBoxFadeInDuration" then
+      if Core.db.profile.editBoxFadeInDuration == 0 then introAg:Stop() end
+      fadeIn:SetDuration(Core.db.profile.editBoxFadeInDuration)
+    end
+    if key == "editBoxFadeOutDuration" then
+      if Core.db.profile.editBoxFadeOutDuration == 0 and outroAg:IsPlaying() then
+        outroAg:Stop()
+        hooks.hooks[self].Hide(self)
+      end
+      fadeOut:SetDuration(Core.db.profile.editBoxFadeOutDuration)
     end
 
     if key == "font" or key == "fontFlags" or key == "editBoxFontSize" then

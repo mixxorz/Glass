@@ -33,6 +33,12 @@ function MessageLineMixin:SetMessage(message)
   self:UpdateFrame()
 end
 
+function MessageLineMixin:UpdateTransitions()
+  local settings = self.view:GetSettings()
+  self:SetFadeInDuration(settings.messageFadeInDuration)
+  self:SetFadeOutDuration(settings.messageFadeOutDuration)
+end
+
 function MessageLineMixin:UpdateFrame()
   local settings = self.view:GetSettings()
   local leftPadding, rightPadding = Utils.getMessagePadding(settings)
@@ -49,8 +55,7 @@ function MessageLineMixin:UpdateFrame()
     self.text:SetText(nil)
     self.text:SetText(text)
   end
-  self:SetFadeInDuration(settings.chatFadeInDuration)
-  self:SetFadeOutDuration(settings.chatFadeOutDuration)
+  self:UpdateTransitions()
   local yPadding = self.text:GetLineHeight() * settings.messageLinePadding
   self:SetHeight(math.max(1, self.text:GetStringHeight() + yPadding * 2))
 

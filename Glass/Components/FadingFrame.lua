@@ -44,6 +44,8 @@ function FadingFrameMixin:QuickShow()
 end
 
 function FadingFrameMixin:QuickHide()
+  self:StopAnimating()
+
   if self.hideTimer ~= nil then
     self.hideTimer:Cancel()
   end
@@ -60,13 +62,18 @@ function FadingFrameMixin:Show()
 
   if not self:IsVisible() then
     super(self).Show(self)
-    self.showAg:Play()
+    if self.fadeIn:GetDuration() > 0 then self.showAg:Play() end
   end
 end
 
 function FadingFrameMixin:Hide()
   if self:IsVisible() then
-    self.hideAg:Play()
+    self.showAg:Stop()
+    if self.fadeOut:GetDuration() > 0 then
+      self.hideAg:Play()
+    else
+      self:QuickHide()
+    end
   end
 
   if self.hideTimer ~= nil then
@@ -76,6 +83,10 @@ end
 
 function FadingFrameMixin:HideDelay(delay)
   delay = delay or 0
+  if delay <= 0 then
+    self:Hide()
+    return
+  end
 
   if self:IsVisible() then
     if self.hideTimer ~= nil then
@@ -89,10 +100,12 @@ function FadingFrameMixin:HideDelay(delay)
 end
 
 function FadingFrameMixin:SetFadeInDuration(duration)
+  if duration == 0 then self.showAg:Stop() end
   self.fadeIn:SetDuration(duration)
 end
 
 function FadingFrameMixin:SetFadeOutDuration(duration)
+  if duration == 0 and self.hideAg:IsPlaying() then self:QuickHide() end
   self.fadeOut:SetDuration(duration)
 end
 

@@ -214,7 +214,7 @@ local function HideWhenInactive(self)
   end
 
   if Core.db.profile.chatShowOnMouseOver then
-    self:HideDelay(Core.db.profile.chatHoldTime)
+    self:HideDelay(Core.db.profile.tabBarHoldTime)
   else
     self:Hide()
   end
@@ -231,8 +231,8 @@ function ChatDockMixin:Init(parent)
   self:SetHeight(Utils.getDockHeight(Core.db.profile))
   self:ClearAllPoints()
   self:SetPoint("TOPLEFT", parent, "TOPLEFT")
-  self:SetFadeInDuration(0.6)
-  self:SetFadeOutDuration(0.6)
+  self:SetFadeInDuration(Core.db.profile.tabBarFadeInDuration)
+  self:SetFadeOutDuration(Core.db.profile.tabBarFadeOutDuration)
 
   for _, spec in ipairs(BUTTONS) do
     local button = _G[spec.global]
@@ -320,6 +320,16 @@ function ChatDockMixin:Init(parent)
         HideWhenInactive(self)
       end),
       Core:Subscribe(UPDATE_CONFIG, function (key)
+        if key == "tabBarFadeInDuration" then
+          self:SetFadeInDuration(Core.db.profile.tabBarFadeInDuration)
+        end
+        if key == "tabBarFadeOutDuration" then
+          self:SetFadeOutDuration(Core.db.profile.tabBarFadeOutDuration)
+        end
+        if key == "tabBarHoldTime" then
+          HideWhenInactive(self)
+        end
+
         if key == "frameWidth" then
           self:SetWidth(Core.db.profile.frameWidth)
         end
