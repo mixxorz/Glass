@@ -18,8 +18,10 @@ local SLIDER_BOUNDS = {
   messageLinePadding = {0, 1}, tabYPadding = {0, 20}, tabSpacing = {0, 50},
   leftGradientWidth = {1, 300}, rightGradientWidth = {1, 300},
   tabLeftGradientWidth = {1, 300}, tabRightGradientWidth = {1, 300},
-  chatHoldTime = {1, 60}, chatFadeInDuration = {0, 3}, chatFadeOutDuration = {0, 3},
-  chatSlideInDuration = {0, 1},
+  messageHoldTime = {0, 60}, messageFadeInDuration = {0, 3}, messageFadeOutDuration = {0, 3},
+  messageSlideInDuration = {0, 1},
+  tabBarHoldTime = {0, 60}, tabBarFadeInDuration = {0, 3}, tabBarFadeOutDuration = {0, 3},
+  editBoxFadeInDuration = {0, 3}, editBoxFadeOutDuration = {0, 3},
 }
 
 local function setSliderBounds(option, key)
@@ -38,7 +40,9 @@ local function initializeProfileSettings(profile)
   local function initialize(settings)
     for _, key in ipairs({"contentLeftPadding", "contentRightPadding", "tabXPadding", "editBoxXPadding",
       "messageTopFade", "messageBottomFade", "tabFont", "tabFontFlags",
-      "tabLeftGradientWidth", "tabRightGradientWidth"}) do
+      "tabLeftGradientWidth", "tabRightGradientWidth",
+      "messageHoldTime", "messageFadeInDuration", "messageFadeOutDuration", "messageSlideInDuration",
+      "tabBarHoldTime", "tabBarFadeInDuration", "tabBarFadeOutDuration"}) do
       if settings[key] == nil then settings[key] = Core.defaults.profile[key] end
     end
   end
@@ -48,10 +52,19 @@ end
 
 local function field(id, key, name, kind, order, min, max, step, values, event)
   local option = { name = name, type = kind, order = order, min = min, max = max, step = step, values = values }
-  if kind == "range" then setSliderBounds(option, key) end
+  if kind == "range" then
+    setSliderBounds(option, key)
+    if key == "messageHoldTime" or key == "tabBarHoldTime" then
+      option.desc = "Time to wait before fading out. Set this to 0 to start fading immediately."
+    elseif key:match("Duration$") then
+      option.desc = "Set this to 0 to skip the animation."
+    end
+  end
   if key == "font" or key == "tabFont" then
     option.dialogControl = "LSM30_Font"
     option.values = LSM:HashTable("font")
+    option.desc = "Font for Latin text only. Other alphabets use Blizzard's chat fonts."
+    if key == "font" and not id then option.desc = option.desc .. " Also used by the edit box." end
   end
   option.get = function()
     local settings = id and extra():GetWindows()[id] or Core.db.profile
@@ -79,6 +92,50 @@ local function inlineSection(parent, key, name, order)
   return group
 end
 
+local function editBoxOptions()
+  local group = section("Edit box", 2)
+  local text = inlineSection(group, "text", "Text", 1)
+  local background = inlineSection(group, "background", "Background", 2)
+  local layout = inlineSection(group, "layout", "Layout", 3)
+  local transitions = inlineSection(group, "transitions", "Transitions", 4)
+  transitions.args.editBoxFadeInDuration =
+    field(nil, "editBoxFadeInDuration", "Fade in duration", "range", 1, 0, 30, 0.05)
+  transitions.args.editBoxFadeOutDuration =
+    field(nil, "editBoxFadeOutDuration", "Fade out duration", "range", 2, 0, 30, 0.05)
+  local behavior = inlineSection(group, "behavior", "Behavior", 5)
+  behavior.args.editBoxAltArrowKeyMode =
+    field(nil, "editBoxAltArrowKeyMode", "Alt-arrow editing", "toggle", 1)
+  behavior.args.editBoxAltArrowKeyMode.desc =
+    "Require Alt for Left/Right arrow-key editing. Turn this off to move the cursor and select text without Alt. " ..
+      "Chat history still uses Alt+Up/Down."
+  text.args.editBoxFontSize = field(nil, "editBoxFontSize", "Font size", "range", 1, 1, 100, 1)
+  text.args.editBoxFontSize.desc =
+    "Size for all alphabets. Latin text uses the message font; other alphabets use Blizzard's chat fonts."
+  background.args.editBoxBackgroundOpacity =
+    field(nil, "editBoxBackgroundOpacity", "Background opacity", "range", 2, 0, 1, 0.01)
+  layout.args.editBoxXPadding = field(nil, "editBoxXPadding", "Horizontal padding", "range", 1, 0, 100, 1)
+  layout.args.editBoxXPadding.desc =
+    "Adds space on both sides of the chat input, including before the channel or whisper label."
+  layout.args.editBoxAnchorPosition = {
+    name = "Position", type = "select", order = 3, values = { ABOVE = "Above", BELOW = "Below" },
+    get = function() return Core.db.profile.editBoxAnchor.position end,
+    set = function(_, v)
+      Core.db.profile.editBoxAnchor.position = v
+      Core.db.profile.editBoxAnchor.yOfs = v == "ABOVE" and 5 or -5
+      Core:Dispatch(Actions.UpdateConfig("editBoxAnchor"))
+    end }
+  layout.args.editBoxAnchorYOfs = {
+    name = "Vertical offset", type = "range", order = 4,
+    min = -9999, max = 9999, step = 1,
+    get = function() return Core.db.profile.editBoxAnchor.yOfs end,
+    set = function(_, v)
+      Core.db.profile.editBoxAnchor.yOfs = v
+      Core:Dispatch(Actions.UpdateConfig("editBoxAnchor"))
+    end }
+  setSliderBounds(layout.args.editBoxAnchorYOfs, "editBoxAnchorYOfs")
+  return group
+end
+
 local function windowOptions(id)
   local isExtra = id ~= nil
   local group = {
@@ -88,18 +145,13 @@ local function windowOptions(id)
   local window = section("Window", 1)
   local messages = section("Messages", 2)
   local tabs = section("Tab bar", 3)
-  local behavior = section("Behavior", isExtra and 4 or 5)
+  local behavior = section("Behavior", 4)
   group.args.window = window
   group.args.messages = messages
   group.args.tabs = tabs
   group.args.behavior = behavior
   local size = inlineSection(window, "size", "Size", 2)
   local position = inlineSection(window, "position", "Position", 3)
-  local management = inlineSection(window, "management", "Window actions", 4)
-  management.args.unlock = {
-    name = "Unlock all windows", type = "execute", order = 1,
-    func = function() Core:Dispatch(Actions.UnlockMover()) end,
-  }
   local function add(target, key, name, kind, order, min, max, step, values, event)
     target.args[key] = field(id, key, name, kind, order, min, max, step, values, event)
   end
@@ -119,6 +171,7 @@ local function windowOptions(id)
       get = function() return extra():GetSource(id) end,
       set = function(_, value) extra():SetSource(id, value) end,
     }
+    local management = inlineSection(window, "management", "Window actions", 4)
     management.args.delete = {
       name = "Delete window", type = "execute", order = 20,
       confirm = true, confirmText = "Delete this window?",
@@ -198,6 +251,11 @@ local function windowOptions(id)
   add(messageBackground, "chatBackgroundOpacity", "Background opacity", "range", 10, 0, 1, 0.01)
   add(messageBackground, "leftGradientWidth", "Left gradient width", "range", 11, 1, 9999, 1)
   add(messageBackground, "rightGradientWidth", "Right gradient width", "range", 12, 1, 9999, 1)
+  local messageTransitions = inlineSection(messages, "transitions", "Transitions", 4)
+  add(messageTransitions, "messageHoldTime", "Fade out delay", "range", 1, 0, 180, 1)
+  add(messageTransitions, "messageFadeInDuration", "Fade in duration", "range", 2, 0, 30, 0.05)
+  add(messageTransitions, "messageFadeOutDuration", "Fade out duration", "range", 3, 0, 30, 0.05)
+  add(messageTransitions, "messageSlideInDuration", "Slide in duration", "range", 4, 0, 30, 0.05)
 
   if isExtra then add(tabs, "showTabBar", "Show tab bar", "toggle", 1) end
   local tabText = inlineSection(tabs, "text", "Text", 2)
@@ -212,10 +270,14 @@ local function windowOptions(id)
   add(tabBackground, "tabBarBackgroundOpacity", "Background opacity", "range", 7, 0, 1, 0.01)
   add(tabBackground, "tabLeftGradientWidth", "Left gradient width", "range", 8, 1, 9999, 1)
   add(tabBackground, "tabRightGradientWidth", "Right gradient width", "range", 9, 1, 9999, 1)
+  local tabTransitions = inlineSection(tabs, "transitions", "Transitions", 5)
+  add(tabTransitions, "tabBarHoldTime", "Fade out delay", "range", 1, 0, 180, 1)
+  add(tabTransitions, "tabBarFadeInDuration", "Fade in duration", "range", 2, 0, 30, 0.05)
+  add(tabTransitions, "tabBarFadeOutDuration", "Fade out duration", "range", 3, 0, 30, 0.05)
   if not isExtra then
     add(tabLayout, "tabSpacing", "Tab spacing", "range", 10, 0, 100, 1)
     tabLayout.args.tabSpacing.desc = "The space between tab labels. Set this to 0 to place them next to each other."
-    local buttons = inlineSection(tabs, "buttons", "Buttons", 5)
+    local buttons = inlineSection(tabs, "buttons", "Buttons", 6)
     add(buttons, "showChatMenuButton", "Show chat menu button", "toggle", 1)
     add(buttons, "showChatChannelButton", "Show chat channels button", "toggle", 2)
     add(buttons, "showSocialButton", "Show social button", "toggle", 3)
@@ -226,12 +288,7 @@ local function windowOptions(id)
     buttons.args.showSocialButton.disabled = function() return not _G.QuickJoinToastButton end
   end
 
-  local fading = inlineSection(behavior, "fading", "Fading and animation", 1)
-  local interaction = inlineSection(behavior, "interaction", "Mouse interaction", 2)
-  add(fading, "chatHoldTime", "Fade out delay", "range", 1, 1, 180, 1, nil, false)
-  add(fading, "chatFadeInDuration", "Fade in duration", "range", 2, 0, 30, 0.05)
-  add(fading, "chatFadeOutDuration", "Fade out duration", "range", 3, 0, 30, 0.05)
-  add(fading, "chatSlideInDuration", "Slide in duration", "range", 4, 0, 30, 0.05, nil, false)
+  local interaction = inlineSection(behavior, "interaction", "Mouse interaction", 1)
   add(interaction, "chatShowOnMouseOver", "Show on mouse over", "toggle", 5, nil, nil, nil, nil, false)
   add(interaction, "mouseOverTooltips", "Mouse over tooltips", "toggle", 6)
   if isExtra then
@@ -243,34 +300,6 @@ local function windowOptions(id)
     for _, key in ipairs({ "hoverEnabled", "scrollEnabled", "linksEnabled" }) do
       interaction.args[key].disabled = function() return extra():GetWindows()[id].nonInteractive end
     end
-  else
-    local input = section("Chat input", 4)
-    group.args.input = input
-    local inputText = inlineSection(input, "text", "Text", 1)
-    local inputBackground = inlineSection(input, "background", "Background", 2)
-    local placement = inlineSection(input, "layout", "Layout", 3)
-    add(inputText, "editBoxFontSize", "Font size", "range", 1, 1, 100, 1)
-    add(inputBackground, "editBoxBackgroundOpacity", "Background opacity", "range", 2, 0, 1, 0.01)
-    add(placement, "editBoxXPadding", "Horizontal padding", "range", 1, 0, 100, 1)
-    placement.args.editBoxXPadding.desc =
-      "Adds space on both sides of the chat input, including before the channel or whisper label."
-    placement.args.editBoxAnchorPosition = {
-      name = "Position", type = "select", order = 3, values = { ABOVE = "Above", BELOW = "Below" },
-      get = function() return Core.db.profile.editBoxAnchor.position end,
-      set = function(_, v)
-        Core.db.profile.editBoxAnchor.position = v
-        Core.db.profile.editBoxAnchor.yOfs = v == "ABOVE" and 5 or -5
-        Core:Dispatch(Actions.UpdateConfig("editBoxAnchor"))
-      end }
-    placement.args.editBoxAnchorYOfs = {
-      name = "Vertical offset", type = "range", order = 4,
-      min = -9999, max = 9999, step = 1,
-      get = function() return Core.db.profile.editBoxAnchor.yOfs end,
-      set = function(_, v)
-        Core.db.profile.editBoxAnchor.yOfs = v
-        Core:Dispatch(Actions.UpdateConfig("editBoxAnchor"))
-      end }
-    setSliderBounds(placement.args.editBoxAnchorYOfs, "editBoxAnchorYOfs")
   end
   return group
 end
@@ -368,10 +397,11 @@ function C:OnEnable()
   initializeProfileSettings(Core.db.profile)
   options = { name = "Glass", type = "group", handler = C, args = {
     home = homeOptions(),
+    editBox = editBoxOptions(),
     profile = DBOptions:GetOptionsTable(Core.db),
   } }
   options.args.profile.name = "Profiles"
-  options.args.profile.order = 2
+  options.args.profile.order = 3
   Core.Libs.AceConfig:RegisterOptionsTable("Glass", options)
   self:RefreshOptions()
   Dialog:SetDefaultSize("Glass", 780, 500)
@@ -400,9 +430,11 @@ function C:RefreshConfig()
   Demo:SetActive(false)
   for _, key in ipairs({ "font", "frameHeight", "frameWidth", "framePosition",
     "contentLeftPadding", "contentRightPadding", "leftGradientWidth", "rightGradientWidth",
-    "tabBarBackgroundOpacity", "editBoxFontSize", "editBoxXPadding",
-    "editBoxBackgroundOpacity", "editBoxAnchor", "messageFontSize", "chatBackgroundOpacity",
-    "chatFadeInDuration", "chatFadeOutDuration", "messageLeading", "messageLinePadding",
+    "tabBarBackgroundOpacity", "tabBarHoldTime", "tabBarFadeInDuration", "tabBarFadeOutDuration",
+    "editBoxFontSize", "editBoxXPadding", "editBoxBackgroundOpacity", "editBoxAnchor", "editBoxAltArrowKeyMode",
+    "editBoxFadeInDuration", "editBoxFadeOutDuration", "messageFontSize", "chatBackgroundOpacity",
+    "messageHoldTime", "messageFadeInDuration", "messageFadeOutDuration", "messageSlideInDuration",
+    "messageLeading", "messageLinePadding",
     "indentWordWrap", "iconTextureYOffset", "messageTopFade", "messageBottomFade",
     "mouseOverTooltips", "tabFont", "tabFontSize",
     "tabFontFlags", "tabXPadding", "tabYPadding",

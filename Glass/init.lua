@@ -57,6 +57,9 @@ Core.defaults = {
     socialButtonPosition = {},
     tabLeftGradientWidth = 12,
     tabRightGradientWidth = 96,
+    tabBarHoldTime = 10,
+    tabBarFadeInDuration = 0.6,
+    tabBarFadeOutDuration = 0.6,
     -- General
     font = "Friz Quadrata TT",
     fontFlags = "",
@@ -74,9 +77,12 @@ Core.defaults = {
     },
 
     -- Edit box
+    editBoxAltArrowKeyMode = true,
     editBoxFontSize = 12,
     editBoxXPadding = 12,
     editBoxBackgroundOpacity = 0.9,
+    editBoxFadeInDuration = 0.2,
+    editBoxFadeOutDuration = 0.05,
     editBoxAnchor = {
       position = "BELOW",
       yOfs = -5
@@ -90,11 +96,11 @@ Core.defaults = {
     messageTopFade = 16,
     messageBottomFade = 16,
 
-    chatHoldTime = 10,
+    messageHoldTime = 10,
+    messageFadeInDuration = 0.6,
+    messageFadeOutDuration = 0.6,
+    messageSlideInDuration = 0.3,
     chatShowOnMouseOver = true,
-    chatFadeInDuration = 0.6,
-    chatFadeOutDuration = 0.6,
-    chatSlideInDuration = 0.3,
 
     indentWordWrap = true,
     mouseOverTooltips = true,
