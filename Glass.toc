@@ -5,6 +5,7 @@
 
 ## Title: |c00DFBA69Glass|r
 ## Notes: Immersive and minimalistic chat UI.
+## IconTexture: Interface\AddOns\Glass\Glass\Assets\icon.tga
 
 ## SavedVariables: GlassDB
 

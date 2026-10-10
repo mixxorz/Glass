@@ -11,6 +11,7 @@
 ### Improvements
 
 * Replace the jump-to-latest text button with a circular down-arrow button in the bottom-right of Main and extra message panes, retaining the unread glow (#158)
+* Add a gold Glass icon to WoW's AddOn List
 
 ## 2.0.0-alpha2 (2026-10-10)
 
