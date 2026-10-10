@@ -1,25 +1,10 @@
-# Abandoned
-
-Please use [LS: Glass](https://www.curseforge.com/wow/addons/ls-glass "LS: Glass")
-
-This project is the original Glass addon by me. I no longer play the game so this project has been abandoned.
-
-i_lightspark has been kind enough to keep the spirit of Glass alive by releasing their own version. Please use that instead.
-
-- [LS: Glass on CurseForge](https://www.curseforge.com/wow/addons/ls-glass)
-- [LS: Glass on Wago](https://addons.wago.io/addons/ls-glass)
-
-**Original description follows**
-
----
-
 ![Glass](https://user-images.githubusercontent.com/3102758/90884068-9549a600-e3e1-11ea-944f-481bd894560e.png)
 
 #### An immersive and minimalistic chat UI for World of Warcraft
 
-[![Demo](https://thumbs.gfycat.com/SkinnyPopularIsabellineshrike-size_restricted.gif)](https://gfycat.com/skinnypopularisabellineshrike)
+## Demo
 
-(Click for slightly higher resolution)
+https://github.com/user-attachments/assets/dd78970b-4d3d-49aa-9b12-8c7bec1fd54f
 
 ## Why?
 
