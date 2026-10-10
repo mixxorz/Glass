@@ -63,6 +63,8 @@ local function field(id, key, name, kind, order, min, max, step, values, event)
   if key == "font" or key == "tabFont" then
     option.dialogControl = "LSM30_Font"
     option.values = LSM:HashTable("font")
+    option.desc = "Font for Latin text only. Other alphabets use Blizzard's chat fonts."
+    if key == "font" and not id then option.desc = option.desc .. " Also used by the edit box." end
   end
   option.get = function()
     local settings = id and extra():GetWindows()[id] or Core.db.profile
@@ -107,6 +109,8 @@ local function editBoxOptions()
     "Require Alt for Left/Right arrow-key editing. Turn this off to move the cursor and select text without Alt. " ..
       "Chat history still uses Alt+Up/Down."
   text.args.editBoxFontSize = field(nil, "editBoxFontSize", "Font size", "range", 1, 1, 100, 1)
+  text.args.editBoxFontSize.desc =
+    "Size for all alphabets. Latin text uses the message font; other alphabets use Blizzard's chat fonts."
   background.args.editBoxBackgroundOpacity =
     field(nil, "editBoxBackgroundOpacity", "Background opacity", "range", 2, 0, 1, 0.01)
   layout.args.editBoxXPadding = field(nil, "editBoxXPadding", "Horizontal padding", "range", 1, 0, 100, 1)
