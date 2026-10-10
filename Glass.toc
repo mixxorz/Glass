@@ -1,4 +1,4 @@
-## Interface: 120100, 16001
+## Interface: 120100, 16001, 11509, 20506, 50504
 ## Plain Title: Glass
 ## Author: mixxorz
 ## Version: @project-version@

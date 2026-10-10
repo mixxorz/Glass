@@ -1,17 +1,8 @@
 local _, Constants = unpack(select(2, ...))
 
--- luacheck: push ignore 113
-local WOW_PROJECT_CLASSIC = WOW_PROJECT_CLASSIC
-local WOW_PROJECT_ID = WOW_PROJECT_ID
--- luacheck: pop
-
 -- Constants
-Constants.ENV = "retail"
 Constants.MESSAGE_HISTORY_LIMIT = 128
-
-if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
-  Constants.ENV = "classic"
-end
+Constants.MESSAGE_UPDATE_BATCH_SIZE = 16
 
 -- Colors
 local function createColor(r, g, b)

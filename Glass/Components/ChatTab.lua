@@ -25,11 +25,19 @@ local tabTexs = {
 local ChatTabMixin = {}
 
 function ChatTabMixin:Init(slidingMessageFrame)
+  local hooks = self.glassHooks
   self.slidingMessageFrame = slidingMessageFrame
   self.chatFrame = slidingMessageFrame.chatFrame
 
   for _, texName in ipairs(tabTexs) do
-    self[texName]:SetTexture(nil)
+    local texture = self[texName]
+    if texture then texture:SetTexture(nil) end
+  end
+  for _, prefix in ipairs({"", "Selected", "Highlight"}) do
+    for _, side in ipairs({"Left", "Middle", "Right"}) do
+      local texture = _G[self:GetName() .. prefix .. side]
+      if texture then texture:SetTexture(nil) end
+    end
   end
 
   self:SetHeight(Utils.getDockHeight(Core.db.profile))
@@ -38,42 +46,42 @@ function ChatTabMixin:Init(slidingMessageFrame)
   self.Text:SetPoint("LEFT", 0, 0)
   self:SetWidth(self.Text:GetStringWidth())
 
-  if not self:IsHooked(self, "SetAlpha") then
-    self:RawHook(self, "SetAlpha", function (alpha)
-      self.hooks[self].SetAlpha(self, 1)
+  if not hooks:IsHooked(self, "SetAlpha") then
+    hooks:RawHook(self, "SetAlpha", function (alpha)
+      hooks.hooks[self].SetAlpha(self, 1)
     end, true)
   end
 
   -- Set width dynamically based on text width
-  if not self:IsHooked(self, "SetWidth") then
-    self:RawHook(self, "SetWidth", function (_, width)
-      self.hooks[self].SetWidth(self, self.Text:GetStringWidth())
+  if not hooks:IsHooked(self, "SetWidth") then
+    hooks:RawHook(self, "SetWidth", function (_, width)
+      hooks.hooks[self].SetWidth(self, self.Text:GetStringWidth())
     end, true)
   end
 
-  if not self:IsHooked(self.Text, "SetTextColor") then
-    self:RawHook(self.Text, "SetTextColor", function (...)
+  if not hooks:IsHooked(self.Text, "SetTextColor") then
+    hooks:RawHook(self.Text, "SetTextColor", function (...)
       -- Temporary chat frames retain their color
       if self.chatFrame.isTemporary then
-        self.hooks[self.Text].SetTextColor(...)
+        hooks.hooks[self.Text].SetTextColor(...)
       else
-        self.hooks[self.Text].SetTextColor(self.Text, Colors.apache.r, Colors.apache.g, Colors.apache.b)
+        hooks.hooks[self.Text].SetTextColor(self.Text, Colors.apache.r, Colors.apache.g, Colors.apache.b)
       end
     end, true)
   end
 
   -- Don't highlight when frame is already visible
-  if not self:IsHooked(self.glow, "Show") then
-    self:RawHook(self.glow, "Show", function ()
+  if not hooks:IsHooked(self.glow, "Show") then
+    hooks:RawHook(self.glow, "Show", function ()
       if not self.slidingMessageFrame:IsVisible() then
-        self.hooks[self.glow].Show(self.glow)
+        hooks.hooks[self.glow].Show(self.glow)
       end
     end, true)
   end
 
   -- Un-highlight when clicked
-  if not self:IsHooked(self, "OnClick") then
-    self:HookScript(self, "OnClick", function ()
+  if not hooks:IsHooked(self, "OnClick") then
+    hooks:SecureHookScript(self, "OnClick", function ()
       FCF_StopAlertFlash(self.chatFrame)
     end)
   end
@@ -83,7 +91,7 @@ function ChatTabMixin:Init(slidingMessageFrame)
     self:RegisterForDrag()
   end
 
-  if not self.menuRegistered then
+  if not self.menuRegistered and _G.Menu and _G.Menu.ModifyMenu then
     self.menuRegistered = true
     _G.Menu.ModifyMenu("MENU_FCF_TAB", function (owner, rootDescription)
       if owner ~= self then return end
@@ -126,7 +134,7 @@ end
 Core.Components.CreateChatTab = function (slidingMessageFrame)
   local frame = _G[slidingMessageFrame.chatFrame:GetName().."Tab"]
   local object = Mixin(frame, ChatTabMixin)
-  AceHook:Embed(object)
+  object.glassHooks = object.glassHooks or AceHook:Embed({})
   object:Init(slidingMessageFrame)
   return object
 end
