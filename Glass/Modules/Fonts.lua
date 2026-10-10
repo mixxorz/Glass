@@ -9,8 +9,15 @@ local UPDATE_CONFIG = Constants.EVENTS.UPDATE_CONFIG
 local CreateFont = CreateFont
 -- luacheck: pop
 
+local function SetFont(font, name, size, flags)
+  local fallback = _G.GameFontNormal:GetFont()
+  local path = LSM:Fetch(LSM.MediaType.FONT, name, true) or fallback
+  local ok, applied = pcall(font.SetFont, font, path, size, flags)
+  if not ok or applied == false then font:SetFont(fallback, size, flags) end
+end
+
 local function ConfigureMessage(font, settings)
-  font:SetFont(LSM:Fetch(LSM.MediaType.FONT, settings.font), settings.messageFontSize, settings.fontFlags)
+  SetFont(font, settings.font, settings.messageFontSize, settings.fontFlags)
   font:SetShadowColor(0, 0, 0, 1)
   font:SetShadowOffset(1, -1)
   font:SetJustifyH("LEFT")
@@ -19,7 +26,7 @@ local function ConfigureMessage(font, settings)
 end
 
 local function ConfigureTab(font, settings)
-  font:SetFont(LSM:Fetch(LSM.MediaType.FONT, settings.tabFont), settings.tabFontSize, settings.tabFontFlags)
+  SetFont(font, settings.tabFont, settings.tabFontSize, settings.tabFontFlags)
   font:SetShadowColor(0, 0, 0, 0)
   font:SetShadowOffset(1, -1)
   font:SetJustifyH("LEFT")
@@ -54,11 +61,8 @@ end
 function Fonts:OnEnable()
   -- GlassMessageFont
   self.fonts.GlassMessageFont = CreateFont("GlassMessageFont")
-  self.fonts.GlassMessageFont:SetFont(
-    LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
-    Core.db.profile.messageFontSize,
-    Core.db.profile.fontFlags
-  )
+  SetFont(self.fonts.GlassMessageFont, Core.db.profile.font,
+    Core.db.profile.messageFontSize, Core.db.profile.fontFlags)
   self.fonts.GlassMessageFont:SetShadowColor(0, 0, 0, 1)
   self.fonts.GlassMessageFont:SetShadowOffset(1, -1)
   self.fonts.GlassMessageFont:SetJustifyH("LEFT")
@@ -76,11 +80,8 @@ function Fonts:OnEnable()
 
   -- GlassEditBoxFont
   self.fonts.GlassEditBoxFont = CreateFont("GlassEditBoxFont")
-  self.fonts.GlassEditBoxFont:SetFont(
-    LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
-    Core.db.profile.editBoxFontSize,
-    Core.db.profile.fontFlags
-  )
+  SetFont(self.fonts.GlassEditBoxFont, Core.db.profile.font,
+    Core.db.profile.editBoxFontSize, Core.db.profile.fontFlags)
   self.fonts.GlassEditBoxFont:SetShadowColor(0, 0, 0, 0)
   self.fonts.GlassEditBoxFont:SetShadowOffset(1, -1)
   self.fonts.GlassEditBoxFont:SetJustifyH("LEFT")
@@ -89,11 +90,8 @@ function Fonts:OnEnable()
 
   Core:Subscribe(UPDATE_CONFIG, function (key)
     if key == "font" or key == "fontFlags" or key == "messageFontSize" then
-      self.fonts.GlassMessageFont:SetFont(
-        LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
-        Core.db.profile.messageFontSize,
-        Core.db.profile.fontFlags
-      )
+      SetFont(self.fonts.GlassMessageFont, Core.db.profile.font,
+        Core.db.profile.messageFontSize, Core.db.profile.fontFlags)
     end
 
     if key == "messageLeading" then
@@ -105,11 +103,8 @@ function Fonts:OnEnable()
     end
 
     if key == "font" or key == "fontFlags" or key == "editBoxFontSize" then
-      self.fonts.GlassEditBoxFont:SetFont(
-        LSM:Fetch(LSM.MediaType.FONT, Core.db.profile.font),
-        Core.db.profile.editBoxFontSize,
-        Core.db.profile.fontFlags
-      )
+      SetFont(self.fonts.GlassEditBoxFont, Core.db.profile.font,
+        Core.db.profile.editBoxFontSize, Core.db.profile.fontFlags)
     end
   end)
 end

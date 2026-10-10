@@ -84,19 +84,19 @@ function UIManager:OnEnable()
   end)
 
   -- Fix Battle.net Toast frame position
-  BNToastFrame:ClearAllPoints()
-  BNToastFrame:SetPoint("BOTTOMLEFT", ChatAlertFrame, "BOTTOMLEFT", 0, 0)
-
-  ChatAlertFrame:ClearAllPoints()
-  ChatAlertFrame:SetPoint("BOTTOMLEFT", self.container, "TOPLEFT", 15, 10)
-
-  -- Hide other chat elements
-  if Constants.ENV == "retail" then
-    QuickJoinToastButton:Hide()
+  if ChatAlertFrame then
+    ChatAlertFrame:ClearAllPoints()
+    ChatAlertFrame:SetPoint("BOTTOMLEFT", self.container, "TOPLEFT", 15, 10)
+    if BNToastFrame then
+      BNToastFrame:ClearAllPoints()
+      BNToastFrame:SetPoint("BOTTOMLEFT", ChatAlertFrame, "BOTTOMLEFT", 0, 0)
+    end
   end
 
-  ChatFrameChannelButton:Hide()
-  ChatFrameMenuButton:Hide()
+  -- Classic clients do not all create the same chat buttons and toast frames.
+  if QuickJoinToastButton then QuickJoinToastButton:Hide() end
+  if ChatFrameChannelButton then ChatFrameChannelButton:Hide() end
+  if ChatFrameMenuButton then ChatFrameMenuButton:Hide() end
 
   -- New version alert
   --[===[@non-debug@
@@ -119,12 +119,16 @@ function UIManager:OnEnable()
   -- Handle temporary chat frames (whisper popout, pet battle)
   self:RawHook("FCF_OpenTemporaryWindow", function (...)
     local chatFrame = self.hooks["FCF_OpenTemporaryWindow"](...)
-    local smf = self.slidingMessageFramePool:Acquire()
-    smf:Init(chatFrame)
-    if not smf.state.isCombatLog then MessageRouter:BindChat(smf, chatFrame) end
+    if not chatFrame then return nil end
+    local name = chatFrame:GetName()
+    if not self.state.temporaryFrames[name] then
+      local smf = self.slidingMessageFramePool:Acquire()
+      smf:Init(chatFrame)
+      if not smf.state.isCombatLog then MessageRouter:BindChat(smf, chatFrame) end
 
-    self.state.temporaryFrames[chatFrame:GetName()] = smf
-    self.state.temporaryTabs[chatFrame:GetName()] = CreateChatTab(smf)
+      self.state.temporaryFrames[name] = smf
+      self.state.temporaryTabs[name] = CreateChatTab(smf)
+    end
     -- The native window may have been selected before its Glass renderer was initialized.
     FCF_DockUpdate()
     ExtraWindows:RefreshSources()
@@ -157,8 +161,9 @@ function UIManager:OnEnable()
   self.tickerFrame:SetScript("OnUpdate", function (_, elapsed)
     self.timeElapsed = self.timeElapsed + elapsed
 
-    while (self.timeElapsed > 0.01) do
-      self.timeElapsed = self.timeElapsed - 0.01
+    -- A frame hitch needs one update, not a replay of every missed render tick.
+    if self.timeElapsed >= 0.01 then
+      self.timeElapsed = self.timeElapsed % 0.01
 
       self.container:OnFrame()
 

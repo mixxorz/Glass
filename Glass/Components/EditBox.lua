@@ -22,22 +22,26 @@ local function GetEditBoxPadding(self)
   return math.min(Utils.getEditBoxXPadding(), math.max(0, math.floor(available / 2)))
 end
 
+local function HideNativeBackgrounds(editBox)
+  for _, suffix in ipairs({"Left", "Mid", "Right", "FocusLeft", "FocusMid", "FocusRight"}) do
+    local texture = _G[editBox:GetName() .. suffix]
+    if texture then texture:Hide() end
+  end
+  for _, key in ipairs({"focusLeft", "focusMid", "focusRight"}) do
+    local texture = editBox[key]
+    if texture then texture:SetAlpha(0) end
+  end
+  if editBox.pratFrame then editBox.pratFrame:Hide() end
+end
+
 function EditBoxMixin:Init(parent)
   -- Keep AceHook off the Blizzard frame so its native HookScript API stays intact.
   local hooks = AceHook:Embed({})
-
-  -- Hide default styling
-  _G[self:GetName().."Left"]:Hide()
-  _G[self:GetName().."Mid"]:Hide()
-  _G[self:GetName().."Right"]:Hide()
-
-  hooks:RawHook(_G[self:GetName().."Left"], "Show", function () end, true)
-  hooks:RawHook(_G[self:GetName().."Mid"], "Show", function () end, true)
-  hooks:RawHook(_G[self:GetName().."Right"], "Show", function () end, true)
-
-  self.focusLeft:SetTexture(nil)
-  self.focusMid:SetTexture(nil)
-  self.focusRight:SetTexture(nil)
+  HideNativeBackgrounds(self)
+  for _, suffix in ipairs({"Left", "Mid", "Right"}) do
+    local texture = _G[self:GetName() .. suffix]
+    if texture then hooks:RawHook(texture, "Show", function () end, true) end
+  end
 
   -- New styling
   self:ClearAllPoints()
@@ -92,7 +96,8 @@ function EditBoxMixin:Init(parent)
   -- Workaround for editbox being open on login
   self.glassInitialized = false
 
-  self:SetScript("OnShow", function ()
+  self:HookScript("OnShow", function ()
+    HideNativeBackgrounds(self)
     if self.glassInitialized then
       introAg:Play()
     else
@@ -113,10 +118,10 @@ function EditBoxMixin:Init(parent)
     end
   end, true)
 
-  hooks:HookScript(self, "OnEditFocusGained", function ()
+  self:HookScript("OnEditFocusGained", function ()
     Core:Dispatch(EditBoxFocusGained())
   end)
-  hooks:HookScript(self, "OnEditFocusLost", function ()
+  self:HookScript("OnEditFocusLost", function ()
     Core:Dispatch(EditBoxFocusLost())
   end)
 
@@ -168,6 +173,7 @@ end
 
 Core.Components.CreateEditBox = function (parent)
   local object = Mixin(_G.ChatFrame1EditBox, EditBoxMixin)
+  object:SetParent(parent)
   object:Init(parent)
   return object
 end

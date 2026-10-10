@@ -6,6 +6,24 @@ local LibEasing = Core.Libs.LibEasing
 local E = Constants.EVENTS
 local SlidingMessageFrameMixin = {}
 
+local function takeMessageBatch(queue, limit)
+  local messages = {}
+  for _ = 1, math.min(limit, #queue) do
+    messages[#messages + 1] = table.remove(queue, 1)
+  end
+  return messages
+end
+
+local function splitHistory(messages)
+  local first = math.max(1, #messages - Constants.MESSAGE_UPDATE_BATCH_SIZE + 1)
+  local latest, older = {}, {}
+  for index = first, #messages do latest[#latest + 1] = messages[index] end
+  for index = first - 1, math.max(1, #messages - Constants.MESSAGE_HISTORY_LIMIT + 1), -1 do
+    older[#older + 1] = messages[index]
+  end
+  return latest, older
+end
+
 function SlidingMessageFrameMixin:GetSettings()
   return self.window and self.window.settings or Core.db.profile
 end
@@ -148,12 +166,8 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
         key == "tabRightGradientWidth" or key == "editBoxBackgroundOpacity" or key == "editBoxXPadding" then
         return
       end
-      if key == "iconTextureYOffset" then
-        for _, message in ipairs(self.state.messages) do
-          message.text:SetText(Core:GetModule("TextProcessing"):ProcessText(message.rawText, self:GetSettings()))
-        end
-      end
-      self:RefreshSettings()
+      self.state.settingsRefreshPending = true
+      self.state.reprocessText = self.state.reprocessText or key == "iconTextureYOffset"
     end),
   }
 
@@ -293,29 +307,47 @@ function SlidingMessageFrameMixin:ScheduleFade()
 end
 
 function SlidingMessageFrameMixin:AppendMessages(messages)
-  for _, message in ipairs(messages) do
-    table.insert(self.state.incomingMessages, message)
+  local queue = self.state.incomingMessages
+  local limit = Constants.MESSAGE_HISTORY_LIMIT
+  for index = math.max(1, #messages - limit + 1), #messages do
+    queue[#queue + 1] = messages[index]
   end
+  while #queue > limit do table.remove(queue, 1) end
 end
 
 function SlidingMessageFrameMixin:PrependMessages(messages)
+  local queue = self.state.incomingScrollbackMessages
+  local capacity = Constants.MESSAGE_HISTORY_LIMIT - #self.state.messages - #queue
   -- Update inserts each history record at the front, so queue each batch newest first.
-  for index = #messages, 1, -1 do
-    table.insert(self.state.incomingScrollbackMessages, messages[index])
+  for index = #messages, math.max(1, #messages - capacity + 1), -1 do
+    queue[#queue + 1] = messages[index]
   end
 end
 
 function SlidingMessageFrameMixin:OnFrame()
   if self.state.isCombatLog then return end
-  if #self.state.incomingMessages > 0 then
-    local incoming = self.state.incomingMessages
-    self.state.incomingMessages = {}
-    self:Update(incoming, false)
+  if self.state.settingsRefreshPending then
+    self.state.settingsRefreshPending = nil
+    if self.state.reprocessText then
+      self.state.reprocessText = nil
+      for _, message in ipairs(self.state.messages) do
+        message.text:SetText(Core:GetModule("TextProcessing"):ProcessText(message.rawText, self:GetSettings()))
+      end
+    end
+    self:RefreshSettings()
   end
-  if #self.state.incomingScrollbackMessages > 0 then
-    local incoming = self.state.incomingScrollbackMessages
-    self.state.incomingScrollbackMessages = {}
-    self:Update(incoming, true)
+  if #self.state.incomingMessages > 0 then
+    local incoming = takeMessageBatch(self.state.incomingMessages, Constants.MESSAGE_UPDATE_BATCH_SIZE)
+    self:Update(incoming, false)
+  elseif #self.state.incomingScrollbackMessages > 0 then
+    local capacity = Constants.MESSAGE_HISTORY_LIMIT - #self.state.messages
+    if capacity <= 0 then
+      self.state.incomingScrollbackMessages = {}
+    else
+      local incoming = takeMessageBatch(self.state.incomingScrollbackMessages,
+        math.min(capacity, Constants.MESSAGE_UPDATE_BATCH_SIZE))
+      self:Update(incoming, true, true)
+    end
   end
 end
 
@@ -336,7 +368,10 @@ end
 
 function SlidingMessageFrameMixin:ReplaceMessages(messages)
   self:ClearMessages()
-  if #messages > 0 then self:Update(messages, false, true) end
+  -- Show the latest lines now; restore older history over later ticks without incoming animations.
+  local latest, older = splitHistory(messages)
+  self.state.incomingScrollbackMessages = older
+  if #latest > 0 then self:Update(latest, false, true) end
 end
 
 function SlidingMessageFrameMixin:Update(incoming, reverse, immediate)
@@ -392,7 +427,7 @@ function SlidingMessageFrameMixin:Update(incoming, reverse, immediate)
     else
       self:SetScrollOffset(endOffset)
     end
-  elseif self:IsInteractive("scrollEnabled") then
+  elseif not reverse and not immediate and self:IsInteractive("scrollEnabled") then
     self.state.unreadMessages = true
     self.overlay:Show()
     self.overlay:ShowNewMessageAlert()

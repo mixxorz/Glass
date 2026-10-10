@@ -29,7 +29,14 @@ function ChatTabMixin:Init(slidingMessageFrame)
   self.chatFrame = slidingMessageFrame.chatFrame
 
   for _, texName in ipairs(tabTexs) do
-    self[texName]:SetTexture(nil)
+    local texture = self[texName]
+    if texture then texture:SetTexture(nil) end
+  end
+  for _, prefix in ipairs({"", "Selected", "Highlight"}) do
+    for _, side in ipairs({"Left", "Middle", "Right"}) do
+      local texture = _G[self:GetName() .. prefix .. side]
+      if texture then texture:SetTexture(nil) end
+    end
   end
 
   self:SetHeight(Utils.getDockHeight(Core.db.profile))
@@ -73,7 +80,7 @@ function ChatTabMixin:Init(slidingMessageFrame)
 
   -- Un-highlight when clicked
   if not self:IsHooked(self, "OnClick") then
-    self:HookScript(self, "OnClick", function ()
+    self:SecureHookScript(self, "OnClick", function ()
       FCF_StopAlertFlash(self.chatFrame)
     end)
   end
@@ -83,7 +90,7 @@ function ChatTabMixin:Init(slidingMessageFrame)
     self:RegisterForDrag()
   end
 
-  if not self.menuRegistered then
+  if not self.menuRegistered and _G.Menu and _G.Menu.ModifyMenu then
     self.menuRegistered = true
     _G.Menu.ModifyMenu("MENU_FCF_TAB", function (owner, rootDescription)
       if owner ~= self then return end
