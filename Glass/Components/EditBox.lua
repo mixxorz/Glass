@@ -23,14 +23,17 @@ local function GetEditBoxPadding(self)
 end
 
 function EditBoxMixin:Init(parent)
+  -- Keep AceHook off the Blizzard frame so its native HookScript API stays intact.
+  local hooks = AceHook:Embed({})
+
   -- Hide default styling
   _G[self:GetName().."Left"]:Hide()
   _G[self:GetName().."Mid"]:Hide()
   _G[self:GetName().."Right"]:Hide()
 
-  self:RawHook(_G[self:GetName().."Left"], "Show", function () end, true)
-  self:RawHook(_G[self:GetName().."Mid"], "Show", function () end, true)
-  self:RawHook(_G[self:GetName().."Right"], "Show", function () end, true)
+  hooks:RawHook(_G[self:GetName().."Left"], "Show", function () end, true)
+  hooks:RawHook(_G[self:GetName().."Mid"], "Show", function () end, true)
+  hooks:RawHook(_G[self:GetName().."Right"], "Show", function () end, true)
 
   self.focusLeft:SetTexture(nil)
   self.focusMid:SetTexture(nil)
@@ -59,13 +62,13 @@ function EditBoxMixin:Init(parent)
   local Ypadding = self.header:GetLineHeight() * 0.66
   self:SetHeight(self.header:GetLineHeight() + Ypadding * 2)
 
-  self:RawHook(self, "SetTextInsets", function ()
+  hooks:RawHook(self, "SetTextInsets", function ()
     Ypadding = self.header:GetLineHeight() * 0.66
     local padding = GetEditBoxPadding(self)
     self.header:ClearAllPoints()
     self.header:SetPoint("LEFT", padding, 0)
     local leftInset = math.min(self.header:GetStringWidth() + padding, self:GetWidth() - padding - 20)
-    self.hooks[self].SetTextInsets(self, leftInset, padding, Ypadding, Ypadding)
+    hooks.hooks[self].SetTextInsets(self, leftInset, padding, Ypadding, Ypadding)
   end, true)
 
   self:SetTextInsets()
@@ -99,21 +102,21 @@ function EditBoxMixin:Init(parent)
 
   outroAg:SetScript("OnFinished", function ()
     if not introAg:IsPlaying() then
-      self.hooks[self].Hide(self)
+      hooks.hooks[self].Hide(self)
     end
   end)
 
   local moverUnlocked = false
-  self:RawHook(self, "Hide", function ()
+  hooks:RawHook(self, "Hide", function ()
     if not moverUnlocked then
       outroAg:Play()
     end
   end, true)
 
-  self:HookScript(self, "OnEditFocusGained", function ()
+  hooks:HookScript(self, "OnEditFocusGained", function ()
     Core:Dispatch(EditBoxFocusGained())
   end)
-  self:HookScript(self, "OnEditFocusLost", function ()
+  hooks:HookScript(self, "OnEditFocusLost", function ()
     Core:Dispatch(EditBoxFocusLost())
   end)
 
@@ -165,7 +168,6 @@ end
 
 Core.Components.CreateEditBox = function (parent)
   local object = Mixin(_G.ChatFrame1EditBox, EditBoxMixin)
-  AceHook:Embed(object)
   object:Init(parent)
   return object
 end
