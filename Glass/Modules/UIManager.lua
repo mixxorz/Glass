@@ -15,7 +15,6 @@ local CreateSlidingMessageFramePool = Core.Components.CreateSlidingMessageFrameP
 local BNToastFrame = BNToastFrame
 local ChatAlertFrame = ChatAlertFrame
 local ChatFrameChannelButton = ChatFrameChannelButton
-local ChatFrameMenuButton = ChatFrameMenuButton
 local CreateFrame = CreateFrame
 local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME
 local FCF_DockUpdate = FCF_DockUpdate
@@ -96,7 +95,6 @@ function UIManager:OnEnable()
   -- Classic clients do not all create the same chat buttons and toast frames.
   if QuickJoinToastButton then QuickJoinToastButton:Hide() end
   if ChatFrameChannelButton then ChatFrameChannelButton:Hide() end
-  if ChatFrameMenuButton then ChatFrameMenuButton:Hide() end
 
   -- New version alert
   --[===[@non-debug@

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### New features
+
+* Add Blizzard's chat/language menu to the left of the first Main chat tab, sized to fit the tab bar and kept visible while its menu is open
+
 ### Improvements
 
 * Replace the jump-to-latest text button with a circular down-arrow button in the bottom-right of Main and extra message panes, retaining the unread glow (#158)

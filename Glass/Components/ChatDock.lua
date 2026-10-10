@@ -24,6 +24,18 @@ local UIParent = UIParent
 -- luacheck: pop
 
 local ChatDockMixin = {}
+local MENU_BUTTON_MAX_SIZE = 24
+local MENU_BUTTON_GAP = 8
+
+local function UpdateMenuButton(dock, padding)
+  local button = dock.chatMenuButton
+  if not button then return 0 end
+  local size = math.max(1, math.min(MENU_BUTTON_MAX_SIZE, dock:GetHeight(), dock:GetWidth() - padding * 2))
+  button:SetSize(size, size)
+  button:ClearAllPoints()
+  button:SetPoint("LEFT", dock, "LEFT", padding, 0)
+  return size
+end
 
 local function UpdateBackground(self)
   local profile = Core.db.profile
@@ -53,6 +65,8 @@ local function UpdateTabSpacing(dock)
   local spacing = Core.db.profile.tabSpacing or 0
   -- Horizontal padding belongs at the bar's outer edges, not between labels.
   local padding = Utils.getTabXPadding(Core.db.profile)
+  local menuWidth = UpdateMenuButton(dock, padding)
+  local firstTabPadding = padding + (menuWidth > 0 and menuWidth + MENU_BUTTON_GAP or 0)
   local staticTab, dynamicTab
   local dynamicWidth, dynamicCount = 0, 0
   local selected = dock.selected
@@ -70,7 +84,7 @@ local function UpdateTabSpacing(dock)
       if staticTab then
         tab:SetPoint("LEFT", staticTab, "RIGHT", spacing, 0)
       else
-        tab:SetPoint("TOPLEFT", dock, "TOPLEFT", padding, 0)
+        tab:SetPoint("TOPLEFT", dock, "TOPLEFT", firstTabPadding, 0)
       end
       staticTab = tab
     else
@@ -95,7 +109,7 @@ local function UpdateTabSpacing(dock)
   local scroll = dock.scrollFrame
   scroll:ClearAllPoints()
   scroll:SetPoint("TOPLEFT", staticTab or dock, staticTab and "TOPRIGHT" or "TOPLEFT",
-    staticTab and spacing or padding, 0)
+    staticTab and spacing or firstTabPadding, 0)
   scroll:SetPoint("BOTTOMRIGHT", dock, "BOTTOMRIGHT", -padding, 0)
   local available = scroll:GetWidth()
   local overflow = dynamicWidth > available
@@ -146,7 +160,8 @@ local function GetInsertIndex(dock, dragged, mouseX)
 end
 
 local function HideWhenInactive(self)
-  if self.state.mouseOver or self.state.moverUnlocked or self.state.editBoxFocused then
+  if self.state.mouseOver or self.state.moverUnlocked or self.state.editBoxFocused
+    or (self.chatMenuButton and self.chatMenuButton:IsMenuOpen()) then
     return
   end
 
@@ -170,6 +185,21 @@ function ChatDockMixin:Init(parent)
   self:SetPoint("TOPLEFT", parent, "TOPLEFT")
   self:SetFadeInDuration(0.6)
   self:SetFadeOutDuration(0.6)
+
+  self.chatMenuButton = _G.ChatFrameMenuButton
+  if self.chatMenuButton then
+    local button = self.chatMenuButton
+    button:SetParent(self)
+    button:SetFrameStrata(self:GetFrameStrata())
+    button:SetFrameLevel(self:GetFrameLevel() + 1)
+    local function OnMenuChanged()
+      if button:IsMenuOpen() then self:Show() else HideWhenInactive(self) end
+    end
+    button:RegisterCallback(button.Event.OnMenuOpen, OnMenuChanged, self)
+    button:RegisterCallback(button.Event.OnMenuClose, OnMenuChanged, self)
+    UpdateMenuButton(self, Utils.getTabXPadding(Core.db.profile))
+    button:Show()
+  end
 
   self.scrollFrame:SetHeight(Utils.getDockHeight(Core.db.profile))
   self.scrollFrame:SetPoint("TOPLEFT", _G.ChatFrame2Tab, "TOPRIGHT")
@@ -239,7 +269,7 @@ function ChatDockMixin:Init(parent)
           self.scrollFrame:SetHeight(height)
           self.scrollFrame.child:SetHeight(height)
         end
-        if key == "tabSpacing" or key == "tabXPadding" then
+        if key == "tabFontSize" or key == "tabYPadding" or key == "tabSpacing" or key == "tabXPadding" then
           FCF_DockUpdate()
         end
 
