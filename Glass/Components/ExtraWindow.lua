@@ -43,6 +43,11 @@ function ExtraWindow:UpdateTabBackground()
   self.tabBar:SetGradientBackground(left, right, colors.black, settings.tabBarBackgroundOpacity or 0)
 end
 
+function ExtraWindow:UpdateTabTransitions()
+  self.tabBar:SetFadeInDuration(self.settings.tabBarFadeInDuration)
+  self.tabBar:SetFadeOutDuration(self.settings.tabBarFadeOutDuration)
+end
+
 function ExtraWindow:UpdateLayout()
   local settings = self.settings
   local frame = self.frame
@@ -61,6 +66,7 @@ function ExtraWindow:UpdateLayout()
   self.tabBar:ClearAllPoints()
   self.tabBar:SetPoint("TOPLEFT", frame, "TOPLEFT")
   self:UpdateTabBackground()
+  self:UpdateTabTransitions()
   self.tab:SetHeight(barHeight)
   self.tab.label:SetFontObject(self.fonts.tab)
   local padding = Utils.getTabXPadding(settings)
@@ -75,9 +81,9 @@ function ExtraWindow:UpdateLayout()
 end
 
 function ExtraWindow:HideInactiveTab()
-  if self.hovered or self.unlocked then return end
+  if self.settings.tabBarNeverFadeOut or self.hovered or self.unlocked then return end
   if self.settings.chatShowOnMouseOver then
-    self.tabBar:HideDelay(self.settings.chatHoldTime)
+    self.tabBar:HideDelay(self.settings.tabBarHoldTime)
   else
     self.tabBar:Hide()
   end
@@ -97,7 +103,11 @@ function ExtraWindow:UpdateVisibility()
   self.renderer:SetShown(active)
   self.tab:SetShown(self.source ~= nil and self.settings.showTabBar == true)
   if self.settings.showTabBar and self.source and active then
-    if self.unlocked or self.hovered then self.tabBar:Show() else self:HideInactiveTab() end
+    if self.settings.tabBarNeverFadeOut or self.unlocked or self.hovered then
+      self.tabBar:Show()
+    else
+      self:HideInactiveTab()
+    end
   else
     self.tabBar:QuickHide()
   end
@@ -109,6 +119,20 @@ function ExtraWindow:UpdateVisibility()
 end
 
 function ExtraWindow:UpdateSettings(settings, key)
+  if key == "messageNeverFadeOut" or key == "messageHoldTime" or key == "messageFadeInDuration" or
+    key == "messageFadeOutDuration" or key == "messageSlideInDuration" then
+    self.settings = settings
+    self:Dispatch(events.UPDATE_CONFIG, key)
+    return
+  end
+  if key == "tabBarNeverFadeOut" or key == "tabBarHoldTime" or
+    key == "tabBarFadeInDuration" or key == "tabBarFadeOutDuration" then
+    self.settings = settings
+    self:UpdateTabTransitions()
+    if key == "tabBarNeverFadeOut" then self:UpdateVisibility()
+    elseif key == "tabBarHoldTime" then self:HideInactiveTab() end
+    return
+  end
   if backgroundSettings[key] or key == "messageTopFade" or key == "messageBottomFade" then
     self.settings = settings
     if backgroundSettings[key] then self:UpdateTabBackground() end
@@ -268,8 +292,6 @@ Core.Components.CreateExtraWindow = function (id, settings)
   self.tabBar = Mixin(CreateFrame("Frame", nil, self.frame), fading, gradient)
   fading.Init(self.tabBar)
   gradient.Init(self.tabBar)
-  self.tabBar:SetFadeInDuration(0.6)
-  self.tabBar:SetFadeOutDuration(0.6)
   self.tab = CreateFrame("Frame", nil, self.tabBar)
   self.tab:SetPoint("LEFT")
   self.tab.label = self.tab:CreateFontString(nil, "OVERLAY")

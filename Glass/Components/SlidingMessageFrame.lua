@@ -142,7 +142,7 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
     end),
     events:Subscribe(E.MOUSE_LEAVE, function ()
       self.state.mouseOver = false
-      self.overlay:HideDelay(self:GetSettings().chatHoldTime)
+      self.overlay:HideDelay(self:GetSettings().messageHoldTime)
       self:ScheduleFade()
     end),
     events:Subscribe(E.UNLOCK_MOVER, function ()
@@ -154,6 +154,29 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
       self:ScheduleFade()
     end),
     events:Subscribe(E.UPDATE_CONFIG, function (key)
+      if key == "messageNeverFadeOut" then
+        if self:GetSettings().messageNeverFadeOut then self:RevealMessages() else self:ScheduleFade() end
+        return
+      end
+      if key == "messageHoldTime" then
+        self:ScheduleFade()
+        if not self.state.mouseOver and not self.state.scrollAtBottom then
+          self.overlay:HideDelay(self:GetSettings().messageHoldTime)
+        end
+        return
+      end
+      if key == "messageFadeInDuration" or key == "messageFadeOutDuration" then
+        for _, message in ipairs(self.state.messages) do message:UpdateTransitions() end
+        return
+      end
+      if key == "messageSlideInDuration" then
+        if self:GetSettings().messageSlideInDuration == 0 and self.state.scrollAtBottom
+          and not self.state.jumpingToBottom then
+          self:StopScrollAnimation()
+          self:SetScrollOffset(self:GetBottomOffset())
+        end
+        return
+      end
       if key == "messageTopFade" or key == "messageBottomFade" then
         self:UpdateEdgeFades()
         return
@@ -163,7 +186,10 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
         return
       end
       if key == "tabBarBackgroundOpacity" or key == "tabLeftGradientWidth" or
-        key == "tabRightGradientWidth" or key == "editBoxBackgroundOpacity" or key == "editBoxXPadding" then
+        key == "tabRightGradientWidth" or key == "tabBarNeverFadeOut" or key == "tabBarHoldTime" or
+        key == "tabBarFadeInDuration" or key == "tabBarFadeOutDuration" or
+        key == "editBoxFadeInDuration" or key == "editBoxFadeOutDuration" or
+        key == "editBoxBackgroundOpacity" or key == "editBoxXPadding" then
         return
       end
       self.state.settingsRefreshPending = true
@@ -302,8 +328,10 @@ function SlidingMessageFrameMixin:RevealMessages()
 end
 
 function SlidingMessageFrameMixin:ScheduleFade()
-  if self.state.mouseOver or self.state.moverUnlocked or self.state.editBoxFocused then return end
-  for _, message in ipairs(self.state.messages) do message:HideDelay(self:GetSettings().chatHoldTime) end
+  local settings = self:GetSettings()
+  if settings.messageNeverFadeOut or self.state.mouseOver or self.state.moverUnlocked
+    or self.state.editBoxFocused then return end
+  for _, message in ipairs(self.state.messages) do message:HideDelay(settings.messageHoldTime) end
 end
 
 function SlidingMessageFrameMixin:AppendMessages(messages)
@@ -419,10 +447,10 @@ function SlidingMessageFrameMixin:Update(incoming, reverse, immediate)
   elseif self.state.scrollAtBottom then
     self:StopScrollAnimation()
     local endOffset = self:GetBottomOffset()
-    if not immediate and settings.chatSlideInDuration > 0 then
+    if not immediate and settings.messageSlideInDuration > 0 then
       self.state.prevEasingHandle = LibEasing:Ease(
         function (value) self:SetScrollOffset(value) end,
-        self.state.scrollOffset, endOffset, settings.chatSlideInDuration, LibEasing.OutCubic
+        self.state.scrollOffset, endOffset, settings.messageSlideInDuration, LibEasing.OutCubic
       )
     else
       self:SetScrollOffset(endOffset)
@@ -431,13 +459,14 @@ function SlidingMessageFrameMixin:Update(incoming, reverse, immediate)
     self.state.unreadMessages = true
     self.overlay:Show()
     self.overlay:ShowNewMessageAlert()
-    if not self.state.mouseOver then self.overlay:HideDelay(settings.chatHoldTime) end
+    if not self.state.mouseOver then self.overlay:HideDelay(settings.messageHoldTime) end
   end
   for _, message in ipairs(newMessages) do
     if retained[message] then
       if immediate then message:QuickShow() else message:Show() end
-      if not self.state.mouseOver and not self.state.moverUnlocked and not self.state.editBoxFocused then
-        message:HideDelay(settings.chatHoldTime)
+      if not settings.messageNeverFadeOut and not self.state.mouseOver and not self.state.moverUnlocked
+        and not self.state.editBoxFocused then
+        message:HideDelay(settings.messageHoldTime)
       end
     end
   end

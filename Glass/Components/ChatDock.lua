@@ -208,13 +208,17 @@ local function GetInsertIndex(dock, dragged, mouseX)
 end
 
 local function HideWhenInactive(self)
+  if Core.db.profile.tabBarNeverFadeOut then
+    self:Show()
+    return
+  end
   if self.state.mouseOver or self.state.moverUnlocked or self.state.editBoxFocused
     or (self.chatMenuButton and self.chatMenuButton:IsMenuOpen()) then
     return
   end
 
   if Core.db.profile.chatShowOnMouseOver then
-    self:HideDelay(Core.db.profile.chatHoldTime)
+    self:HideDelay(Core.db.profile.tabBarHoldTime)
   else
     self:Hide()
   end
@@ -231,8 +235,8 @@ function ChatDockMixin:Init(parent)
   self:SetHeight(Utils.getDockHeight(Core.db.profile))
   self:ClearAllPoints()
   self:SetPoint("TOPLEFT", parent, "TOPLEFT")
-  self:SetFadeInDuration(0.6)
-  self:SetFadeOutDuration(0.6)
+  self:SetFadeInDuration(Core.db.profile.tabBarFadeInDuration)
+  self:SetFadeOutDuration(Core.db.profile.tabBarFadeOutDuration)
 
   for _, spec in ipairs(BUTTONS) do
     local button = _G[spec.global]
@@ -286,7 +290,7 @@ function ChatDockMixin:Init(parent)
     self:SecureHook("FCFDock_UpdateTabs", UpdateTabSpacing)
   end
 
-  if self.state.editBoxFocused then
+  if self.state.editBoxFocused or Core.db.profile.tabBarNeverFadeOut then
     self:QuickShow()
   else
     self:QuickHide()
@@ -320,6 +324,16 @@ function ChatDockMixin:Init(parent)
         HideWhenInactive(self)
       end),
       Core:Subscribe(UPDATE_CONFIG, function (key)
+        if key == "tabBarFadeInDuration" then
+          self:SetFadeInDuration(Core.db.profile.tabBarFadeInDuration)
+        end
+        if key == "tabBarFadeOutDuration" then
+          self:SetFadeOutDuration(Core.db.profile.tabBarFadeOutDuration)
+        end
+        if key == "tabBarNeverFadeOut" or key == "tabBarHoldTime" then
+          HideWhenInactive(self)
+        end
+
         if key == "frameWidth" then
           self:SetWidth(Core.db.profile.frameWidth)
         end
