@@ -41,8 +41,9 @@ local function initializeProfileSettings(profile)
     for _, key in ipairs({"contentLeftPadding", "contentRightPadding", "tabXPadding", "editBoxXPadding",
       "messageTopFade", "messageBottomFade", "tabFont", "tabFontFlags",
       "tabLeftGradientWidth", "tabRightGradientWidth",
-      "messageHoldTime", "messageFadeInDuration", "messageFadeOutDuration", "messageSlideInDuration",
-      "tabBarHoldTime", "tabBarFadeInDuration", "tabBarFadeOutDuration"}) do
+      "messageNeverFadeOut", "messageHoldTime", "messageFadeInDuration", "messageFadeOutDuration",
+      "messageSlideInDuration", "tabBarNeverFadeOut", "tabBarHoldTime", "tabBarFadeInDuration",
+      "tabBarFadeOutDuration"}) do
       if settings[key] == nil then settings[key] = Core.defaults.profile[key] end
     end
   end
@@ -252,10 +253,18 @@ local function windowOptions(id)
   add(messageBackground, "leftGradientWidth", "Left gradient width", "range", 11, 1, 9999, 1)
   add(messageBackground, "rightGradientWidth", "Right gradient width", "range", 12, 1, 9999, 1)
   local messageTransitions = inlineSection(messages, "transitions", "Transitions", 4)
+  add(messageTransitions, "messageNeverFadeOut", "Never fade out", "toggle", 0)
+  messageTransitions.args.messageNeverFadeOut.desc = "Keep messages visible while the window is inactive."
   add(messageTransitions, "messageHoldTime", "Fade out delay", "range", 1, 0, 180, 1)
   add(messageTransitions, "messageFadeInDuration", "Fade in duration", "range", 2, 0, 30, 0.05)
   add(messageTransitions, "messageFadeOutDuration", "Fade out duration", "range", 3, 0, 30, 0.05)
   add(messageTransitions, "messageSlideInDuration", "Slide in duration", "range", 4, 0, 30, 0.05)
+  local function messageFadeOutDisabled()
+    local settings = id and extra():GetWindows()[id] or Core.db.profile
+    return settings.messageNeverFadeOut
+  end
+  messageTransitions.args.messageHoldTime.disabled = messageFadeOutDisabled
+  messageTransitions.args.messageFadeOutDuration.disabled = messageFadeOutDisabled
 
   if isExtra then add(tabs, "showTabBar", "Show tab bar", "toggle", 1) end
   local tabText = inlineSection(tabs, "text", "Text", 2)
@@ -271,9 +280,17 @@ local function windowOptions(id)
   add(tabBackground, "tabLeftGradientWidth", "Left gradient width", "range", 8, 1, 9999, 1)
   add(tabBackground, "tabRightGradientWidth", "Right gradient width", "range", 9, 1, 9999, 1)
   local tabTransitions = inlineSection(tabs, "transitions", "Transitions", 5)
+  add(tabTransitions, "tabBarNeverFadeOut", "Never fade out", "toggle", 0)
+  tabTransitions.args.tabBarNeverFadeOut.desc = "Keep the tab bar visible while the window is inactive."
   add(tabTransitions, "tabBarHoldTime", "Fade out delay", "range", 1, 0, 180, 1)
   add(tabTransitions, "tabBarFadeInDuration", "Fade in duration", "range", 2, 0, 30, 0.05)
   add(tabTransitions, "tabBarFadeOutDuration", "Fade out duration", "range", 3, 0, 30, 0.05)
+  local function tabFadeOutDisabled()
+    local settings = id and extra():GetWindows()[id] or Core.db.profile
+    return settings.tabBarNeverFadeOut
+  end
+  tabTransitions.args.tabBarHoldTime.disabled = tabFadeOutDisabled
+  tabTransitions.args.tabBarFadeOutDuration.disabled = tabFadeOutDisabled
   if not isExtra then
     add(tabLayout, "tabSpacing", "Tab spacing", "range", 10, 0, 100, 1)
     tabLayout.args.tabSpacing.desc = "The space between tab labels. Set this to 0 to place them next to each other."
@@ -430,11 +447,11 @@ function C:RefreshConfig()
   Demo:SetActive(false)
   for _, key in ipairs({ "font", "frameHeight", "frameWidth", "framePosition",
     "contentLeftPadding", "contentRightPadding", "leftGradientWidth", "rightGradientWidth",
-    "tabBarBackgroundOpacity", "tabBarHoldTime", "tabBarFadeInDuration", "tabBarFadeOutDuration",
+    "tabBarBackgroundOpacity", "tabBarNeverFadeOut", "tabBarHoldTime", "tabBarFadeInDuration", "tabBarFadeOutDuration",
     "editBoxFontSize", "editBoxXPadding", "editBoxBackgroundOpacity", "editBoxAnchor", "editBoxAltArrowKeyMode",
     "editBoxFadeInDuration", "editBoxFadeOutDuration", "messageFontSize", "chatBackgroundOpacity",
-    "messageHoldTime", "messageFadeInDuration", "messageFadeOutDuration", "messageSlideInDuration",
-    "messageLeading", "messageLinePadding",
+    "messageNeverFadeOut", "messageHoldTime", "messageFadeInDuration", "messageFadeOutDuration",
+    "messageSlideInDuration", "messageLeading", "messageLinePadding",
     "indentWordWrap", "iconTextureYOffset", "messageTopFade", "messageBottomFade",
     "mouseOverTooltips", "tabFont", "tabFontSize",
     "tabFontFlags", "tabXPadding", "tabYPadding",

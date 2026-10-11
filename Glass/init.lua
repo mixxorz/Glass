@@ -57,6 +57,7 @@ Core.defaults = {
     socialButtonPosition = {},
     tabLeftGradientWidth = 12,
     tabRightGradientWidth = 96,
+    tabBarNeverFadeOut = false,
     tabBarHoldTime = 10,
     tabBarFadeInDuration = 0.6,
     tabBarFadeOutDuration = 0.6,
@@ -96,6 +97,7 @@ Core.defaults = {
     messageTopFade = 16,
     messageBottomFade = 16,
 
+    messageNeverFadeOut = false,
     messageHoldTime = 10,
     messageFadeInDuration = 0.6,
     messageFadeOutDuration = 0.6,

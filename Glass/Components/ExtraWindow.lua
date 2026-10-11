@@ -81,7 +81,7 @@ function ExtraWindow:UpdateLayout()
 end
 
 function ExtraWindow:HideInactiveTab()
-  if self.hovered or self.unlocked then return end
+  if self.settings.tabBarNeverFadeOut or self.hovered or self.unlocked then return end
   if self.settings.chatShowOnMouseOver then
     self.tabBar:HideDelay(self.settings.tabBarHoldTime)
   else
@@ -103,7 +103,11 @@ function ExtraWindow:UpdateVisibility()
   self.renderer:SetShown(active)
   self.tab:SetShown(self.source ~= nil and self.settings.showTabBar == true)
   if self.settings.showTabBar and self.source and active then
-    if self.unlocked or self.hovered then self.tabBar:Show() else self:HideInactiveTab() end
+    if self.settings.tabBarNeverFadeOut or self.unlocked or self.hovered then
+      self.tabBar:Show()
+    else
+      self:HideInactiveTab()
+    end
   else
     self.tabBar:QuickHide()
   end
@@ -115,16 +119,18 @@ function ExtraWindow:UpdateVisibility()
 end
 
 function ExtraWindow:UpdateSettings(settings, key)
-  if key == "messageHoldTime" or key == "messageFadeInDuration" or
+  if key == "messageNeverFadeOut" or key == "messageHoldTime" or key == "messageFadeInDuration" or
     key == "messageFadeOutDuration" or key == "messageSlideInDuration" then
     self.settings = settings
     self:Dispatch(events.UPDATE_CONFIG, key)
     return
   end
-  if key == "tabBarHoldTime" or key == "tabBarFadeInDuration" or key == "tabBarFadeOutDuration" then
+  if key == "tabBarNeverFadeOut" or key == "tabBarHoldTime" or
+    key == "tabBarFadeInDuration" or key == "tabBarFadeOutDuration" then
     self.settings = settings
     self:UpdateTabTransitions()
-    if key == "tabBarHoldTime" then self:HideInactiveTab() end
+    if key == "tabBarNeverFadeOut" then self:UpdateVisibility()
+    elseif key == "tabBarHoldTime" then self:HideInactiveTab() end
     return
   end
   if backgroundSettings[key] or key == "messageTopFade" or key == "messageBottomFade" then

@@ -154,6 +154,10 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
       self:ScheduleFade()
     end),
     events:Subscribe(E.UPDATE_CONFIG, function (key)
+      if key == "messageNeverFadeOut" then
+        if self:GetSettings().messageNeverFadeOut then self:RevealMessages() else self:ScheduleFade() end
+        return
+      end
       if key == "messageHoldTime" then
         self:ScheduleFade()
         if not self.state.mouseOver and not self.state.scrollAtBottom then
@@ -182,7 +186,7 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
         return
       end
       if key == "tabBarBackgroundOpacity" or key == "tabLeftGradientWidth" or
-        key == "tabRightGradientWidth" or key == "tabBarHoldTime" or
+        key == "tabRightGradientWidth" or key == "tabBarNeverFadeOut" or key == "tabBarHoldTime" or
         key == "tabBarFadeInDuration" or key == "tabBarFadeOutDuration" or
         key == "editBoxFadeInDuration" or key == "editBoxFadeOutDuration" or
         key == "editBoxBackgroundOpacity" or key == "editBoxXPadding" then
@@ -324,8 +328,10 @@ function SlidingMessageFrameMixin:RevealMessages()
 end
 
 function SlidingMessageFrameMixin:ScheduleFade()
-  if self.state.mouseOver or self.state.moverUnlocked or self.state.editBoxFocused then return end
-  for _, message in ipairs(self.state.messages) do message:HideDelay(self:GetSettings().messageHoldTime) end
+  local settings = self:GetSettings()
+  if settings.messageNeverFadeOut or self.state.mouseOver or self.state.moverUnlocked
+    or self.state.editBoxFocused then return end
+  for _, message in ipairs(self.state.messages) do message:HideDelay(settings.messageHoldTime) end
 end
 
 function SlidingMessageFrameMixin:AppendMessages(messages)
@@ -458,7 +464,8 @@ function SlidingMessageFrameMixin:Update(incoming, reverse, immediate)
   for _, message in ipairs(newMessages) do
     if retained[message] then
       if immediate then message:QuickShow() else message:Show() end
-      if not self.state.mouseOver and not self.state.moverUnlocked and not self.state.editBoxFocused then
+      if not settings.messageNeverFadeOut and not self.state.mouseOver and not self.state.moverUnlocked
+        and not self.state.editBoxFocused then
         message:HideDelay(settings.messageHoldTime)
       end
     end

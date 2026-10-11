@@ -208,6 +208,10 @@ local function GetInsertIndex(dock, dragged, mouseX)
 end
 
 local function HideWhenInactive(self)
+  if Core.db.profile.tabBarNeverFadeOut then
+    self:Show()
+    return
+  end
   if self.state.mouseOver or self.state.moverUnlocked or self.state.editBoxFocused
     or (self.chatMenuButton and self.chatMenuButton:IsMenuOpen()) then
     return
@@ -286,7 +290,7 @@ function ChatDockMixin:Init(parent)
     self:SecureHook("FCFDock_UpdateTabs", UpdateTabSpacing)
   end
 
-  if self.state.editBoxFocused then
+  if self.state.editBoxFocused or Core.db.profile.tabBarNeverFadeOut then
     self:QuickShow()
   else
     self:QuickHide()
@@ -326,7 +330,7 @@ function ChatDockMixin:Init(parent)
         if key == "tabBarFadeOutDuration" then
           self:SetFadeOutDuration(Core.db.profile.tabBarFadeOutDuration)
         end
-        if key == "tabBarHoldTime" then
+        if key == "tabBarNeverFadeOut" or key == "tabBarHoldTime" then
           HideWhenInactive(self)
         end
 
