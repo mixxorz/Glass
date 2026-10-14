@@ -1,9 +1,12 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 local Router = Core:GetModule("MessageRouter")
 
 local function createMessage(text, red, green, blue)
-  if text == nil then return nil end
-  return {text = tostring(text), r = red or 1, g = green or 1, b = blue or 1}
+  if Utils.canAccessValue(text) then
+    if text == nil then return nil end
+    text = tostring(text)
+  end
+  return {text = text, r = red or 1, g = green or 1, b = blue or 1}
 end
 
 local function readChatHistory(chatFrame)

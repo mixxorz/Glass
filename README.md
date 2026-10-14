@@ -40,6 +40,17 @@ You may also download the latest release on [GitHub](https://github.com/mixxorz/
 - Allows you to customize fonts, spacing, backgrounds, and layout.
 - Works alongside addons like Prat, ElvUI, and Leatrix Plus.
 
+## Scrolling
+
+- Mouse wheel: move through messages.
+- Shift + mouse wheel: pan within a long message. This can scroll past the text;
+  release Shift and scroll normally, or use the jump button, to reset the pan.
+- Jump button: return to the latest messages.
+
+Secret messages keep Glass's wrapping, backgrounds, and fades. Incoming batches
+containing secret text skip the slide-in animation; ordinary messages can still
+slide in while secret messages remain in history.
+
 ## Addon compatibility
 
 ### ElvUI

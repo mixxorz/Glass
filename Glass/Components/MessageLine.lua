@@ -14,7 +14,8 @@ function MessageLineMixin:Init(view)
     end
   end)
   self:SetScript("OnHyperlinkEnter", function (_, link, text)
-    if self.view:IsInteractive("hoverEnabled") and self.view:GetSettings().mouseOverTooltips then
+    if Utils.canAccessValue(link) and self.view:IsInteractive("hoverEnabled")
+      and self.view:GetSettings().mouseOverTooltips then
       self.hoveredLink = link
       Core:Dispatch(Constants.ACTIONS.HyperlinkEnter({link, text}))
     end
@@ -28,9 +29,13 @@ end
 
 function MessageLineMixin:SetMessage(message)
   self.rawText = message.text
+  self.displayText = TP:ProcessText(message.text, self.view:GetSettings())
   self.text:SetTextColor(message.r or 1, message.g or 1, message.b or 1, 1)
-  self.text:SetText(TP:ProcessText(message.text, self.view:GetSettings()))
   self:UpdateFrame()
+end
+
+function MessageLineMixin:ReprocessText()
+  self.displayText = TP:ProcessText(self.rawText, self.view:GetSettings())
 end
 
 function MessageLineMixin:UpdateTransitions()
@@ -39,25 +44,47 @@ function MessageLineMixin:UpdateTransitions()
   self:SetFadeOutDuration(settings.messageFadeOutDuration)
 end
 
+function MessageLineMixin:ClearAnchor()
+  -- Clear the text aspect before changing anchors or reusing a secret FontString.
+  Utils.clearFontStringText(self.text)
+  self.text:ClearAllPoints()
+  self.anchorTarget, self.anchorRelativePoint, self.anchorPoint = nil, nil, nil
+end
+
+function MessageLineMixin:IsAnchoredTo(relativeTo, relativePoint, point)
+  return self.anchorTarget == relativeTo and self.anchorRelativePoint == relativePoint and self.anchorPoint == point
+end
+
+function MessageLineMixin:SetAnchor(relativeTo, relativePoint, point)
+  if self:IsAnchoredTo(relativeTo, relativePoint, point) then return end
+  self:ClearAnchor()
+  local padding = point == "BOTTOMLEFT" and self.yPadding or -self.yPadding
+  self.text:SetPoint(point, relativeTo, relativePoint, self.leftPadding, padding)
+  self.text:SetText(self.displayText)
+  self.anchorTarget, self.anchorRelativePoint, self.anchorPoint = relativeTo, relativePoint, point
+end
+
 function MessageLineMixin:UpdateFrame()
   local settings = self.view:GetSettings()
   local leftPadding, rightPadding = Utils.getMessagePadding(settings)
-  self:SetWidth(settings.frameWidth)
+  self:ClearAnchor()
+  self:ClearAllPoints()
   self.text:SetFontObject(self.view.window and self.view.window.fonts.message or "GlassMessageFont")
-  self.text:ClearAllPoints()
-  self.text:SetPoint("LEFT", leftPadding, 0)
   self.text:SetWidth(math.max(1, settings.frameWidth - leftPadding - rightPadding))
+  self.text:SetJustifyH("LEFT")
+  self.text:SetWordWrap(true)
+  self.text:SetNonSpaceWrap(true)
   self.text:SetIndentedWordWrap(settings.indentWordWrap)
-  if self.indentWordWrap ~= settings.indentWordWrap then
-    self.indentWordWrap = settings.indentWordWrap
-    -- Invalidate the cached text layout before measuring the changed wrap mode.
-    local text = self.text:GetText()
-    self.text:SetText(nil)
-    self.text:SetText(text)
-  end
+  self.text:SetMaxLines(0)
+  self.leftPadding = leftPadding
+  self.yPadding = self.text:GetLineHeight() * settings.messageLinePadding
+  self.publicHeight = nil
+
+  -- The engine sizes the row around wrapped text; Lua never reads these bounds.
+  self:SetPoint("TOPLEFT", self.text, "TOPLEFT", -leftPadding, self.yPadding)
+  self:SetPoint("BOTTOMRIGHT", self.text, "BOTTOMRIGHT", rightPadding, -self.yPadding)
+  self:SetAnchor(self:GetParent(), "BOTTOMLEFT", "BOTTOMLEFT")
   self:UpdateTransitions()
-  local yPadding = self.text:GetLineHeight() * settings.messageLinePadding
-  self:SetHeight(math.max(1, self.text:GetStringHeight() + yPadding * 2))
 
   local links = self.view:IsInteractive("linksEnabled")
   local tooltips = self.view:IsInteractive("hoverEnabled") and settings.mouseOverTooltips
@@ -68,7 +95,6 @@ function MessageLineMixin:UpdateFrame()
   self:SetHyperlinksEnabled(links or tooltips)
   -- Hyperlinks receive their own events; ordinary message text stays click-through.
   self:EnableMouse(false)
-  -- Keep wheel input on the message pane, even when a link is under the cursor.
   self:EnableMouseWheel(false)
   self:UpdateTextures()
 end
@@ -99,8 +125,9 @@ Core.Components.CreateMessageLinePool = function (parent, view)
       end
       message:StopAnimating()
       message:QuickHide()
+      message:ClearAnchor()
       message:ClearAllPoints()
-      message.rawText = nil
+      message.rawText, message.displayText, message.publicHeight = nil, nil, nil
     end
   )
 end

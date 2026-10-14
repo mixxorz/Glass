@@ -44,8 +44,10 @@ end
 
 function GradientBackgroundMixin:SetChatGradientBackground(color, opacity, settings)
   local profile = settings or Core.db.profile
-  local leftWidth = math.max(0, math.min(profile.leftGradientWidth, self:GetWidth() - 1))
-  local rightWidth = math.max(0, math.min(profile.rightGradientWidth, self:GetWidth() - leftWidth))
+  -- Message bounds can inherit secret anchoring, even when their width is fixed.
+  local width = profile.frameWidth
+  local leftWidth = math.max(0, math.min(profile.leftGradientWidth, width - 1))
+  local rightWidth = math.max(0, math.min(profile.rightGradientWidth, width - leftWidth))
   self:SetGradientBackground(leftWidth, rightWidth, color, opacity)
 end
 

@@ -55,7 +55,8 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
     mouseOver = false, editBoxFocused = not window and _G.ChatFrame1EditBox:HasFocus() or false,
     moverUnlocked = not window and UIManager.moverFrame:IsShown() or false,
     incomingScrollbackMessages = {}, incomingMessages = {}, messages = {},
-    scrollAtBottom = true, jumpingToBottom = false, unreadMessages = false, scrollOffset = 0,
+    scrollAtBottom = true, jumpingToBottom = false, unreadMessages = false,
+    scrollIndex = 1, messageOffset = 0, slideOffset = 0,
     isCombatLog = not window and chatFrame == _G.ChatFrame2,
   }
   self.config = { overflowHeight = 60 }
@@ -99,7 +100,11 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
   if not self.slider then self.slider = _G.CreateFrame("Frame", nil, self.viewport) end
   self.slider:SetFrameLevel(self.viewport:GetFrameLevel())
   self.slider:ClearAllPoints()
-  self:SetScrollOffset(0)
+  self:SetSlideOffset(0)
+  if not self.measurementText then
+    self.measurementText = self.viewport:CreateFontString(nil, "ARTWORK")
+    self.measurementText:Hide()
+  end
   if not self.messageFramePool then
     self.messageFramePool = Core.Components.CreateMessageLinePool(self.slider, self)
   end
@@ -114,17 +119,12 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
   self:EnableMouse(false)
   self:SetScript("OnMouseWheel", function (_, delta)
     if not self:IsInteractive("scrollEnabled") then return end
-    local minScroll, maxScroll = self:GetScrollBounds()
-    local scrollValue = math.max(minScroll, math.min(self.state.scrollOffset - delta * 20, maxScroll))
-    self:StopScrollAnimation()
-    self:SetScrollOffset(scrollValue)
-    self.state.scrollAtBottom = scrollValue == maxScroll
-    if self.state.scrollAtBottom then
-      self:SnapToBottom()
+    if _G.IsShiftKeyDown() then
+      -- Pan within a tall message without asking how many wrapped lines it has.
+      self:SetScrollPosition(self.state.scrollIndex, self.state.messageOffset + delta * 20)
     else
-      self:SetHeight(self.config.height)
-      self:UpdateEdgeFades()
-      self.overlay:Show()
+      local step = delta > 0 and math.ceil(delta) or math.floor(delta)
+      self:SetScrollPosition(self.state.scrollIndex + step, 0)
     end
     self:RevealMessages()
     self:ScheduleFade()
@@ -173,7 +173,8 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
         if self:GetSettings().messageSlideInDuration == 0 and self.state.scrollAtBottom
           and not self.state.jumpingToBottom then
           self:StopScrollAnimation()
-          self:SetScrollOffset(self:GetBottomOffset())
+          self:SetSlideOffset(0)
+          self:UpdatePaneHeight()
         end
         return
       end
@@ -241,19 +242,80 @@ function SlidingMessageFrameMixin:UpdateEdgeFades()
   end
 end
 
-function SlidingMessageFrameMixin:SetScrollOffset(offset)
-  self.state.scrollOffset = math.max(0, offset)
-  -- Keep messages in the clipped frame's render layers, as Blizzard's ScrollBox does.
-  self.slider:SetPoint("TOPLEFT", self.viewport, "TOPLEFT", 0, self.state.scrollOffset)
+function SlidingMessageFrameMixin:SetSlideOffset(offset)
+  self.state.slideOffset = offset
+  self.slider:SetPoint("TOPLEFT", self.viewport, "TOPLEFT", 0, offset - self.state.messageOffset)
 end
 
-function SlidingMessageFrameMixin:GetScrollBounds()
-  return Utils.getMessageScrollBounds(self.slider:GetHeight(), self.config.height, self.config.overflowHeight)
+function SlidingMessageFrameMixin:UpdatePaneHeight()
+  local overflow = self.state.scrollAtBottom and not self.state.jumpingToBottom
+    and self.config.overflowHeight or 0
+  self:SetHeight(self.config.height + overflow)
+  self:UpdateEdgeFades()
 end
 
-function SlidingMessageFrameMixin:GetBottomOffset()
-  local _, bottom = self:GetScrollBounds()
-  return bottom
+function SlidingMessageFrameMixin:LayoutMessages()
+  local messages = self.state.messages
+  if #messages == 0 then return end
+  local anchorIndex = #messages - self.state.scrollIndex + 1
+  -- Break changed links first to avoid cycles, but keep untouched text layouts cached.
+  for index, message in ipairs(messages) do
+    local target, relativePoint, point
+    if index == anchorIndex then
+      target, relativePoint, point = self.slider, "BOTTOMLEFT", "BOTTOMLEFT"
+    elseif index < anchorIndex then
+      target, relativePoint, point = messages[index + 1], "TOPLEFT", "BOTTOMLEFT"
+    else
+      target, relativePoint, point = messages[index - 1], "BOTTOMLEFT", "TOPLEFT"
+    end
+    if not message:IsAnchoredTo(target, relativePoint, point) then message:ClearAnchor() end
+  end
+  messages[anchorIndex]:SetAnchor(self.slider, "BOTTOMLEFT", "BOTTOMLEFT")
+  for index = anchorIndex - 1, 1, -1 do
+    messages[index]:SetAnchor(messages[index + 1], "TOPLEFT", "BOTTOMLEFT")
+  end
+  for index = anchorIndex + 1, #messages do
+    messages[index]:SetAnchor(messages[index - 1], "BOTTOMLEFT", "TOPLEFT")
+  end
+end
+
+function SlidingMessageFrameMixin:GetPublicHeight(message)
+  if message.publicHeight ~= nil then return message.publicHeight or nil end
+  message.publicHeight = false
+  if not Utils.canAccessValue(message.displayText) then return nil end
+
+  -- Even public rows inherit secret geometry from neighbours. Measure off the chain.
+  local text = self.measurementText
+  local settings = self:GetSettings()
+  local left, right = Utils.getMessagePadding(settings)
+  Utils.clearFontStringText(text)
+  text:ClearAllPoints()
+  text:SetPoint("TOPLEFT", self.viewport, "TOPLEFT")
+  text:SetFontObject(self.window and self.window.fonts.message or "GlassMessageFont")
+  text:SetWidth(math.max(1, settings.frameWidth - left - right))
+  text:SetJustifyH("LEFT")
+  text:SetWordWrap(true)
+  text:SetNonSpaceWrap(true)
+  text:SetIndentedWordWrap(settings.indentWordWrap)
+  text:SetMaxLines(0)
+  text:SetText(message.displayText)
+  local height = text:GetHeight()
+  Utils.clearFontStringText(text)
+  if not Utils.canAccessValue(height) then return nil end
+  message.publicHeight = math.max(0, height) + message.yPadding * 2
+  return message.publicHeight
+end
+
+function SlidingMessageFrameMixin:GetPublicDistanceToBottom()
+  local messages = self.state.messages
+  local anchorIndex = #messages - self.state.scrollIndex + 1
+  local distance = self.state.messageOffset - self.state.slideOffset
+  for index = anchorIndex + 1, #messages do
+    local height = self:GetPublicHeight(messages[index])
+    if height == nil then return nil end
+    distance = distance + height
+  end
+  return distance
 end
 
 function SlidingMessageFrameMixin:StopScrollAnimation()
@@ -262,6 +324,38 @@ function SlidingMessageFrameMixin:StopScrollAnimation()
     self.state.prevEasingHandle = nil
   end
   self.state.jumpingToBottom = false
+end
+
+function SlidingMessageFrameMixin:AnimateSlide(start, duration, jumping)
+  self:SetSlideOffset(start)
+  self.state.jumpingToBottom = jumping or false
+  self:UpdatePaneHeight()
+  self.state.prevEasingHandle = LibEasing:Ease(
+    function (offset) self:SetSlideOffset(offset) end, start, 0, duration, LibEasing.OutCubic,
+    function ()
+      self.state.prevEasingHandle = nil
+      self.state.jumpingToBottom = false
+      self:SetSlideOffset(0)
+      self:UpdatePaneHeight()
+    end
+  )
+end
+
+function SlidingMessageFrameMixin:SetScrollPosition(index, offset)
+  self:StopScrollAnimation()
+  self.state.scrollIndex = math.max(1, math.min(#self.state.messages, index))
+  self.state.messageOffset = #self.state.messages > 0 and math.max(0, offset) or 0
+  self.state.scrollAtBottom = self.state.scrollIndex == 1 and self.state.messageOffset == 0
+  self:LayoutMessages()
+  self:SetSlideOffset(0)
+  self:UpdatePaneHeight()
+  if self.state.scrollAtBottom then
+    self.state.unreadMessages = false
+    self.overlay:QuickHide()
+    self.overlay:HideNewMessageAlert()
+  else
+    self.overlay:Show()
+  end
 end
 
 function SlidingMessageFrameMixin:RefreshSettings()
@@ -274,51 +368,39 @@ function SlidingMessageFrameMixin:RefreshSettings()
   self:ClearAllPoints()
   self:SetPoint("TOPLEFT", 0, -self:GetContentOffset())
   self:EnableMouseWheel(self:IsInteractive("scrollEnabled"))
-  self.slider:SetWidth(self.config.width)
-  local contentHeight = 0
-  for _, message in ipairs(self.state.messages) do
-    message:UpdateFrame()
-    contentHeight = contentHeight + message:GetHeight()
-  end
-  self.slider:SetHeight(self.config.height + self.config.overflowHeight + contentHeight)
+  self.slider:SetSize(self.config.width, self.config.height)
+  for _, message in ipairs(self.state.messages) do message:UpdateFrame() end
   self.overlay:RefreshLayout(self.config.height)
   self.overlay.snapToBottomFrame:EnableMouse(self:IsInteractive("scrollEnabled"))
-  self:SetHeight(self.config.height + (self.state.scrollAtBottom and self.config.overflowHeight or 0))
-  local minScroll, maxScroll = self:GetScrollBounds()
-  local offset = math.max(minScroll, math.min(self.state.scrollOffset, maxScroll))
-  if self.state.scrollAtBottom or not self:IsInteractive("scrollEnabled") or offset == maxScroll then
-    self:SnapToBottom()
-  else
-    self:SetScrollOffset(offset)
+  if not self:IsInteractive("scrollEnabled") then
+    self.state.scrollIndex, self.state.messageOffset = 1, 0
   end
-  self:UpdateEdgeFades()
+  self.state.scrollIndex = math.max(1, math.min(#self.state.messages, self.state.scrollIndex))
+  self.state.scrollAtBottom = self.state.scrollIndex == 1 and self.state.messageOffset == 0
+  self:LayoutMessages()
+  self:SetSlideOffset(0)
+  self:UpdatePaneHeight()
+  if self.state.scrollAtBottom then
+    self.state.unreadMessages = false
+    self.overlay:QuickHide()
+    self.overlay:HideNewMessageAlert()
+  end
 end
 
 function SlidingMessageFrameMixin:SnapToBottom(animated)
+  local distance = animated and self:GetPublicDistanceToBottom()
   self:StopScrollAnimation()
+  self.state.scrollIndex, self.state.messageOffset = 1, 0
   self.state.scrollAtBottom = true
   self.state.unreadMessages = false
-  local target = self:GetBottomOffset()
-  if animated then
-    -- Keep history clipped while jumping. The extra viewport space is only for new-message animations.
-    self.state.jumpingToBottom = true
-    self:SetHeight(self.config.height)
-    local start = math.min(target, math.max(self.state.scrollOffset, target - self.config.height * 2))
-    self.state.prevEasingHandle = LibEasing:Ease(
-      function (offset) self:SetScrollOffset(offset) end, start, target, 0.3, LibEasing.OutCubic,
-      function ()
-        self.state.jumpingToBottom = false
-        self.state.prevEasingHandle = nil
-        self:SetHeight(self.config.height + self.config.overflowHeight)
-        self:SetScrollOffset(self:GetBottomOffset())
-        self:UpdateEdgeFades()
-      end
-    )
+  self:LayoutMessages()
+  if distance and distance > 0 then
+    -- Unknown distances snap immediately; public history keeps the animated jump.
+    self:AnimateSlide(-math.min(distance, self.config.height * 2), 0.3, true)
   else
-    self:SetHeight(self.config.height + self.config.overflowHeight)
-    self:SetScrollOffset(target)
+    self:SetSlideOffset(0)
+    self:UpdatePaneHeight()
   end
-  self:UpdateEdgeFades()
   self.overlay:QuickHide()
   self.overlay:HideNewMessageAlert()
 end
@@ -359,7 +441,7 @@ function SlidingMessageFrameMixin:OnFrame()
     if self.state.reprocessText then
       self.state.reprocessText = nil
       for _, message in ipairs(self.state.messages) do
-        message.text:SetText(Core:GetModule("TextProcessing"):ProcessText(message.rawText, self:GetSettings()))
+        message:ReprocessText()
       end
     end
     self:RefreshSettings()
@@ -384,13 +466,15 @@ function SlidingMessageFrameMixin:ClearMessages()
   self.state.messages = {}
   self.state.incomingMessages = {}
   self.state.incomingScrollbackMessages = {}
-  self.state.head, self.state.tail = nil, nil
+  self.state.scrollIndex, self.state.messageOffset = 1, 0
   self.state.scrollAtBottom = true
   self.state.unreadMessages = false
   if self.messageFramePool then self.messageFramePool:ReleaseAll() end
   if self.slider then
-    self.slider:SetHeight(self.config.height + self.config.overflowHeight)
-    self:SnapToBottom()
+    self:SetSlideOffset(0)
+    self:UpdatePaneHeight()
+    self.overlay:QuickHide()
+    self.overlay:HideNewMessageAlert()
   end
 end
 
@@ -405,57 +489,56 @@ end
 function SlidingMessageFrameMixin:Update(incoming, reverse, immediate)
   local settings = self:GetSettings()
   local newMessages = {}
-  local oldHeight = self.slider:GetHeight()
+  local wasAtBottom = self.state.scrollAtBottom
+  local selected = self.state.messages[#self.state.messages - self.state.scrollIndex + 1]
+  local previousSlide = self.state.slideOffset
+  local wasJumping = self.state.jumpingToBottom
+  local duration = wasJumping and 0.3 or settings.messageSlideInDuration
+  local canSlide = wasAtBottom and not reverse and not immediate and duration > 0
+  local addedHeight = 0
   for _, record in ipairs(incoming) do
     local message = self.messageFramePool:Acquire()
     message:SetMessage(record)
-    message:ClearAllPoints()
-    message:SetPoint("BOTTOMLEFT")
-    if reverse then
-      if self.state.tail then
-        message:ClearAllPoints()
-        message:SetPoint("BOTTOMLEFT", self.state.tail, "TOPLEFT")
-      end
-    elseif self.state.head then
-      self.state.head:ClearAllPoints()
-      self.state.head:SetPoint("BOTTOMLEFT", message, "TOPLEFT")
-    end
-    self.state.tail = self.state.tail or message
-    self.state.head = self.state.head or message
-    if reverse then self.state.tail = message else self.state.head = message end
     table.insert(newMessages, message)
-    if reverse then table.insert(self.state.messages, 1, message) else table.insert(self.state.messages, message) end
-  end
-  local removedHeight = 0
-  while #self.state.messages > Constants.MESSAGE_HISTORY_LIMIT do
-    local old = table.remove(self.state.messages, 1)
-    removedHeight = removedHeight + old:GetHeight()
-    self.messageFramePool:Release(old)
-  end
-  self.state.tail = self.state.messages[1]
-  local retained = {}
-  local newHeight = self.config.height + self.config.overflowHeight
-  for _, message in ipairs(self.state.messages) do
-    retained[message] = true
-    newHeight = newHeight + message:GetHeight()
-  end
-  self.slider:SetHeight(newHeight)
-  local scrollAdjustment = reverse and newHeight - oldHeight or -removedHeight
-  self:SetScrollOffset(self.state.scrollOffset + scrollAdjustment)
-  if self.state.jumpingToBottom then
-    self:SnapToBottom(not immediate)
-  elseif self.state.scrollAtBottom then
-    self:StopScrollAnimation()
-    local endOffset = self:GetBottomOffset()
-    if not immediate and settings.messageSlideInDuration > 0 then
-      self.state.prevEasingHandle = LibEasing:Ease(
-        function (value) self:SetScrollOffset(value) end,
-        self.state.scrollOffset, endOffset, settings.messageSlideInDuration, LibEasing.OutCubic
-      )
+    if reverse then
+      table.insert(self.state.messages, 1, message)
     else
-      self:SetScrollOffset(endOffset)
+      table.insert(self.state.messages, message)
     end
-  elseif not reverse and not immediate and self:IsInteractive("scrollEnabled") then
+    if canSlide then
+      local height = self:GetPublicHeight(message)
+      if height == nil then canSlide = false else addedHeight = addedHeight + height end
+    end
+  end
+  while #self.state.messages > Constants.MESSAGE_HISTORY_LIMIT do
+    self.messageFramePool:Release(table.remove(self.state.messages, 1))
+  end
+  local retained = {}
+  for _, message in ipairs(self.state.messages) do retained[message] = true end
+  if not wasAtBottom and not reverse then
+    self.state.scrollIndex = self.state.scrollIndex + #incoming
+  end
+  self.state.scrollIndex = math.max(1, math.min(#self.state.messages, self.state.scrollIndex))
+  if selected and not retained[selected] then self.state.messageOffset = 0 end
+  self.state.scrollAtBottom = self.state.scrollIndex == 1 and self.state.messageOffset == 0
+  self:LayoutMessages()
+
+  if not reverse then
+    self:StopScrollAnimation()
+    if canSlide and (addedHeight > 0 or previousSlide < 0) then
+      self:AnimateSlide(previousSlide - addedHeight, duration, wasJumping)
+    else
+      -- A mixed batch has an unknown total displacement, so skip the whole slide.
+      self:SetSlideOffset(0)
+      self:UpdatePaneHeight()
+    end
+  elseif not self.state.scrollAtBottom then
+    self:StopScrollAnimation()
+    self:SetSlideOffset(0)
+    self:UpdatePaneHeight()
+  end
+
+  if not reverse and not immediate and not self.state.scrollAtBottom and self:IsInteractive("scrollEnabled") then
     self.state.unreadMessages = true
     self.overlay:Show()
     self.overlay:ShowNewMessageAlert()

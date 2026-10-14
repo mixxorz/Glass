@@ -11,6 +11,15 @@ Utils.super = function (obj)
   return getmetatable(obj).__index
 end
 
+Utils.canAccessValue = function (value)
+  if _G.canaccessvalue then return _G.canaccessvalue(value) end
+  return not _G.issecretvalue or not _G.issecretvalue(value)
+end
+
+Utils.clearFontStringText = function (fontString)
+  if fontString.ClearText then fontString:ClearText() else fontString:SetText(nil) end
+end
+
 Utils.getEditBoxXPadding = function ()
   local profile = Core.db.profile
   return math.max(0, math.min(profile.editBoxXPadding, math.floor((profile.frameWidth - 1) / 2)))
@@ -26,12 +35,6 @@ Utils.getMessagePadding = function (settings)
     left, right = math.floor(left * scale), math.floor(right * scale)
   end
   return left, right
-end
-
-Utils.getMessageScrollBounds = function (scrollHeight, paneHeight, overflowHeight)
-  local last = math.max(0, scrollHeight - paneHeight)
-  local first = math.min(paneHeight + overflowHeight, last)
-  return first, last
 end
 
 Utils.getMessageEdgeFades = function (settings, height, atBottom)
