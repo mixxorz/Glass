@@ -69,7 +69,6 @@ function ScrollOverlayFrame:ShowNewMessageAlert()
 end
 
 function ScrollOverlayFrame:HideNewMessageAlert()
-  self.newMessageAlertFrame:StopAnimating()
   self.newMessageAlertFrame:QuickHide()
 end
 

@@ -33,6 +33,9 @@ You may also download the latest release on [GitHub](https://github.com/mixxorz/
 - `/glass lock` - unlock all Glass windows for moving and resizing
 - `/glass demo` - turn demo mode on or off
 
+By default scrolling scrolls _per message_. If you have a really long message
+and you want to scroll within it, use Shift+Scroll.
+
 ## Features
 
 - Adds smooth animations to incoming chat messages.

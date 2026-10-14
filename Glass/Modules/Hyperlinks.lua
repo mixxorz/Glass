@@ -1,4 +1,4 @@
-local Core, Constants = unpack(select(2, ...))
+local Core, Constants, Utils = unpack(select(2, ...))
 local Hyperlinks = Core:GetModule("Hyperlinks")
 
 local OpenNews = Constants.ACTIONS.OpenNews
@@ -35,6 +35,7 @@ end
 function Hyperlinks:OnEnable()
   -- Custom hyperlink for [See what's new]
   _G.hooksecurefunc("SetItemRef", function(link)
+    if not Utils.canAccessValue(link) then return end
     local linkType, addon, param1 = strsplit(":", link)
     if linkType == "garrmission" and addon == "Glass" then
       if param1 == "opennews" then
@@ -47,15 +48,21 @@ function Hyperlinks:OnEnable()
     local link, text, button = unpack(payload)
     -- Use global reference in case some addon has hooked into it for custom
     -- hyperlinks (e.g. Mythic Dungeon Tools, Prat)
-    _G.SetItemRef(link, text, button)
+    if _G.securecallfunction then
+      _G.securecallfunction(_G.SetItemRef, link, text, button)
+    elseif Utils.canAccessValue(link) and Utils.canAccessValue(text) then
+      _G.SetItemRef(link, text, button)
+    end
   end)
 
   Core:Subscribe(HYPERLINK_ENTER, function (payload)
     local link, text = unpack(payload)
+    if not Utils.canAccessValue(link) then return end
     local t = string.match(link, "^(.-):")
 
     if linkTypes[t] then
       if t == "battlepet" then
+        if not Utils.canAccessValue(text) then return end
         self.state.showingTooltip = BattlePetTooltip
         GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
         BattlePetToolTip_ShowLink(text)

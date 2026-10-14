@@ -1,4 +1,4 @@
-local Core = unpack(select(2, ...))
+local Core, _, Utils = unpack(select(2, ...))
 local TP = Core:GetModule("TextProcessing")
 
 -- luacheck: push ignore 113
@@ -84,6 +84,10 @@ function TP:ProcessText(text, settings)
   local result = text
 
   for _, processor in ipairs(TEXT_PROCESSORS) do
+    if not Utils.canAccessValue(result) then
+      break
+    end
+
     -- Prevent failing processors from bringing down the whole pipeline
     local retOk, retVal = pcall(processor, result, settings)
 
