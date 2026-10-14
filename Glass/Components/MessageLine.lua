@@ -57,7 +57,7 @@ end
 
 function MessageLineMixin:SetAnchor(relativeTo, relativePoint, point)
   if self:IsAnchoredTo(relativeTo, relativePoint, point) then return end
-  self:ClearAnchor()
+  if self.anchorTarget then self:ClearAnchor() end
   local padding = point == "BOTTOMLEFT" and self.yPadding or -self.yPadding
   self.text:SetPoint(point, relativeTo, relativePoint, self.leftPadding, padding)
   self.text:SetText(self.displayText)
@@ -123,7 +123,6 @@ Core.Components.CreateMessageLinePool = function (parent, view)
         Core:Dispatch(Constants.ACTIONS.HyperlinkLeave(message.hoveredLink))
         message.hoveredLink = nil
       end
-      message:StopAnimating()
       message:QuickHide()
       message:ClearAnchor()
       message:ClearAllPoints()

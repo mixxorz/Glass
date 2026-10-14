@@ -55,7 +55,7 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
     mouseOver = false, editBoxFocused = not window and _G.ChatFrame1EditBox:HasFocus() or false,
     moverUnlocked = not window and UIManager.moverFrame:IsShown() or false,
     incomingScrollbackMessages = {}, incomingMessages = {}, messages = {},
-    scrollAtBottom = true, jumpingToBottom = false, unreadMessages = false,
+    scrollAtBottom = true, jumpingToBottom = false,
     scrollIndex = 1, messageOffset = 0, slideOffset = 0,
     isCombatLog = not window and chatFrame == _G.ChatFrame2,
   }
@@ -110,7 +110,7 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
   end
   if not self.overlay then
     self.overlay = Core.Components.CreateScrollOverlayFrame(self)
-    self.overlay:SetScript("OnClickSnapFrame", function () self:SnapToBottom(true) end)
+    self.overlay:SetScript("OnClickSnapFrame", function () self:SnapToBottom() end)
   end
   -- The jump button is a sibling of the faded viewport, not part of its content.
   self.overlay:SetFrameLevel(self.slider:GetFrameLevel() + 2)
@@ -350,7 +350,6 @@ function SlidingMessageFrameMixin:SetScrollPosition(index, offset)
   self:SetSlideOffset(0)
   self:UpdatePaneHeight()
   if self.state.scrollAtBottom then
-    self.state.unreadMessages = false
     self.overlay:QuickHide()
     self.overlay:HideNewMessageAlert()
   else
@@ -381,18 +380,16 @@ function SlidingMessageFrameMixin:RefreshSettings()
   self:SetSlideOffset(0)
   self:UpdatePaneHeight()
   if self.state.scrollAtBottom then
-    self.state.unreadMessages = false
     self.overlay:QuickHide()
     self.overlay:HideNewMessageAlert()
   end
 end
 
-function SlidingMessageFrameMixin:SnapToBottom(animated)
-  local distance = animated and self:GetPublicDistanceToBottom()
+function SlidingMessageFrameMixin:SnapToBottom()
+  local distance = self:GetPublicDistanceToBottom()
   self:StopScrollAnimation()
   self.state.scrollIndex, self.state.messageOffset = 1, 0
   self.state.scrollAtBottom = true
-  self.state.unreadMessages = false
   self:LayoutMessages()
   if distance and distance > 0 then
     -- Unknown distances snap immediately; public history keeps the animated jump.
@@ -468,7 +465,6 @@ function SlidingMessageFrameMixin:ClearMessages()
   self.state.incomingScrollbackMessages = {}
   self.state.scrollIndex, self.state.messageOffset = 1, 0
   self.state.scrollAtBottom = true
-  self.state.unreadMessages = false
   if self.messageFramePool then self.messageFramePool:ReleaseAll() end
   if self.slider then
     self:SetSlideOffset(0)
@@ -539,7 +535,6 @@ function SlidingMessageFrameMixin:Update(incoming, reverse, immediate)
   end
 
   if not reverse and not immediate and not self.state.scrollAtBottom and self:IsInteractive("scrollEnabled") then
-    self.state.unreadMessages = true
     self.overlay:Show()
     self.overlay:ShowNewMessageAlert()
     if not self.state.mouseOver then self.overlay:HideDelay(settings.messageHoldTime) end
