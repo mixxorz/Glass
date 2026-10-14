@@ -1,15 +1,12 @@
-# 2.0.0-alpha4 (2026-10-11)
+# 2.0.0-alpha5 (2026-10-14)
 
-New features
+Changes
 
-- Add configurable Alt-arrow editing (#128).
-- Add separate Transitions controls for messages, tab bars, and the edit box, including zero-duration support.
-- Add Never fade out options for messages and tab bars (#125).
-
-Improvements
-
-- Move chat input settings to Edit box and remove redundant per-window unlock actions.
+- Mouse wheel now scrolls per message; use Shift+Scroll to move within long messages.
+- Secret messages retain Glass's styling and fades; incoming batches containing secret text skip sliding.
+- Secret text skips Glass's icon-offset adjustment and Glass-added Prat timestamps.
 
 Bug fixes
 
-- Support multilingual text with native font families; custom fonts apply to Latin text (#146).
+- Fix Lua errors caused by secret chat text during boss encounters and other restricted content (#166).
+- Preserve ordinary-message slide animations when secret messages remain in history.
