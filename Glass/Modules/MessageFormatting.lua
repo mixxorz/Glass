@@ -203,7 +203,7 @@ function F:SetRuleValue(identity, field, value, displayName)
   local settings = writableSettings()
   if not public(settings.rules, "table") then settings.rules = {} end
   settings.rules[identity] = any and rule or nil
-  self:NotifyChanged()
+  self:NotifyChanged(identity, field)
 end
 
 function F:ResetRule(identity)
@@ -212,11 +212,16 @@ function F:ResetRule(identity)
   if not Utils.canAccessValue(rules[identity]) then return end
   if rules[identity] == nil then return end
   rules[identity] = nil
-  self:NotifyChanged()
+  self:NotifyChanged(identity)
 end
 
-function F:NotifyChanged()
-  Core:Dispatch(Constants.EVENTS.MESSAGE_FORMATTING_CHANGED)
+function F:NotifyChanged(identity, field)
+  local kind = "text"
+  if public(field, "string") then
+    if field == "background" then kind = "background"
+    elseif field == "textColor" then kind = "body" end
+  end
+  Core:Dispatch(Constants.EVENTS.MESSAGE_FORMATTING_CHANGED, { identity = identity, kind = kind })
 end
 
 local function copyDescriptor(descriptor)

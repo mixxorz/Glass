@@ -24,6 +24,39 @@ local function splitHistory(messages)
   return latest, older
 end
 
+local function formattingEffect(payload)
+  if not Utils.canAccessValue(payload) or type(payload) ~= "table" then return nil, "text" end
+  local identity, kind = payload.identity, payload.kind
+  if not Utils.canAccessValue(identity) or not Utils.canAccessValue(kind) then return nil, "text" end
+  if identity ~= nil and (type(identity) ~= "string" or identity == "") then return nil, "text" end
+  if type(kind) ~= "string" or (kind ~= "background" and kind ~= "body" and kind ~= "text") then
+    return nil, "text"
+  end
+  return identity, kind
+end
+
+local function queueFormattingChange(state, payload)
+  local identity, kind = formattingEffect(payload)
+  local changes = state.formattingRefreshPending or { all = {}, byIdentity = {} }
+  state.formattingRefreshPending = changes
+  if changes.all.text then return end
+  if not identity and kind == "text" then
+    changes.all = { text = true }
+    changes.byIdentity = {}
+    return
+  end
+  local effects = changes.all
+  if identity then
+    effects = changes.byIdentity[identity] or {}
+    changes.byIdentity[identity] = effects
+  end
+  if effects.text then return end
+  if kind == "text" then
+    effects.background, effects.body = nil, nil
+  end
+  effects[kind] = true
+end
+
 function SlidingMessageFrameMixin:GetSettings()
   return self.window and self.window.settings or Core.db.profile
 end
@@ -198,8 +231,8 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
     end),
   }
 
-  table.insert(self.subscriptions, Core:Subscribe(E.MESSAGE_FORMATTING_CHANGED, function ()
-    self.state.formattingRefreshPending = true
+  table.insert(self.subscriptions, Core:Subscribe(E.MESSAGE_FORMATTING_CHANGED, function (payload)
+    queueFormattingChange(self.state, payload)
   end))
 
   if not window then
@@ -389,13 +422,32 @@ function SlidingMessageFrameMixin:RefreshSettings()
   end
 end
 
-function SlidingMessageFrameMixin:RefreshFormatting()
+function SlidingMessageFrameMixin:RefreshFormatting(changes)
   if self.state.isCombatLog then return end
+  local all = changes and changes.all or { text = true }
+  local layoutNeeded = false
   for _, message in ipairs(self.state.messages) do
-    message:RefreshFormatting()
+    local scoped
+    if changes and not all.text then
+      local record = message.messageRecord
+      local identity = record and record.identity
+      if Utils.canAccessValue(identity) and type(identity) == "string" then
+        scoped = changes.byIdentity[identity]
+      end
+    end
+    if all.text or (scoped and scoped.text) then
+      message:RefreshFormatting()
+      layoutNeeded = true
+    else
+      local background = all.background or (scoped and scoped.background)
+      local body = all.body or (scoped and scoped.body)
+      if background or body then message:RefreshColors(background, body) end
+    end
   end
-  self:LayoutMessages()
-  self:UpdatePaneHeight()
+  if layoutNeeded then
+    self:LayoutMessages()
+    self:UpdatePaneHeight()
+  end
 end
 
 function SlidingMessageFrameMixin:SnapToBottom()
@@ -457,8 +509,9 @@ function SlidingMessageFrameMixin:OnFrame()
     self:RefreshSettings()
   end
   if self.state.formattingRefreshPending then
+    local changes = self.state.formattingRefreshPending
     self.state.formattingRefreshPending = nil
-    self:RefreshFormatting()
+    self:RefreshFormatting(changes)
   end
   if #self.state.incomingMessages > 0 then
     local incoming = takeMessageBatch(self.state.incomingMessages, Constants.MESSAGE_UPDATE_BATCH_SIZE)

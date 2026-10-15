@@ -47,6 +47,21 @@ function MessageLineMixin:RefreshFormatting()
   self:UpdateTextures()
 end
 
+function MessageLineMixin:RefreshColors(refreshBackground, refreshBody)
+  local message = self.messageRecord
+  if not message then return end
+  local settings = self.view:GetSettings()
+  local style = Formatting:ResolveStyle(message, settings)
+  self.messageStyle = style
+  if refreshBackground then
+    self:SetChatGradientBackground(style.backgroundColor, style.backgroundOpacity, settings)
+  end
+  if refreshBody then
+    local color = style.textColor
+    self.text:SetTextColor(color.r, color.g, color.b, 1)
+  end
+end
+
 function MessageLineMixin:ReprocessText()
   self:RefreshFormatting()
 end
