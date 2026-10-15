@@ -41,7 +41,36 @@ and you want to scroll within it, use Shift+Scroll.
 - Adds smooth animations to incoming chat messages.
 - Lets you add extra Glass panes that track other chat tabs.
 - Allows you to customize fonts, spacing, backgrounds, and layout.
+- Offers profile-wide message formatting: channel aliases, independent colors,
+  and optional Glass timestamps.
 - Works alongside addons like Prat, ElvUI, and Leatrix Plus.
+
+## Message formatting
+
+Open `/glass` and select **Message formatting**. Settings are organized by
+message type, with channel pages directly under Message formatting, and apply across all Glass
+windows in the active profile, including extra windows.
+
+- Channel aliases are enabled by default and editable. Disable an alias or leave
+  it blank to preserve the original header; reset a rule to restore its defaults.
+- Numbered channels default to the number captured with each message. Rules
+  follow stable built-in channel identities or normalized custom-channel names,
+  not numbered slots, so changing channel numbers does not move your settings.
+- Default body RGB, channel-header RGB, and background RGBA are independent.
+  Inline player/item colors remain distinct; zero background alpha is transparent.
+- Glass timestamps are optional and off by default. Choose shared local-time
+  presets (12- or 24-hour, with or without seconds) and a timestamp color.
+
+Glass owns its timestamps. It hides recognizable native timestamp prefixes only
+in its own display, without changing WoW's timestamp preferences. Original
+messages are preserved. When original time or channel identity is missing,
+Glass falls back conservatively: unknown historical times are not replaced with
+the current time, and uncertain headers are left unchanged. Custom or legacy
+history may retain its original styling. Restricted text can remain displayable
+while timestamp and header transformations are unavailable.
+
+Use `/glass demo` to preview formatting. Your chat input still sends real
+messages while demo mode is active; turn it off to return to real chat.
 
 ## Addon compatibility
 
@@ -53,14 +82,16 @@ Glass works with ElvUI, but make sure to disable the Chat module.
 
 Glass works with Prat, but make sure to disable the EditBox module.
 
-Prat Timestamps work with Glass but with a caveat. Prat allows you to select
-which tabs to enable timestamps on. This is currently not supported and
-Timestamps will be enabled on all tabs if the Prat Timestamps module is loaded.
-If you want to disable Prat Timestamps, you'll need to set the module to "Don't
-load" (just "Disabled" won't work).
+There is no Prat timestamp-provider integration. Prat history can still flow
+through native chat buffers; Glass uses saved original epoch times and identity
+metadata where available. Missing metadata and uncertain provenance limit
+historical timestamp and channel formatting, and custom or legacy histories
+may retain their original styles.
 
-Note: WoW's built-in timestamps work with Glass. (Interface -> Social ->
-Timestamps)
+Arbitrary timestamps already baked into Prat's saved text may remain and can
+coexist with a Glass timestamp. Disable Prat timestamp generation for future
+messages when using Glass-owned timestamps. This does not erase prefixes
+already saved in history.
 
 ### Leatrix Plus
 

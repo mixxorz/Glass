@@ -198,6 +198,10 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
     end),
   }
 
+  table.insert(self.subscriptions, Core:Subscribe(E.MESSAGE_FORMATTING_CHANGED, function ()
+    self.state.formattingRefreshPending = true
+  end))
+
   if not window then
     table.insert(self.subscriptions, Core:Subscribe(E.EDIT_BOX_FOCUS_GAINED, function ()
       self.state.editBoxFocused = true
@@ -385,6 +389,15 @@ function SlidingMessageFrameMixin:RefreshSettings()
   end
 end
 
+function SlidingMessageFrameMixin:RefreshFormatting()
+  if self.state.isCombatLog then return end
+  for _, message in ipairs(self.state.messages) do
+    message:RefreshFormatting()
+  end
+  self:LayoutMessages()
+  self:UpdatePaneHeight()
+end
+
 function SlidingMessageFrameMixin:SnapToBottom()
   local distance = self:GetPublicDistanceToBottom()
   self:StopScrollAnimation()
@@ -442,6 +455,10 @@ function SlidingMessageFrameMixin:OnFrame()
       end
     end
     self:RefreshSettings()
+  end
+  if self.state.formattingRefreshPending then
+    self.state.formattingRefreshPending = nil
+    self:RefreshFormatting()
   end
   if #self.state.incomingMessages > 0 then
     local incoming = takeMessageBatch(self.state.incomingMessages, Constants.MESSAGE_UPDATE_BATCH_SIZE)

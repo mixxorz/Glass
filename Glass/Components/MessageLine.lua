@@ -1,6 +1,6 @@
 local Core, Constants, Utils = unpack(select(2, ...))
-local Colors = Constants.COLORS
 local TP = Core:GetModule("TextProcessing")
+local Formatting = Core:GetModule("MessageFormatting")
 local MessageLineMixin = {}
 
 function MessageLineMixin:Init(view)
@@ -28,14 +28,27 @@ function MessageLineMixin:Init(view)
 end
 
 function MessageLineMixin:SetMessage(message)
-  self.rawText = message.text
-  self.displayText = TP:ProcessText(message.text, self.view:GetSettings())
-  self.text:SetTextColor(message.r or 1, message.g or 1, message.b or 1, 1)
+  self.messageRecord = message
+  self:RefreshFormatting()
   self:UpdateFrame()
 end
 
+function MessageLineMixin:RefreshFormatting()
+  local message = self.messageRecord
+  if not message then return end
+  local settings = self.view:GetSettings()
+  self.rawText = message.text
+  self.displayText = TP:ProcessText(message.text, settings, message)
+  self.messageStyle = Formatting:ResolveStyle(message, settings)
+  local color = self.messageStyle.textColor
+  self.text:SetTextColor(color.r, color.g, color.b, 1)
+  self.publicHeight = nil
+  self:ClearAnchor()
+  self:UpdateTextures()
+end
+
 function MessageLineMixin:ReprocessText()
-  self.displayText = TP:ProcessText(self.rawText, self.view:GetSettings())
+  self:RefreshFormatting()
 end
 
 function MessageLineMixin:UpdateTransitions()
@@ -101,7 +114,13 @@ end
 
 function MessageLineMixin:UpdateTextures()
   local settings = self.view:GetSettings()
-  self:SetChatGradientBackground(Colors.codGray, settings.chatBackgroundOpacity, settings)
+  if self.messageRecord then
+    local style = Formatting:ResolveStyle(self.messageRecord, settings)
+    self.messageStyle = style
+    self:SetChatGradientBackground(style.backgroundColor, style.backgroundOpacity, settings)
+  else
+    self:SetChatGradientBackground(Constants.COLORS.codGray, settings.chatBackgroundOpacity, settings)
+  end
 end
 
 local function CreateMessageLine(parent, view)
@@ -127,6 +146,7 @@ Core.Components.CreateMessageLinePool = function (parent, view)
       message:ClearAnchor()
       message:ClearAllPoints()
       message.rawText, message.displayText, message.publicHeight = nil, nil, nil
+      message.messageRecord, message.messageStyle = nil, nil
     end
   )
 end

@@ -34,7 +34,10 @@ Core:NewModule("Config", "AceConsole-3.0")
 Core:NewModule("Fonts")
 Core:NewModule("Hyperlinks")
 Core:NewModule("News")
+Core:NewModule("MessageFormatting")
+Core:NewModule("MessageMarkup")
 Core:NewModule("TextProcessing")
+Core:NewModule("MessageMetadata")
 Core:NewModule("MessageRouter", "AceHook-3.0")
 Core:NewModule("Demo")
 Core:NewModule("UIManager", "AceHook-3.0")
@@ -45,6 +48,14 @@ Core.defaults = {
   char = { extraWindowSources = {} },
   profile = {
     extraWindows = {},
+    messageFormatting = {
+      timestamps = {
+        enabled = false,
+        preset = "24h",
+        color = { r = 128 / 255, g = 128 / 255, b = 128 / 255 },
+      },
+      rules = {},
+    },
     tabFont = "Friz Quadrata TT",
     tabFontFlags = "",
     tabFontSize = 12,

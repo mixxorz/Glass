@@ -50,10 +50,14 @@ Glass\Components\ExtraWindow.lua
 
 # Modules
 Glass\Modules\Config.lua
+Glass\Modules\ConfigMessageFormatting.lua
 Glass\Modules\Fonts.lua
 Glass\Modules\Hyperlinks.lua
 Glass\Modules\News.lua
+Glass\Modules\MessageFormatting.lua
+Glass\Modules\MessageMarkup.lua
 Glass\Modules\TextProcessing.lua
+Glass\Modules\MessageMetadata.lua
 Glass\Modules\MessageRouter.lua
 Glass\Modules\Demo.lua
 Glass\Modules\UIManager.lua

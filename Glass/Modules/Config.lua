@@ -417,8 +417,10 @@ function C:OnEnable()
     editBox = editBoxOptions(),
     profile = DBOptions:GetOptionsTable(Core.db),
   } }
+  self.options = options
+  options.args.messageFormatting = self:BuildMessageFormattingOptions()
   options.args.profile.name = "Profiles"
-  options.args.profile.order = 3
+  options.args.profile.order = 4
   Core.Libs.AceConfig:RegisterOptionsTable("Glass", options)
   self:RefreshOptions()
   Dialog:SetDefaultSize("Glass", 780, 500)
@@ -426,6 +428,9 @@ function C:OnEnable()
   Core.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
   Core.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
   Core.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
+  Core:Subscribe(Constants.EVENTS.MESSAGE_CHANNELS_CHANGED, function()
+    self:RefreshMessageFormattingOptions()
+  end)
   Core:Subscribe(Constants.EVENTS.SAVE_FRAME_POSITION, function(position)
     Core.db.profile.positionAnchor = position
   end)
@@ -463,4 +468,6 @@ function C:RefreshConfig()
   local module = extra()
   if module then module:Rebuild() end
   self:RefreshOptions()
+  self:RefreshMessageFormattingOptions()
+  Core:GetModule("MessageFormatting"):NotifyChanged()
 end
