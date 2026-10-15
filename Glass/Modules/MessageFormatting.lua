@@ -217,8 +217,6 @@ end
 
 function F:NotifyChanged()
   Core:Dispatch(Constants.EVENTS.MESSAGE_FORMATTING_CHANGED)
-  local registry = _G.LibStub("AceConfigRegistry-3.0")
-  if registry:GetOptionsTable("Glass") then registry:NotifyChange("Glass") end
 end
 
 local function copyDescriptor(descriptor)

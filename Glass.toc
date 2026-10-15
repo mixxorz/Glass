@@ -33,6 +33,7 @@ Glass\constants.lua
 Glass\utils.lua
 
 # Components
+Glass\Components\ColorPicker.lua
 Glass\Components\ChatDock.lua
 Glass\Components\ChatTab.lua
 Glass\Components\EditBox.lua

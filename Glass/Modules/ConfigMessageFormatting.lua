@@ -20,6 +20,15 @@ local function nativeColor(chatType, channelNumber)
   return { r = 1, g = 1, b = 1 }
 end
 
+local function backgroundDefault(chatType, channelNumber)
+  local base = Constants.COLORS.codGray
+  local native = nativeColor(chatType, channelNumber)
+  return { r = base.r * 0.9 + native.r * 0.1,
+    g = base.g * 0.9 + native.g * 0.1,
+    b = base.b * 0.9 + native.b * 0.1,
+    a = Core.db.profile.chatBackgroundOpacity }
+end
+
 local function timestampOptions()
   local function disabled() return not Formatting:GetSettings().timestamps.enabled end
   return { name = "Timestamps", type = "group", order = 0, args = {
@@ -34,7 +43,8 @@ local function timestampOptions()
         ["12h"] = "12-hour (1:05 PM)", ["12h-seconds"] = "12-hour with seconds (1:05:09 PM)" },
       get = function() return Formatting:GetSettings().timestamps.preset end,
       set = function(_, value) Formatting:SetTimestampValue("preset", value) end },
-    color = { name = "Timestamp color", type = "color", hasAlpha = false, order = 3, disabled = disabled,
+    color = { name = "Timestamp color", type = "color", dialogControl = "GlassColorPicker",
+      hasAlpha = false, order = 3, disabled = disabled,
       get = function()
         local color = Formatting:GetSettings().timestamps.color
         return color.r, color.g, color.b
@@ -56,7 +66,8 @@ local function typeOptions(descriptor, order)
     parent[field .. "Enabled"] = { name = "Override " .. name, type = "toggle", order = index,
       get = function() return Formatting:GetRule(identity)[field] ~= nil end,
       set = function(_, enabled) set(field, enabled and nativeColor(chatType, context.channelNumber) or nil) end }
-    parent[field] = { name = name, type = "color", hasAlpha = false, order = index + 1,
+    parent[field] = { name = name, type = "color", dialogControl = "GlassColorPicker",
+      hasAlpha = false, order = index + 1,
       disabled = function() return Formatting:GetRule(identity)[field] == nil end,
       get = function()
         local color = Formatting:GetRule(identity)[field] or nativeColor(chatType, context.channelNumber)
@@ -92,17 +103,14 @@ local function typeOptions(descriptor, order)
   style.args.backgroundEnabled = { name = "Override background", type = "toggle", order = 1,
     get = function() return Formatting:GetRule(identity).background ~= nil end,
     set = function(_, enabled)
-      local color = Constants.COLORS.codGray
-      set("background", enabled and { r = color.r, g = color.g, b = color.b,
-        a = Core.db.profile.chatBackgroundOpacity } or nil)
+      set("background", enabled and backgroundDefault(chatType, context.channelNumber) or nil)
     end }
-  style.args.background = { name = "Background color", type = "color", hasAlpha = true, order = 2,
+  style.args.background = { name = "Background color", type = "color", dialogControl = "GlassColorPicker",
+    hasAlpha = true, order = 2,
     disabled = function() return Formatting:GetRule(identity).background == nil end,
     get = function()
-      local rule = Formatting:GetRule(identity)
-      local color = rule.background or Constants.COLORS.codGray
-      local alpha = rule.background and rule.background.a or Core.db.profile.chatBackgroundOpacity
-      return color.r, color.g, color.b, alpha
+      local color = Formatting:GetRule(identity).background or backgroundDefault(chatType, context.channelNumber)
+      return color.r, color.g, color.b, color.a
     end,
     set = function(_, r, g, b, a)
       Formatting:SetRuleValue(identity, "background", { r = r, g = g, b = b, a = a }, displayName)
