@@ -12,6 +12,10 @@ local COMMON_TYPES = {
   "RAID", "RAID_LEADER", "RAID_WARNING", "GUILD", "OFFICER",
   "INSTANCE_CHAT", "INSTANCE_CHAT_LEADER", "EMOTE", "SYSTEM",
 }
+local TYPE_NAMES = {
+  WHISPER = "Whisper (receiving)",
+  WHISPER_INFORM = "Whisper (sending)",
+}
 local PRESETS = { ["24h"] = true, ["24h-seconds"] = true, ["12h"] = true, ["12h-seconds"] = true }
 local RULE_FIELDS = { aliasEnabled = true, alias = true, background = true, textColor = true, labelColor = true }
 local DESCRIPTOR_FIELDS = {
@@ -277,7 +281,8 @@ function F:GetEntries()
     if supported(chatType) and not seen[chatType] then
       seen[chatType] = true
       result[#result + 1] = {
-        key = "type:" .. chatType, name = text(_G[chatType]) and _G[chatType] or chatType,
+        key = "type:" .. chatType,
+        name = TYPE_NAMES[chatType] or (text(_G[chatType]) and _G[chatType] or chatType),
         chatType = chatType, hasHeader = DEFAULT_ALIASES[chatType] ~= nil, available = true,
       }
     end

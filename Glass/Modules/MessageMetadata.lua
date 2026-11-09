@@ -60,8 +60,12 @@ function Metadata:RefreshChannels()
           local category = integer(info.zoneChannelID) and info.zoneChannelID or nil
           local key = Formatting:ResolveIdentity("CHANNEL", category, info.name, kind)
           if key then
+            local displayName = info.name
+            if kind == "builtin" and public(info.shortcut, "string") and info.shortcut ~= "" then
+              displayName = info.shortcut
+            end
             descriptors[#descriptors + 1] = {
-              key = key, name = info.name, chatType = "CHANNEL", channelName = info.name,
+              key = key, name = displayName, chatType = "CHANNEL", channelName = info.name,
               channelNumber = info.localID, channelKind = kind, hasHeader = true, available = true,
             }
           end
