@@ -77,13 +77,22 @@ function Metadata:RefreshChannels()
 end
 
 local function nativeType(infoID)
-  if not positive(infoID) or not public(_G.ChatTypeInfo, "table") then return end
-  for name, info in pairs(_G.ChatTypeInfo) do
-    if public(name, "string") and name:match("^[A-Z_]+$") and not name:match("^CHANNEL")
-      and public(info, "table") and public(info.id, "number") and info.id == infoID then
-      return name
+  if not positive(infoID) then return end
+  local api = _G.C_ChatInfo
+  if public(api, "table") and public(api.GetChatTypeName, "function") then
+    local ok, name = pcall(api.GetChatTypeName, infoID)
+    if ok and public(name, "string") then
+      return Formatting:ResolveIdentity(name) and name or nil
     end
   end
+  local resolved
+  for name, info in pairs(Formatting:GetChatTypes()) do
+    if public(info.id, "number") and info.id == infoID then
+      if resolved then return nil end
+      resolved = name
+    end
+  end
+  return resolved
 end
 
 local function decode(entry, origin)

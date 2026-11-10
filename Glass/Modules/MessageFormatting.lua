@@ -97,6 +97,20 @@ local function writableSettings()
   return profile.messageFormatting
 end
 
+function F:GetChatTypes()
+  local types, result = container(_G.ChatTypeInfo), {}
+  local function collect(source)
+    for name in pairs(container(source)) do
+      if supported(name) then result[name] = types[name] end
+    end
+  end
+  collect(types)
+  -- Current clients move registered types into the proxy's backing table.
+  local metatable = getmetatable(types)
+  if public(metatable, "table") then collect(metatable.__index) end
+  return result
+end
+
 function F:GetSettings()
   local saved = savedSettings()
   local stamps = container(saved.timestamps)
@@ -183,7 +197,7 @@ function F:SetTimestampValue(field, value)
   local settings = writableSettings()
   if not public(settings.timestamps, "table") then settings.timestamps = {} end
   settings.timestamps[field] = accepted
-  self:NotifyChanged()
+  self:NotifyChanged(nil, field)
 end
 
 function F:SetRuleValue(identity, field, value, displayName)
@@ -223,7 +237,8 @@ function F:NotifyChanged(identity, field)
   local kind = "text"
   if public(field, "string") then
     if field == "background" then kind = "background"
-    elseif field == "textColor" then kind = "body" end
+    elseif field == "textColor" then kind = "body"
+    elseif field == "labelColor" or field == "color" then kind = "markup" end
   end
   Core:Dispatch(Constants.EVENTS.MESSAGE_FORMATTING_CHANGED, { identity = identity, kind = kind })
 end
@@ -289,7 +304,7 @@ function F:GetEntries()
   end
   for _, chatType in ipairs(COMMON_TYPES) do add(chatType) end
   local remaining = {}
-  for chatType in pairs(_G.ChatTypeInfo or {}) do
+  for chatType in pairs(self:GetChatTypes()) do
     if supported(chatType) and not seen[chatType] then remaining[#remaining + 1] = chatType end
   end
   table.sort(remaining)

@@ -47,6 +47,12 @@ function MessageLineMixin:RefreshFormatting()
   self:UpdateTextures()
 end
 
+function MessageLineMixin:RefreshTextColors()
+  if not self.messageRecord or not Utils.canAccessValue(self.rawText) then return end
+  self.displayText = TP:ProcessText(self.rawText, self.view:GetSettings(), self.messageRecord)
+  if self.anchorTarget then self.text:SetText(self.displayText) end
+end
+
 function MessageLineMixin:RefreshColors(refreshBackground, refreshBody)
   local message = self.messageRecord
   if not message then return end

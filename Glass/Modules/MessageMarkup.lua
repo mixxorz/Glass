@@ -19,9 +19,13 @@ local function context(message)
     and message.chatType:match("^[A-Z_]+%d*$") and public(message.identity, "string")
 end
 local function nativeContext(message)
-  return public(message, "table") and public(message.chatType, "string")
-    and message.chatType:match("^[A-Z_]+%d*$") and public(message.nativeEvent, "string")
-    and message.nativeEvent == "CHAT_MSG_" .. message.chatType
+  if not public(message, "table") or not public(message.chatType, "string")
+    or not message.chatType:match("^[A-Z_]+%d*$") then return false end
+  local event = message.nativeEvent
+  if not Utils.canAccessValue(event) then return false end
+  if event ~= nil then return public(event, "string") and event == "CHAT_MSG_" .. message.chatType end
+  -- Native pings supply only a chat-type ID, without event metadata.
+  return message.chatType == "PING" and public(message.identity, "string") and message.identity == "type:PING"
 end
 
 function Markup:EscapeLabel(value)

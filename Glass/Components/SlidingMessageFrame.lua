@@ -29,7 +29,8 @@ local function formattingEffect(payload)
   local identity, kind = payload.identity, payload.kind
   if not Utils.canAccessValue(identity) or not Utils.canAccessValue(kind) then return nil, "text" end
   if identity ~= nil and (type(identity) ~= "string" or identity == "") then return nil, "text" end
-  if type(kind) ~= "string" or (kind ~= "background" and kind ~= "body" and kind ~= "text") then
+  if type(kind) ~= "string"
+    or (kind ~= "background" and kind ~= "body" and kind ~= "markup" and kind ~= "text") then
     return nil, "text"
   end
   return identity, kind
@@ -52,7 +53,7 @@ local function queueFormattingChange(state, payload)
   end
   if effects.text then return end
   if kind == "text" then
-    effects.background, effects.body = nil, nil
+    effects.background, effects.body, effects.markup = nil, nil, nil
   end
   effects[kind] = true
 end
@@ -439,6 +440,7 @@ function SlidingMessageFrameMixin:RefreshFormatting(changes)
       message:RefreshFormatting()
       layoutNeeded = true
     else
+      if all.markup or (scoped and scoped.markup) then message:RefreshTextColors() end
       local background = all.background or (scoped and scoped.background)
       local body = all.body or (scoped and scoped.body)
       if background or body then message:RefreshColors(background, body) end
