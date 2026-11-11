@@ -1,5 +1,10 @@
 # Repository instructions
 
+## Versioning
+
+Follow the [versioning policy](CONTRIBUTING.md#versioning) when choosing release
+versions. Glass uses product versioning, not strict Semantic Versioning.
+
 ## Testing
 
 Automated tests are not allowed in this repository. They require mocking the

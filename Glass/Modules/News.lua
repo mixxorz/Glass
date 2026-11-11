@@ -8,7 +8,7 @@ local OPEN_NEWS = Constants.EVENTS.OPEN_NEWS
 -- luacheck: push ignore 631
 local CHANGELOG = {
   {
-    name = "Unreleased",
+    name = "2.1.0 (2026-11-11)",
     items = {[[
 New features
 

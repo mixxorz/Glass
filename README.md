@@ -38,39 +38,12 @@ and you want to scroll within it, use Shift+Scroll.
 
 ## Features
 
-- Adds smooth animations to incoming chat messages.
-- Lets you add extra Glass panes that track other chat tabs.
-- Allows you to customize fonts, spacing, backgrounds, and layout.
-- Offers profile-wide message formatting: channel aliases, independent colors,
-  and optional Glass timestamps.
-- Works alongside addons like Prat, ElvUI, and Leatrix Plus.
-
-## Message formatting
-
-Open `/glass` and select **Message formatting**. Settings are organized by
-message type, with channel pages directly under Message formatting, and apply across all Glass
-windows in the active profile, including extra windows.
-
-- Channel aliases are enabled by default and editable. Disable an alias or leave
-  it blank to preserve the original header; reset a rule to restore its defaults.
-- Numbered channels default to the number captured with each message. Rules
-  follow stable built-in channel identities or normalized custom-channel names,
-  not numbered slots, so changing channel numbers does not move your settings.
-- Default body RGB, channel-header RGB, and background RGBA are independent.
-  Inline player/item colors remain distinct; zero background alpha is transparent.
-- Glass timestamps are optional and off by default. Choose shared local-time
-  presets (12- or 24-hour, with or without seconds) and a timestamp color.
-
-Glass owns its timestamps. It hides recognizable native timestamp prefixes only
-in its own display, without changing WoW's timestamp preferences. Original
-messages are preserved. When original time or channel identity is missing,
-Glass falls back conservatively: unknown historical times are not replaced with
-the current time, and uncertain headers are left unchanged. Custom or legacy
-history may retain its original styling. Restricted text can remain displayable
-while timestamp and header transformations are unavailable.
-
-Use `/glass demo` to preview formatting. Your chat input still sends real
-messages while demo mode is active; turn it off to return to real chat.
+- **Smooth animations** — messages slide in and fade away.
+- **Flexible windows** — add, move, and resize chat panes.
+- **Custom styling** — choose your fonts, spacing, colors, and backgrounds.
+- **Short channel labels** — use built-in abbreviations or create your own.
+- **Built-in timestamps** — 12- or 24-hour time, with optional seconds.
+- **Addon compatibility** — works with Prat, ElvUI, and Leatrix Plus.
 
 ## Addon compatibility
 
