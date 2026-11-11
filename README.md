@@ -38,10 +38,12 @@ and you want to scroll within it, use Shift+Scroll.
 
 ## Features
 
-- Adds smooth animations to incoming chat messages.
-- Lets you add extra Glass panes that track other chat tabs.
-- Allows you to customize fonts, spacing, backgrounds, and layout.
-- Works alongside addons like Prat, ElvUI, and Leatrix Plus.
+- **Smooth animations** — messages slide in and fade away.
+- **Flexible windows** — add, move, and resize chat panes.
+- **Custom styling** — choose your fonts, spacing, colors, and backgrounds.
+- **Short channel labels** — use built-in abbreviations or create your own.
+- **Built-in timestamps** — 12- or 24-hour time, with optional seconds.
+- **Addon compatibility** — works with Prat, ElvUI, and Leatrix Plus.
 
 ## Addon compatibility
 
@@ -53,14 +55,16 @@ Glass works with ElvUI, but make sure to disable the Chat module.
 
 Glass works with Prat, but make sure to disable the EditBox module.
 
-Prat Timestamps work with Glass but with a caveat. Prat allows you to select
-which tabs to enable timestamps on. This is currently not supported and
-Timestamps will be enabled on all tabs if the Prat Timestamps module is loaded.
-If you want to disable Prat Timestamps, you'll need to set the module to "Don't
-load" (just "Disabled" won't work).
+There is no Prat timestamp-provider integration. Prat history can still flow
+through native chat buffers; Glass uses saved original epoch times and identity
+metadata where available. Missing metadata and uncertain provenance limit
+historical timestamp and channel formatting, and custom or legacy histories
+may retain their original styles.
 
-Note: WoW's built-in timestamps work with Glass. (Interface -> Social ->
-Timestamps)
+Arbitrary timestamps already baked into Prat's saved text may remain and can
+coexist with a Glass timestamp. Disable Prat timestamp generation for future
+messages when using Glass-owned timestamps. This does not erase prefixes
+already saved in history.
 
 ### Leatrix Plus
 

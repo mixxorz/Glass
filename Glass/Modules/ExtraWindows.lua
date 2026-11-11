@@ -93,11 +93,13 @@ function ExtraWindows:AddWindow(sourceName)
   local id = tostring(Core.db.global.extraWindowSerial)
   local settings = {}
   for key, value in pairs(Core.db.profile) do
-    if type(value) ~= "table" then settings[key] = value end
+    if key ~= "messageFormatting" and type(value) ~= "table" then settings[key] = value end
   end
   -- AceDB fills defaults lazily; copy their effective values, not just saved overrides.
   for key in pairs(Core.defaults.profile) do
-    if key ~= "extraWindows" and key ~= "editBoxAnchor" then settings[key] = copy(Core.db.profile[key]) end
+    if key ~= "extraWindows" and key ~= "editBoxAnchor" and key ~= "messageFormatting" then
+      settings[key] = copy(Core.db.profile[key])
+    end
   end
   settings.positionAnchor = copy(Core.db.profile.positionAnchor)
   settings.positionAnchor.xOfs = settings.positionAnchor.xOfs + 40
