@@ -53,6 +53,22 @@ local function timestampOptions()
   } }
 end
 
+local function playerOptions()
+  return { name = "Player names", type = "group", order = 0.5, args = {
+    description = { type = "description", order = 0,
+      name = "Icons appear when character information is available." },
+    raceIcon = { name = "Race icon", type = "toggle", order = 1,
+      get = function() return Formatting:GetPlayerSettings().raceIcon end,
+      set = function(_, value) Formatting:SetPlayerValue("raceIcon", value) end },
+    classIcon = { name = "Class icon", type = "toggle", order = 2,
+      get = function() return Formatting:GetPlayerSettings().classIcon end,
+      set = function(_, value) Formatting:SetPlayerValue("classIcon", value) end },
+    classColor = { name = "Class-colored names", type = "toggle", order = 3,
+      get = function() return Formatting:GetPlayerSettings().classColor end,
+      set = function(_, value) Formatting:SetPlayerValue("classColor", value) end },
+  } }
+end
+
 local function typeOptions(descriptor, order)
   local identity, displayName, chatType = descriptor.key, descriptor.name, descriptor.chatType
   local context = { chatType = chatType, channelKind = descriptor.channelKind,
@@ -127,7 +143,7 @@ end
 
 function C:BuildMessageFormattingOptions()
   local group = { name = "Message formatting", type = "group", order = 3, childGroups = "tree",
-    args = { timestamps = timestampOptions() } }
+    args = { timestamps = timestampOptions(), players = playerOptions() } }
   for index, descriptor in ipairs(Formatting:GetEntries()) do
     group.args[descriptor.key] = typeOptions(descriptor, index)
   end

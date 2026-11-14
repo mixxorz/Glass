@@ -54,6 +54,7 @@ Core.defaults = {
         preset = "24h",
         color = { r = 128 / 255, g = 128 / 255, b = 128 / 255 },
       },
+      players = { raceIcon = false, classIcon = false, classColor = false },
       rules = {},
     },
     tabFont = "Friz Quadrata TT",
