@@ -2,7 +2,7 @@
 
 New features
 
-- Add optional race icons, class icons, and class-colored player names, all off by default.
+- Add race icons, class icons, and class-colored player names.
 
 Changes
 

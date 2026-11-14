@@ -33,8 +33,7 @@ local function timestampOptions()
   local function disabled() return not Formatting:GetSettings().timestamps.enabled end
   return { name = "Timestamps", type = "group", inline = true, order = 1, args = {
     description = { type = "description", order = 0,
-      name = "Show local time from original-arrival metadata when available. " ..
-        "Native WoW timestamps are suppressed in Glass only; other chat displays are unchanged." },
+      name = "Show the time when a message was received. Native WoW timestamps are hidden." },
     enabled = { name = "Enabled", type = "toggle", order = 1,
       get = function() return Formatting:GetSettings().timestamps.enabled end,
       set = function(_, value) Formatting:SetTimestampValue("enabled", value) end },
