@@ -21,9 +21,9 @@ The user requested autonomous end-to-end delivery in a new worktree. Use the dec
 ## Architecture
 
 - `MessageFormatting` validates and persists `messageFormatting.players = { raceIcon, classIcon, classColor }`, exposes `GetPlayerSettings()` and `SetPlayerValue(field, value)`, and dispatches existing formatting-change events.
-- `MessageMetadata` retains accessible sender name, player GUID, and line ID from native event arguments 2, 12, and 11. Limit enrichment to player-chat event families. Keep optional sender extraction isolated so it cannot discard channel/timestamp metadata.
+- `MessageMetadata` retains accessible sender name, player GUID, line ID, and native flag from event arguments 2, 12, 11, and 6. Limit enrichment to player-chat event families with conventional headers. Keep optional sender extraction isolated so it cannot discard channel/timestamp metadata.
 - A focused `PlayerIdentity` module hides GUID lookup, sex conventions, class colors, atlas aliases/validation, and inline icon markup behind `GetAppearance(guid, options, viewSettings)`. Lookup occurs only when an option is enabled, allowing unavailable information to be retried on a later re-render. No growing global name/GUID cache, roster scan, inspect, or /who request.
-- `MessageMarkup:FormatSender(text, message, viewSettings)` uses the existing token scanner to find the first sender hyperlink with a matching native sender identity/line ID. Preserve link targets and delimiters byte-for-byte. Never decorate unrelated player links or Battle.net account names. Restore original color state after the modified label, preserve non-color decorations, and leave the message body unchanged.
+- `MessageMarkup:FormatSender(text, message, viewSettings)` uses the existing token scanner to validate the localized native sender-slot prefix and first non-channel hyperlink against sender name, line ID, and normalized chat category. Do not scan onward into the body after an unexpected link/prefix. Preserve link targets and delimiters byte-for-byte. Never decorate unrelated player links or Battle.net account names. Restore original color state after the modified label, preserve non-color decorations, and leave the message body unchanged.
 - `TextProcessing` runs sender formatting after channel-header formatting, before existing texture alignment and Glass timestamps. Atlas markup includes its own vertical offset because the existing texture processor handles only texture markup.
 
 ## APIs and compatibility
@@ -38,7 +38,7 @@ Secret text bypasses formatting. Secret/missing sender identity, lookup results,
 
 Use existing global formatting events. Icon toggles request text reprocessing and relayout; class-color changes can request markup-only reprocessing. Existing profile copy/reset/switch notifications apply. Extra windows share the same options but use their own font size/offset. Reprocessing always starts from raw text, so icons never accumulate.
 
-History with trustworthy native event metadata can be decorated. Legacy plain-string history, system messages, NPC messages, and Battle.net account whispers remain unchanged. Unavailable lookup results are not negatively cached.
+History with trustworthy native event metadata can be decorated. Legacy plain-string history, system/NPC messages, Battle.net account whispers, community/Discord links, and TEXT_EMOTE messages without conventional headers remain unchanged. For outgoing whispers, decorate the recipient only when the GUID lookup does not contradict the displayed identity; never substitute the local player GUID. Unavailable lookup results are not negatively cached.
 
 ## Research
 
