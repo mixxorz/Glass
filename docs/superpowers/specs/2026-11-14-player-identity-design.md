@@ -2,7 +2,7 @@
 
 ## Goal and scope
 
-Add three independent profile-wide options under **Message formatting → Player names**:
+Add three independent profile-wide options in the **Player names** section of the top-level **Chat options** page, alongside an inline **Timestamps** section:
 
 - Race icon
 - Class icon

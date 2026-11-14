@@ -31,7 +31,7 @@ end
 
 local function timestampOptions()
   local function disabled() return not Formatting:GetSettings().timestamps.enabled end
-  return { name = "Timestamps", type = "group", order = 0, args = {
+  return { name = "Timestamps", type = "group", inline = true, order = 1, args = {
     description = { type = "description", order = 0,
       name = "Show local time from original-arrival metadata when available. " ..
         "Native WoW timestamps are suppressed in Glass only; other chat displays are unchanged." },
@@ -54,7 +54,7 @@ local function timestampOptions()
 end
 
 local function playerOptions()
-  return { name = "Player names", type = "group", order = 0.5, args = {
+  return { name = "Player names", type = "group", inline = true, order = 2, args = {
     description = { type = "description", order = 0,
       name = "Icons appear when character information is available." },
     raceIcon = { name = "Race icon", type = "toggle", order = 1,
@@ -141,9 +141,13 @@ local function typeOptions(descriptor, order)
   return page
 end
 
-function C:BuildMessageFormattingOptions()
-  local group = { name = "Message formatting", type = "group", order = 3, childGroups = "tree",
+function C:BuildChatOptions()
+  return { name = "Chat options", type = "group", order = 3,
     args = { timestamps = timestampOptions(), players = playerOptions() } }
+end
+
+function C:BuildMessageFormattingOptions()
+  local group = { name = "Message formatting", type = "group", order = 4, childGroups = "tree", args = {} }
   for index, descriptor in ipairs(Formatting:GetEntries()) do
     group.args[descriptor.key] = typeOptions(descriptor, index)
   end
@@ -160,7 +164,7 @@ function C:RefreshMessageFormattingOptions()
   local identity = selected and selected:match("^messageFormatting\001(.+)$")
   if (identity and not group.args[identity])
     or (selected == "messageFormatting" and nested and nested.selected and not group.args[nested.selected]) then
-    Dialog:SelectGroup("Glass", "messageFormatting", "timestamps")
+    Dialog:SelectGroup("Glass", "messageFormatting")
   else
     _G.LibStub("AceConfigRegistry-3.0"):NotifyChange("Glass")
   end

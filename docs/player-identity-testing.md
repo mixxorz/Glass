@@ -11,7 +11,7 @@ Status: **In-game verification pending.** Static checks and review do not establ
 1. Install this worktree using the existing Glass addon symlink in the requested WoW client. Do not copy files or replace a real addon directory without confirmation. This task does not change the installation automatically.
 2. Ensure the worktree has its addon libraries in `libs/`, then reload the UI.
 3. Enable Lua errors (`/console scriptErrors 1`). If available, use BugSack/BugGrabber to record errors.
-4. Open `/glass` → **Message formatting → Player names**. All three options should initially be off in a new profile.
+4. Open `/glass` → **Chat options** and find the **Player names** section below **Timestamps**. All three player-name options should initially be off in a new profile.
 5. Use real player chat, not `/glass demo`: demo samples do not carry native sender identity. Have another player of a different race/class available, ideally on another realm.
 
 ## Options and live refresh
@@ -33,6 +33,8 @@ For each row, check say, party/guild or channel chat, and both whisper direction
 - Icons should appear immediately before the clickable name. Repeatedly toggling, scrolling, or changing tabs must not accumulate icons.
 - If Blizzard already class-colors a name, disabling the Glass option should restore that incoming appearance, not force a channel color.
 - Turn each setting on/off, switch/copy/reset profiles, and reload. Confirm defaults, persistence, and immediate refresh.
+- Confirm timestamp enable/format/color controls work in the same Chat options page, and previous timestamp/player-name settings survive the navigation move.
+- Confirm Message formatting contains only type/channel overrides. With a custom channel selected, leave it and clear its final saved override; selection should return to Message formatting without targeting the removed Timestamps page.
 
 ## Chat and identity
 

@@ -91,3 +91,14 @@ Expected: all addon files parse; zero lint warnings/errors; no whitespace errors
 - Whole-branch review and fix re-review: no remaining concrete findings; ready for in-game testing only.
 - Static verification: 32 addon Lua files parse; luacheck 1.2.0 reports zero warnings/errors. Extended check: 79 addon/library Lua files parse. TOC/XML dependency audit: zero missing paths. Branch-wide whitespace check clean after fixes.
 - In-game behavior remains unverified. No automated tests/harnesses, installation changes, release/version/tag/push/merge operations.
+
+## Follow-up: Chat options navigation
+
+The user verified the feature in WoW Forever and approved a shared top-level **Chat options** page instead of separate top-level entries. Keep timestamps and player names together as inline sections on that page. Per-type/channel overrides remain under Message formatting; settings storage and rendering behavior stay unchanged.
+
+- [x] Add `C:BuildChatOptions()` in `Glass/Modules/ConfigMessageFormatting.lua`, reusing existing timestamp/player builders as inline groups, ordered 1 and 2. Register the page at root order 3 in `Glass/Modules/Config.lua`; move Message formatting to 4 and Profiles to 5.
+- [x] Remove timestamp/player groups from `BuildMessageFormattingOptions()`. Change stale-channel selection fallback to the existing Message formatting root, never the removed timestamps child.
+- [x] Update README, manual checklist, and current design location. Keep existing saved values; no migration, release, or further installation changes.
+- [x] Run full syntax/lint/branch whitespace checks, review the focused diff and AceConfig selection behavior, commit and leave the installed Forever worktree ready for `/reload`.
+
+Verification: 79 addon/library Lua files parse; luacheck has zero warnings/errors in 32 addon files; branch whitespace check clean. Focused independent review approved the UI grouping, AceConfig fallback, and profile lifecycle. The new UI arrangement still needs in-game verification.

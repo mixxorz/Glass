@@ -46,9 +46,11 @@ and you want to scroll within it, use Shift+Scroll.
 - **Player names** — optional race icons, class icons, and class-colored names.
 - **Addon compatibility** — works with Prat, ElvUI, and Leatrix Plus.
 
-## Player names
+## Chat options
 
-Open `/glass` → **Message formatting → Player names** to enable **Race icon**,
+Open `/glass` → **Chat options** for timestamps and player-name formatting.
+
+Under **Player names**, enable **Race icon**,
 **Class icon**, or **Class-colored names**. All three are off by default and apply
 to every Glass window in the current profile. Icons fade with the messages.
 
