@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Improvements
+
+- Expand the unlocked Social mover to cover the icon and Battle.net notification area.
+
+### Bug fixes
+
+- Make Battle.net notifications follow the Social icon, with the toast's bottom-left corner aligned to the icon's bottom-right corner.
+
 ## 2.1.0 (2026-11-11)
 
 New features
