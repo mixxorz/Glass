@@ -22,7 +22,10 @@ local function atlasExists(atlas)
   if public(api, "table") and public(api.GetAtlasInfo, "function") then fn = api.GetAtlasInfo end
   return public(call(fn, atlas), "table")
 end
-local RACES = { Scourge = "Undead", NightElf = "NightElf", BloodElf = "BloodElf" }
+local RACES = {
+  scourge = "undead", highmountaintauren = "highmountain",
+  lightforgeddraenei = "lightforged", zandalaritroll = "zandalari",
+}
 
 function Identity:GetAppearance(guid, options, viewSettings, expectedName)
   if not public(options, "table") then return nil end
@@ -37,11 +40,9 @@ function Identity:GetAppearance(guid, options, viewSettings, expectedName)
   if not ok then return nil end
   local expected, expectedRealm = expectedName:match("^([^%-]+)%-(.+)$")
   expected = expected or expectedName
-  if public(name, "string") then
-    if name ~= expected then return nil end
-    if expectedRealm and public(server, "string") and server ~= "" and realm(server) ~= realm(expectedRealm) then
-      return nil
-    end
+  if public(name, "string") and name ~= expected then return nil end
+  if expectedRealm and public(server, "string") and server ~= "" and realm(server) ~= realm(expectedRealm) then
+    return nil
   end
   local settings = public(viewSettings, "table") and viewSettings or Core.db.profile
   local size, offset = settings.messageFontSize, settings.iconTextureYOffset
@@ -55,15 +56,17 @@ function Identity:GetAppearance(guid, options, viewSettings, expectedName)
   if raceOn and public(race, "string") and race:match("^[%a]+$")
     and public(sex, "number") and (sex == 2 or sex == 3) then
     local gender = sex == 2 and "male" or "female"
-    local atlas = call(_G.GetRaceAtlas, race, sex)
-    if not atlasExists(atlas) then atlas = "raceicon-" .. (RACES[race] or race):lower() .. "-" .. gender end
+    local raceName = race:lower()
+    local atlas = call(_G.GetRaceAtlas, raceName, gender)
+    if not atlasExists(atlas) then atlas = "raceicon-" .. (RACES[raceName] or raceName) .. "-" .. gender end
     add(atlas)
   end
   local color
   if public(class, "string") and class:match("^[A-Z]+$") then
     if classOn then
-      local atlas = call(_G.GetClassAtlas, class)
-      if not atlasExists(atlas) then atlas = "classicon-" .. class:lower() end
+      local className = class:lower()
+      local atlas = call(_G.GetClassAtlas, className)
+      if not atlasExists(atlas) then atlas = "classicon-" .. className end
       add(atlas)
     end
     if colorOn then
