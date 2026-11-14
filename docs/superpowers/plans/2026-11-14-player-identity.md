@@ -29,6 +29,7 @@
 - `Glass/Modules/TextProcessing.lua`: sender processor insertion.
 - `Glass.toc`: load new module before markup processing.
 - `Glass/Components/SlidingMessageFrame.lua`: invalidate generated icon markup on font-size/window reset changes (review-discovered integration requirement).
+- `Glass/Components/MessageLine.lua`: invalidate cached public height after markup-only reprocessing, since lookup availability can change embedded icon widths.
 - `README.md`, `docs/player-identity-testing.md`: feature documentation and manual verification.
 
 ## Static check commands
@@ -78,6 +79,15 @@ Expected: all addon files parse; zero lint warnings/errors; no whitespace errors
 
 - [x] Document settings location, defaults, availability limitation and preserved fading concisely.
 - [x] Write concrete in-game steps for all toggle combinations, profile changes, history/reload, multiple views/font sizes/offsets, standard chat types/whisper directions, NPC/BN/system exclusions, native colors/icons, item/player links, wrapping/fading/scroll anchoring, aliases/sex variants and Retail restricted chat. Record that in-game verification is pending.
-- [ ] Request broad independent whole-branch review against spec and plan; resolve findings and re-review fixes. Verify settings refresh in unchanged renderer/profile code explicitly.
-- [ ] Run all static checks, check TOC dependencies and git status, commit docs/fixes. Leave branch/worktree intact, unmerged and unreleased.
-- [ ] Report branch/path, how to enable settings, checks performed, research limitation, and readiness for in-game testing. Do not change any WoW installation symlink unless requested; installation modifies a path outside this project.
+- [x] Request broad independent whole-branch review against spec and plan; resolve findings and re-review fixes. Verify settings refresh in unchanged renderer/profile code explicitly.
+- [x] Run all static checks, check TOC dependencies and git status, commit docs/fixes. Leave branch/worktree intact, unmerged and unreleased.
+- [x] Report branch/path, how to enable settings, checks performed, research limitation, and readiness for in-game testing. Do not change any WoW installation symlink unless requested; installation modifies a path outside this project.
+
+## Execution record
+
+- Settings task: `1c07f23`, spec and quality review approved.
+- Rendering task: `6d8131e`, followed by reviewed fixes in `7448127` for atlas helper arguments/aliases, independent realm checks, and font-size invalidation.
+- Documentation: `f69a3cf`; final review fix `b8624bb` clears cached message heights after markup reprocessing and removes documentation trailing whitespace.
+- Whole-branch review and fix re-review: no remaining concrete findings; ready for in-game testing only.
+- Static verification: 32 addon Lua files parse; luacheck 1.2.0 reports zero warnings/errors. Extended check: 79 addon/library Lua files parse. TOC/XML dependency audit: zero missing paths. Branch-wide whitespace check clean after fixes.
+- In-game behavior remains unverified. No automated tests/harnesses, installation changes, release/version/tag/push/merge operations.
