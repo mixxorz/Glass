@@ -1,7 +1,9 @@
 # Player identity: in-game verification
 
-Branch: `feat/player-identity`  
-Worktree: `.worktrees/player-identity`  
+Branch: `feat/player-identity`
+
+Worktree: `.worktrees/player-identity`
+
 Status: **In-game verification pending.** Static checks and review do not establish client behavior.
 
 ## Setup
@@ -51,6 +53,7 @@ For each row, check say, party/guild or channel chat, and both whisper direction
 ## Layout, history, and fading
 
 - Send a message long enough to wrap. Icons should scale with the message font without excessive line height or clipping.
+- In a narrow window with race/class icons enabled, scroll up and jump to bottom to populate cached heights. Scroll up again, then toggle only class-colored names after character info becomes available or unavailable, so reprocessing adds or removes icons. Check wrapping and jump to bottom again: the animation distance and final bottom alignment should match the refreshed text, without clipping or gaps. Repeat for both availability changes.
 - Create an extra Glass window with a different message font size and icon offset. It should share these toggles but render icons at its own size/alignment.
 - Adjust icon vertical offset, font size, leading, and frame width. Check the baseline, wrapped height, scroll anchor, and bottom alignment.
 - Let messages fade completely, then reveal them by hovering. Icons and names must fade/reappear with their messages; there should be no persistent standalone icon frames.
