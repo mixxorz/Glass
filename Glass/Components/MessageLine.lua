@@ -50,6 +50,7 @@ end
 function MessageLineMixin:RefreshTextColors()
   if not self.messageRecord or not Utils.canAccessValue(self.rawText) then return end
   self.displayText = TP:ProcessText(self.rawText, self.view:GetSettings(), self.messageRecord)
+  self.publicHeight = nil
   if self.anchorTarget then self.text:SetText(self.displayText) end
 end
 

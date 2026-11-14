@@ -17,6 +17,7 @@ local TYPE_NAMES = {
   WHISPER_INFORM = "Whisper (sending)",
 }
 local PRESETS = { ["24h"] = true, ["24h-seconds"] = true, ["12h"] = true, ["12h-seconds"] = true }
+local PLAYER_FIELDS = { raceIcon = true, classIcon = true, classColor = true }
 local RULE_FIELDS = { aliasEnabled = true, alias = true, background = true, textColor = true, labelColor = true }
 local DESCRIPTOR_FIELDS = {
   "key", "name", "chatType", "channelName", "channelNumber", "channelKind", "hasHeader", "available",
@@ -129,6 +130,27 @@ function F:GetSettings()
   }
 end
 
+function F:GetPlayerSettings()
+  local saved = container(savedSettings().players)
+  local result = {}
+  for field in pairs(PLAYER_FIELDS) do
+    result[field] = public(saved[field], "boolean") and saved[field] == true
+  end
+  return result
+end
+
+function F:SetPlayerValue(field, value)
+  if not public(field, "string") or not PLAYER_FIELDS[field]
+    or not Utils.canAccessValue(value) then return end
+  if value ~= nil and not public(value, "boolean") then return end
+  local saved = container(savedSettings().players)
+  if equal(saved[field], value) then return end
+  local settings = writableSettings()
+  if not public(settings.players, "table") then settings.players = {} end
+  settings.players[field] = value
+  self:NotifyChanged(nil, field)
+end
+
 function F:ResolveIdentity(chatType, zoneChannelID, channelName, channelKind)
   if not text(chatType) then return nil end
   if supported(chatType) then return "type:" .. chatType end
@@ -238,7 +260,7 @@ function F:NotifyChanged(identity, field)
   if public(field, "string") then
     if field == "background" then kind = "background"
     elseif field == "textColor" then kind = "body"
-    elseif field == "labelColor" or field == "color" then kind = "markup" end
+    elseif field == "labelColor" or field == "color" or field == "classColor" then kind = "markup" end
   end
   Core:Dispatch(Constants.EVENTS.MESSAGE_FORMATTING_CHANGED, { identity = identity, kind = kind })
 end

@@ -35,6 +35,7 @@ Core:NewModule("Fonts")
 Core:NewModule("Hyperlinks")
 Core:NewModule("News")
 Core:NewModule("MessageFormatting")
+Core:NewModule("PlayerIdentity")
 Core:NewModule("MessageMarkup")
 Core:NewModule("TextProcessing")
 Core:NewModule("MessageMetadata")
@@ -54,6 +55,7 @@ Core.defaults = {
         preset = "24h",
         color = { r = 128 / 255, g = 128 / 255, b = 128 / 255 },
       },
+      players = { raceIcon = false, classIcon = false, classColor = false },
       rules = {},
     },
     tabFont = "Friz Quadrata TT",

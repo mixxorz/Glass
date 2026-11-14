@@ -68,11 +68,13 @@ local function token(text, at)
   if pair == "|r" then return { kind = "reset", last = at + 1 } end
   if pair == "|T" or pair == "|A" then
     local close = delimiter(text, at + 2, pair == "|T" and "|t" or "|a")
-    if close then return { kind = "decoration", last = close + 1 } end
+    if close and not text:sub(at + 2, close - 1):find("|", 1, true) then
+      return { kind = "decoration", last = close + 1 }
+    end
   elseif pair == "|H" then
     local first = delimiter(text, at + 2, "|h")
     local last = first and delimiter(text, first + 2, "|h")
-    if last then
+    if last and not text:sub(at + 2, first - 1):find("|", 1, true) then
       return { kind = "link", last = last + 1, target = text:sub(at + 2, first - 1),
         firstLabel = first + 2, lastLabel = last - 1 }
     end
@@ -198,6 +200,128 @@ function Markup:FormatHeader(text, message)
   local label = formatLabel(text:sub(first, last), alias, color, active)
   if not label then return text end
   return replaceSpan(text, first, last, label)
+end
+
+local function normalizedPrefix(text, message)
+  local parts, at, linked, visible = {}, 1, false, false
+  while at <= #text do
+    if text:sub(at, at) == "|" then
+      local item = token(text, at)
+      if not item or item.kind == "literal" then return nil end
+      if item.kind == "link" then
+        if linked or visible or not agrees(item.target, message) then return nil end
+        local label = text:sub(item.firstLabel, item.lastLabel)
+        if not labelTokens(label) then return nil end
+        linked = true
+      end
+      at = item.last + 1
+    else
+      local char = text:sub(at, at)
+      parts[#parts + 1] = char
+      if not char:match("%s") then visible = true end
+      at = at + 1
+    end
+  end
+  return (table.concat(parts):gsub("%s+", " "):gsub("^ ", ""):gsub(" $", ""))
+end
+
+local function senderTemplate(message)
+  local template = _G["CHAT_" .. message.chatType .. "_GET"]
+  if not public(template, "string") then return nil end
+  local at = 1
+  while at <= #template do
+    local char = template:sub(at, at)
+    if char == "|" then
+      local item = token(template, at)
+      if not item or template:sub(at, item.last):find("%", 1, true) then return nil end
+      at = item.last + 1
+    elseif char == "%" then
+      local rest = template:sub(at)
+      if rest:sub(1, 2) ~= "%s" and rest:sub(1, 4) ~= "%1$s" then return nil end
+      return normalizedPrefix(template:sub(1, at - 1), message)
+    else
+      at = at + 1
+    end
+  end
+end
+
+function Markup:FormatSender(text, message, viewSettings)
+  local options = Formatting:GetPlayerSettings()
+  if not options.raceIcon and not options.classIcon and not options.classColor then return text end
+  if not public(text, "string") or not nativeContext(message)
+    or not public(message.senderName, "string") or not public(message.senderGUID, "string")
+    or not finite(message.senderLineID) or message.senderLineID <= 0 or message.senderLineID % 1 ~= 0
+    or not public(message.senderFlag, "string") then return text end
+  local wanted = senderTemplate(message)
+  if not wanted then return text end
+  local at, active, candidate, start = 1, nil, nil, nil
+  while at <= #text do
+    if text:sub(at, at) == "|" then
+      local item = token(text, at)
+      if not item then return text end
+      if item.kind == "color" then active = item.raw
+      elseif item.kind == "reset" then active = nil
+      elseif item.kind == "link" then
+        if not item.target:match("^channel:") then candidate, start = item, at; break end
+        local controls = labelTokens(text:sub(item.firstLabel, item.lastLabel))
+        if not controls then return text end
+        for _, control in ipairs(controls) do
+          if control.kind == "color" then active = control.raw
+          elseif control.kind == "reset" then active = nil end
+        end
+      end
+      at = item.last + 1
+    else
+      at = at + 1
+    end
+  end
+  if not candidate then return text end
+  local before = normalizedPrefix(text:sub(1, start - 1), message)
+  if not before then return text end
+  if before ~= wanted then
+    local flag = _G["CHAT_FLAG_" .. message.senderFlag]
+    if not public(flag, "string") then return text end
+    local withFlag = normalizedPrefix((wanted .. " " .. flag), message)
+    local joinedFlag = normalizedPrefix(wanted .. flag, message)
+    if before ~= withFlag and before ~= joinedFlag then return text end
+  end
+  local name, line, category = candidate.target:match("^player:([^:]+):(%d+):([A-Z_]+):[^:]*$")
+  if not name or name ~= message.senderName or tonumber(line) ~= message.senderLineID
+    or category ~= (FAMILIES[message.chatType]
+      or (message.chatType == "WHISPER_INFORM" and "WHISPER")
+      or (message.chatType == "PARTY_GUIDE" and "PARTY") or message.chatType) then return text end
+  local label = text:sub(candidate.firstLabel, candidate.lastLabel)
+  local items, cursor = {}, 1
+  while cursor <= #label do
+    local item
+    if label:sub(cursor, cursor) == "|" then
+      item = token(label, cursor)
+      if not item or item.kind == "link" then return text end
+    else
+      item = { kind = "literal", last = cursor }
+    end
+    item.raw = label:sub(cursor, item.last)
+    items[#items + 1] = item
+    cursor = item.last + 1
+  end
+  local appearance = Core:GetModule("PlayerIdentity"):GetAppearance(
+    message.senderGUID, options, viewSettings, message.senderName)
+  if not appearance then return text end
+  local color = self:ColorCode(appearance.color)
+  if color then
+    local parts = { color }
+    for _, item in ipairs(items) do
+      if item.kind == "color" then active = item.raw
+      elseif item.kind == "reset" then active = nil
+      else parts[#parts + 1] = item.raw end
+    end
+    -- Restore the native post-label state, not just the color at link entry.
+    parts[#parts + 1] = "|r" .. (active or "")
+    label = table.concat(parts)
+  end
+  local link = text:sub(start, candidate.firstLabel - 1) .. label
+    .. text:sub(candidate.lastLabel + 1, candidate.last)
+  return replaceSpan(text, start, candidate.last, appearance.icons .. link)
 end
 
 local function timestampFormat()
