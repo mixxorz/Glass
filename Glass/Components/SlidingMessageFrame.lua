@@ -229,6 +229,7 @@ function SlidingMessageFrameMixin:Init(chatFrame, window)
       end
       self.state.settingsRefreshPending = true
       self.state.reprocessText = self.state.reprocessText or key == "iconTextureYOffset"
+        or key == "messageFontSize" or key == "window" or key == nil
     end),
   }
 

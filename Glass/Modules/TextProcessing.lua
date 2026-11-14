@@ -97,6 +97,10 @@ local function headerProcessor(text, _, message)
   return Markup:FormatHeader(text, message)
 end
 
+local function senderProcessor(text, settings, message)
+  return Markup:FormatSender(text, message, settings)
+end
+
 local function glassTimestampProcessor(text, _, message)
   local settings = Formatting:GetSettings().timestamps
   if not settings.enabled or not Utils.canAccessValue(message) or type(message) ~= "table" then
@@ -126,6 +130,7 @@ local TEXT_PROCESSORS = {
   nativeTimestampProcessor,
   baseColorProcessor,
   headerProcessor,
+  senderProcessor,
   textureProcessor,
   glassTimestampProcessor,
 }

@@ -31,10 +31,9 @@ end
 
 local function timestampOptions()
   local function disabled() return not Formatting:GetSettings().timestamps.enabled end
-  return { name = "Timestamps", type = "group", order = 0, args = {
+  return { name = "Timestamps", type = "group", inline = true, order = 1, args = {
     description = { type = "description", order = 0,
-      name = "Show local time from original-arrival metadata when available. " ..
-        "Native WoW timestamps are suppressed in Glass only; other chat displays are unchanged." },
+      name = "Show the time when a message was received. Native WoW timestamps are hidden." },
     enabled = { name = "Enabled", type = "toggle", order = 1,
       get = function() return Formatting:GetSettings().timestamps.enabled end,
       set = function(_, value) Formatting:SetTimestampValue("enabled", value) end },
@@ -50,6 +49,22 @@ local function timestampOptions()
         return color.r, color.g, color.b
       end,
       set = function(_, r, g, b) Formatting:SetTimestampValue("color", { r = r, g = g, b = b }) end },
+  } }
+end
+
+local function playerOptions()
+  return { name = "Player names", type = "group", inline = true, order = 2, args = {
+    description = { type = "description", order = 0,
+      name = "Icons appear when character information is available." },
+    raceIcon = { name = "Race icon", type = "toggle", order = 1,
+      get = function() return Formatting:GetPlayerSettings().raceIcon end,
+      set = function(_, value) Formatting:SetPlayerValue("raceIcon", value) end },
+    classIcon = { name = "Class icon", type = "toggle", order = 2,
+      get = function() return Formatting:GetPlayerSettings().classIcon end,
+      set = function(_, value) Formatting:SetPlayerValue("classIcon", value) end },
+    classColor = { name = "Class-colored names", type = "toggle", order = 3,
+      get = function() return Formatting:GetPlayerSettings().classColor end,
+      set = function(_, value) Formatting:SetPlayerValue("classColor", value) end },
   } }
 end
 
@@ -125,9 +140,13 @@ local function typeOptions(descriptor, order)
   return page
 end
 
+function C:BuildChatOptions()
+  return { name = "Chat options", type = "group", order = 3,
+    args = { timestamps = timestampOptions(), players = playerOptions() } }
+end
+
 function C:BuildMessageFormattingOptions()
-  local group = { name = "Message formatting", type = "group", order = 3, childGroups = "tree",
-    args = { timestamps = timestampOptions() } }
+  local group = { name = "Message formatting", type = "group", order = 4, childGroups = "tree", args = {} }
   for index, descriptor in ipairs(Formatting:GetEntries()) do
     group.args[descriptor.key] = typeOptions(descriptor, index)
   end
@@ -144,7 +163,7 @@ function C:RefreshMessageFormattingOptions()
   local identity = selected and selected:match("^messageFormatting\001(.+)$")
   if (identity and not group.args[identity])
     or (selected == "messageFormatting" and nested and nested.selected and not group.args[nested.selected]) then
-    Dialog:SelectGroup("Glass", "messageFormatting", "timestamps")
+    Dialog:SelectGroup("Glass", "messageFormatting")
   else
     _G.LibStub("AceConfigRegistry-3.0"):NotifyChange("Glass")
   end

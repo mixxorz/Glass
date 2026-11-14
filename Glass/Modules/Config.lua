@@ -418,9 +418,10 @@ function C:OnEnable()
     profile = DBOptions:GetOptionsTable(Core.db),
   } }
   self.options = options
+  options.args.chatOptions = self:BuildChatOptions()
   options.args.messageFormatting = self:BuildMessageFormattingOptions()
   options.args.profile.name = "Profiles"
-  options.args.profile.order = 4
+  options.args.profile.order = 5
   Core.Libs.AceConfig:RegisterOptionsTable("Glass", options)
   self:RefreshOptions()
   Dialog:SetDefaultSize("Glass", 780, 500)

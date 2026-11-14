@@ -43,7 +43,21 @@ and you want to scroll within it, use Shift+Scroll.
 - **Custom styling** — choose your fonts, spacing, colors, and backgrounds.
 - **Short channel labels** — use built-in abbreviations or create your own.
 - **Built-in timestamps** — 12- or 24-hour time, with optional seconds.
+- **Player names** — optional race icons, class icons, and class-colored names.
 - **Addon compatibility** — works with Prat, ElvUI, and Leatrix Plus.
+
+## Chat options
+
+Open `/glass` → **Chat options** for timestamps and player-name formatting.
+
+Under **Player names**, enable **Race icon**,
+**Class icon**, or **Class-colored names**. All three are off by default and apply
+to every Glass window in the current profile. Icons fade with the messages.
+
+Formatting requires accessible character information and native sender metadata.
+Unknown characters, restricted chat, and legacy history may retain their original
+appearance. Turning an option off preserves incoming formatting, including native
+class colors.
 
 ## Addon compatibility
 
