@@ -139,6 +139,25 @@ local function decode(entry, origin)
   return result
 end
 
+local SENDERS = { SAY = true, YELL = true, WHISPER = true, WHISPER_INFORM = true,
+  PARTY = true, PARTY_LEADER = true, PARTY_GUIDE = true, RAID = true, RAID_LEADER = true,
+  RAID_WARNING = true, GUILD = true, OFFICER = true, INSTANCE_CHAT = true,
+  INSTANCE_CHAT_LEADER = true, EMOTE = true, CHANNEL = true }
+
+local function sender(entry)
+  local extra = entry.extraData
+  if not packed(extra, 5) or not public(extra[4], "string") then return end
+  local chatType = extra[4]:match("^CHAT_MSG_([A-Z_]+)$")
+  if not chatType or not SENDERS[chatType] then return end
+  local args = extra[5]
+  if not packed(args, 12) then return end
+  local name, guid, line, flag = args[2], args[12], args[11], args[6]
+  if not public(name, "string") or name == "" or not public(guid, "string")
+    or not guid:match("^Player%-.+") or not integer(line) or not public(flag, "string") then return end
+  return { senderName = name, senderGUID = guid, senderLineID = line, senderFlag = flag,
+    nativeEvent = extra[4], chatType = chatType }
+end
+
 function Metadata:GetRecord(entry, origin)
   if not public(entry, "table") then return end
   local cached = self.records[entry]
@@ -152,6 +171,8 @@ function Metadata:GetRecord(entry, origin)
   -- Optional metadata must never suppress an accepted native message.
   local ok, metadata = pcall(decode, entry, origin)
   if ok then for key, value in pairs(metadata) do record[key] = value end end
+  local senderOK, fields = pcall(sender, entry)
+  if senderOK and fields then for key, value in pairs(fields) do record[key] = value end end
   self.records[entry] = record
   return record
 end
