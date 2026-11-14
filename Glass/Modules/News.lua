@@ -8,6 +8,18 @@ local OPEN_NEWS = Constants.EVENTS.OPEN_NEWS
 -- luacheck: push ignore 631
 local CHANGELOG = {
   {
+    name = "Unreleased",
+    items = {[[
+New features
+
+- Add optional race icons, class icons, and class-colored player names, all off by default.
+
+Changes
+
+- Move timestamps and player-name settings to Chat options.
+    ]]}
+  },
+  {
     name = "2.1.0 (2026-11-11)",
     items = {[[
 New features
