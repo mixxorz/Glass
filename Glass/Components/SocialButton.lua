@@ -22,7 +22,16 @@ function SocialButtonMixin:ShouldShowButton()
   return true
 end
 
+function SocialButtonMixin:AnchorBattleNetToast()
+  local toast, button = self.bnetToast, self.button
+  if not toast or not self:ShouldShowButton() or not button:IsShown() then return false end
+  toast:ClearAllPoints()
+  toast:SetPoint("BOTTOMLEFT", button, "BOTTOMRIGHT", 0, 0)
+  return true
+end
+
 function SocialButtonMixin:UpdateToastDirection()
+  self:AnchorBattleNetToast()
   local button = self.button
   if not button.SetToastDirection or not button.Toast then return end
   local left, right = button:GetLeft(), button:GetRight()
@@ -56,7 +65,21 @@ function SocialButtonMixin:UpdatePosition()
   self:UpdateToastDirection()
 end
 
+function SocialButtonMixin:UpdateMoverSize()
+  local scale = self:GetEffectiveScale()
+  local buttonScale = self.button:GetEffectiveScale() / scale
+  local width = self.button:GetWidth() * buttonScale
+  local height = self.button:GetHeight() * buttonScale
+  if self.bnetToast then
+    local toastScale = self.bnetToast:GetEffectiveScale() / scale
+    width = width + self.bnetToast:GetWidth() * toastScale
+    height = math.max(height, self.bnetToast:GetHeight() * toastScale)
+  end
+  self:SetSize(width, height)
+end
+
 function SocialButtonMixin:UpdateMoverVisibility()
+  self:UpdateMoverSize()
   local shown = self.unlocked and self:ShouldShowButton() and self.button:IsShown()
   self:SetShown(shown)
   self:EnableMouse(shown)
@@ -95,14 +118,24 @@ function SocialButtonMixin:Init(button, dock)
   self.label:SetPoint("BOTTOM", self, "TOP", 0, 2)
   self.label:SetText("Social")
 
-  -- Skip Social in Blizzard's alert stack so it cannot reset our anchor or move other alerts.
+  -- Keep Social and its Battle.net toasts separate from the other chat alerts.
   local container = button:GetAlertContainer()
+  local bnetToast = _G.BNToastFrame
   for _, subsystem in ipairs(container and container.alertFrameSubSystems or {}) do
     if subsystem.anchorFrame == button then
       self:RawHook(subsystem, "AdjustAnchors", function (_, relativeAlert)
         return relativeAlert
       end, true)
-      break
+    elseif bnetToast and subsystem.anchorFrame == bnetToast then
+      self.bnetToast = bnetToast
+      bnetToast:HookScript("OnSizeChanged", function ()
+        self:UpdateMoverSize()
+        self:AnchorBattleNetToast()
+      end)
+      self:RawHook(subsystem, "AdjustAnchors", function (system, relativeAlert)
+        if self:AnchorBattleNetToast() then return relativeAlert end
+        return self.hooks[system].AdjustAnchors(system, relativeAlert)
+      end, true)
     end
   end
 
@@ -123,10 +156,12 @@ function SocialButtonMixin:Init(button, dock)
     -- Blizzard can show the widget again when input modes change.
     if not self:ShouldShowButton() then button:Hide() end
     self:UpdateMoverVisibility()
+    if container then container:UpdateAnchors() end
   end)
   button:HookScript("OnHide", function ()
     self:FinishDragging()
     self:UpdateMoverVisibility()
+    if container then container:UpdateAnchors() end
   end)
 
   Core:Subscribe(events.UNLOCK_MOVER, function ()
