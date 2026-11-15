@@ -2,6 +2,32 @@ local Core, Constants, Utils = unpack(select(2, ...))
 local Router = Core:GetModule("MessageRouter")
 local Metadata = Core:GetModule("MessageMetadata")
 
+-- Native channel notices omit their event metadata from history entries.
+local NOTICE_EVENTS = {
+  CHAT_MSG_CHANNEL_JOIN = "CHANNEL_JOIN",
+  CHAT_MSG_CHANNEL_LEAVE = "CHANNEL_LEAVE",
+  CHAT_MSG_CHANNEL_LIST = "CHANNEL_LIST",
+  CHAT_MSG_CHANNEL_NOTICE = "CHANNEL_NOTICE",
+  CHAT_MSG_CHANNEL_NOTICE_USER = "CHANNEL_NOTICE_USER",
+}
+local function pack(...)
+  return { n = select("#", ...), ... }
+end
+
+local function callNativeHandler(router, handler, frame, event, ...)
+  local previous = router.noticeContext
+  local source = router.chatSources[frame]
+  local noticeType = source and NOTICE_EVENTS[event]
+  if not noticeType and not previous then return handler(frame, event, ...) end
+  router.noticeContext = noticeType and {
+    source = source, chatType = noticeType, channelNumber = select(8, ...),
+  } or nil
+  local results = pack(pcall(handler, frame, event, ...))
+  router.noticeContext = previous
+  if not results[1] then error(results[2], 0) end
+  return unpack(results, 2, results.n)
+end
+
 local function createMessage(text, red, green, blue)
   if Utils.canAccessValue(text) then
     if text == nil then return nil end
@@ -41,6 +67,26 @@ function Router:OnInitialize()
   self.bindings = {}
   self.requestedSources = {}
   self.bufferSources = {}
+  self.noticeHandlers = {}
+end
+
+function Router:HookNativeNotices(chatFrame)
+  if type(chatFrame.MessageEventHandler) == "function" then
+    if self.noticeHandlers[chatFrame] then return end
+    self:RawHook(chatFrame, "MessageEventHandler", function(frame, event, ...)
+      return callNativeHandler(self, self.hooks[frame].MessageEventHandler, frame, event, ...)
+    end, true)
+    self.noticeHandlers[chatFrame] = true
+  elseif type(_G.ChatFrame_MessageEventHandler) == "function" and not self.globalNoticeHandler then
+    self:RawHook("ChatFrame_MessageEventHandler", function(frame, event, ...)
+      local handler = self.hooks.ChatFrame_MessageEventHandler
+      if not self.chatSources[frame] and not self.noticeContext then
+        return handler(frame, event, ...)
+      end
+      return callNativeHandler(self, handler, frame, event, ...)
+    end, true)
+    self.globalNoticeHandler = true
+  end
 end
 
 -- History readers return unprocessed messages, oldest first. Renderers must not mutate them.
@@ -105,6 +151,8 @@ function Router:GetChatSource(chatFrame)
     self:Hook(chatFrame, "AddMessage", function() self:GetChatSource(chatFrame) end, true)
   end
 
+  self:HookNativeNotices(chatFrame)
+
   -- Temporary chat frames can be reused with a different history buffer.
   local buffer = usableBuffer(chatFrame.historyBuffer) and chatFrame.historyBuffer or nil
   if source.historyBuffer ~= buffer then
@@ -142,7 +190,11 @@ function Router:HookBufferMethod(buffer, method, origin)
 end
 
 function Router:ObserveBufferInsertion(buffer, entry, origin)
-  local message = Metadata:GetRecord(entry, origin)
+  local context = origin == "live" and self.noticeContext
+  local sources = self.bufferSources[buffer]
+  local notice = context and sources and sources[context.source]
+    and context.source.historyBuffer == buffer and context or nil
+  local message = Metadata:GetRecord(entry, origin, notice)
   if not message then return end
   for source in pairs(self.bufferSources[buffer] or {}) do
     if origin == "backfill" then self:Prepend(source, {message})
