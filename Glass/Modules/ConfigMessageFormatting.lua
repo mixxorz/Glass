@@ -69,46 +69,75 @@ local function playerOptions()
 end
 
 local function typeOptions(descriptor, order)
-  local identity, displayName, chatType = descriptor.key, descriptor.name, descriptor.chatType
-  local context = { chatType = chatType, channelKind = descriptor.channelKind,
-    channelNumber = descriptor.channelNumber }
-  local page = { name = displayName, type = "group", order = order, args = {} }
+  local chatType, channelNumber = descriptor.chatType, descriptor.channelNumber
+  local context = { chatType = chatType, channelKind = descriptor.channelKind, channelNumber = channelNumber }
+  local page = { name = descriptor.name, type = "group", order = order, args = {} }
+  local function get(field)
+    return Formatting:GetEntryValue(descriptor, field)
+  end
   local function set(field, value)
-    Formatting:SetRuleValue(identity, field, value, displayName)
-    if value == nil then C:RefreshMessageFormattingOptions() end
+    Formatting:SetEntryValue(descriptor, field, value)
+  end
+  local function fieldName(field, name)
+    return function()
+      local _, mixed = get(field)
+      return mixed and (name .. " (mixed)") or name
+    end
+  end
+  local function overrideEnabled(field)
+    local value, mixed = get(field)
+    if mixed then return nil end
+    return value ~= nil
+  end
+  local function overrideDisabled(field)
+    local value, mixed = get(field)
+    return value == nil and not mixed
   end
   local function rgbOverride(parent, field, name, index)
     parent[field .. "Enabled"] = { name = "Override " .. name, type = "toggle", order = index,
-      get = function() return Formatting:GetRule(identity)[field] ~= nil end,
-      set = function(_, enabled) set(field, enabled and nativeColor(chatType, context.channelNumber) or nil) end }
-    parent[field] = { name = name, type = "color", dialogControl = "GlassColorPicker",
+      tristate = true,
+      get = function() return overrideEnabled(field) end,
+      set = function(_, enabled) set(field, enabled and nativeColor(chatType, channelNumber) or nil) end }
+    parent[field] = { name = fieldName(field, name), type = "color", dialogControl = "GlassColorPicker",
       hasAlpha = false, order = index + 1,
-      disabled = function() return Formatting:GetRule(identity)[field] == nil end,
+      arg = #descriptor.members > 1 and { confirmOnly = true } or nil,
+      disabled = function() return overrideDisabled(field) end,
       get = function()
-        local color = Formatting:GetRule(identity)[field] or nativeColor(chatType, context.channelNumber)
+        local color = get(field) or nativeColor(chatType, channelNumber)
         return color.r, color.g, color.b
       end,
       set = function(_, r, g, b) set(field, { r = r, g = g, b = b }) end }
   end
-  if descriptor.available == false then
-    page.args.availability = { type = "description", order = 0,
-      name = "This channel is currently unavailable. Saved settings remain editable and apply when it returns." }
-  end
+  page.args.mixed = { type = "description", order = 0,
+    name = "Saved formatting differs within this group. Changes apply to all message types in the group.",
+    hidden = function()
+      for _, field in ipairs({ "aliasEnabled", "alias", "labelColor", "background", "textColor" }) do
+        local _, mixed = get(field)
+        if mixed then return false end
+      end
+      return true
+    end }
   if descriptor.hasHeader then
     local header = { name = "Channel label", type = "group", inline = true, order = 1, args = {} }
     page.args.header = header
-    header.args.enabled = { name = "Enable alias", type = "toggle", order = 1,
-      get = function() return Formatting:GetRule(identity).aliasEnabled ~= false end,
-      set = function(_, value) set("aliasEnabled", value) end }
-    header.args.alias = { name = "Alias", type = "input", order = 2,
+    header.args.enabled = { name = "Enable alias", type = "toggle", order = 1, tristate = true,
+      get = function()
+        local enabled, mixed = get("aliasEnabled")
+        if mixed then return nil end
+        return enabled ~= false
+      end,
+      set = function(_, value) set("aliasEnabled", value == true) end }
+    header.args.alias = { name = fieldName("alias", "Alias"), type = "input", order = 2,
       desc = "Leave blank to preserve the original header. Default: " ..
         (Formatting:GetDefaultAlias(context)
           or (context.channelKind and "Current channel number" or "Original header")),
-      disabled = function() return Formatting:GetRule(identity).aliasEnabled == false end,
+      disabled = function()
+        local enabled, mixed = get("aliasEnabled")
+        return enabled == false and not mixed
+      end,
       get = function()
-        local alias = Formatting:GetRule(identity).alias
-        if alias ~= nil then return alias end
-        return Formatting:GetDefaultAlias(context) or ""
+        local alias, mixed = get("alias")
+        return not mixed and alias or ""
       end,
       set = function(_, value) set("alias", value) end }
     rgbOverride(header.args, "labelColor", "Label color", 3)
@@ -116,25 +145,25 @@ local function typeOptions(descriptor, order)
   local style = { name = "Message style", type = "group", inline = true, order = 2, args = {} }
   page.args.style = style
   style.args.backgroundEnabled = { name = "Override background", type = "toggle", order = 1,
-    get = function() return Formatting:GetRule(identity).background ~= nil end,
+    tristate = true,
+    get = function() return overrideEnabled("background") end,
     set = function(_, enabled)
-      set("background", enabled and backgroundDefault(chatType, context.channelNumber) or nil)
+      set("background", enabled and backgroundDefault(chatType, channelNumber) or nil)
     end }
-  style.args.background = { name = "Background color", type = "color", dialogControl = "GlassColorPicker",
-    hasAlpha = true, order = 2,
-    disabled = function() return Formatting:GetRule(identity).background == nil end,
+  style.args.background = { name = fieldName("background", "Background color"),
+    type = "color", dialogControl = "GlassColorPicker", hasAlpha = true, order = 2,
+    arg = #descriptor.members > 1 and { confirmOnly = true } or nil,
+    disabled = function() return overrideDisabled("background") end,
     get = function()
-      local color = Formatting:GetRule(identity).background or backgroundDefault(chatType, context.channelNumber)
+      local color = get("background") or backgroundDefault(chatType, channelNumber)
       return color.r, color.g, color.b, color.a
     end,
-    set = function(_, r, g, b, a)
-      Formatting:SetRuleValue(identity, "background", { r = r, g = g, b = b, a = a }, displayName)
-    end }
+    set = function(_, r, g, b, a) set("background", { r = r, g = g, b = b, a = a }) end }
   rgbOverride(style.args, "textColor", "Body color", 3)
   page.args.reset = { name = "Reset to defaults", type = "execute", order = 3,
-    confirm = true, confirmText = "Reset all formatting overrides for this type or channel?",
+    confirm = true, confirmText = "Reset all formatting overrides for this message group?",
     func = function()
-      Formatting:ResetRule(identity)
+      Formatting:ResetEntry(descriptor)
       C:RefreshMessageFormattingOptions()
     end }
   return page
@@ -147,8 +176,12 @@ end
 
 function C:BuildMessageFormattingOptions()
   local group = { name = "Message formatting", type = "group", order = 4, childGroups = "tree", args = {} }
-  for index, descriptor in ipairs(Formatting:GetEntries()) do
-    group.args[descriptor.key] = typeOptions(descriptor, index)
+  for index, category in ipairs(Formatting:GetCategories()) do
+    local options = { name = category.name, type = "group", order = index, childGroups = "tree", args = {} }
+    for entryIndex, descriptor in ipairs(category.entries) do
+      options.args[descriptor.key] = typeOptions(descriptor, entryIndex)
+    end
+    group.args[category.key] = options
   end
   return group
 end
@@ -159,10 +192,19 @@ function C:RefreshMessageFormattingOptions()
   self.options.args.messageFormatting = group
   local root = Dialog:GetStatusTable("Glass", {}).groups
   local nested = Dialog:GetStatusTable("Glass", { "messageFormatting" }).groups
+  local function validSelection(selected, options)
+    if type(selected) ~= "string" then return true end
+    for key in selected:gmatch("[^\001]+") do
+      options = options.args and options.args[key]
+      if not options then return false end
+    end
+    return true
+  end
   local selected = root and root.selected
-  local identity = selected and selected:match("^messageFormatting\001(.+)$")
-  if (identity and not group.args[identity])
-    or (selected == "messageFormatting" and nested and nested.selected and not group.args[nested.selected]) then
+  local formattingSelected = type(selected) == "string"
+    and (selected == "messageFormatting" or selected:match("^messageFormatting\001"))
+  if formattingSelected and (not validSelection(selected, self.options)
+    or (selected == "messageFormatting" and not validSelection(nested and nested.selected, group))) then
     Dialog:SelectGroup("Glass", "messageFormatting")
   else
     _G.LibStub("AceConfigRegistry-3.0"):NotifyChange("Glass")

@@ -1,5 +1,5 @@
 local AceGUI = _G.LibStub("AceGUI-3.0")
-local Type, Version = "GlassColorPicker", 1
+local Type, Version = "GlassColorPicker", 2
 if (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 local function ownsPopup(widget, session, picker)
@@ -30,7 +30,7 @@ local function openPicker(frame)
   picker:SetFrameLevel(frame:GetFrameLevel() + 10)
   picker:SetClampedToScreen(true)
 
-  local session = {}
+  local session = { confirmOnly = widget.confirmOnly, changed = false, cancelled = false }
   widget.pickerSession = session
   local ready = false
   local r, g, b = widget.r, widget.g, widget.b
@@ -40,7 +40,9 @@ local function openPicker(frame)
     if not ready or not ownsPopup(widget, session, picker) then return end
     if red == widget.r and green == widget.g and blue == widget.b and alpha == widget.a then return end
     widget:SetColor(red, green, blue, alpha)
-    widget:Fire("OnValueChanged", red, green, blue, alpha)
+    session.changed = red ~= r or green ~= g or blue ~= b or alpha ~= a
+    -- Grouped colors have no single original value to restore on cancellation.
+    if not session.confirmOnly then widget:Fire("OnValueChanged", red, green, blue, alpha) end
   end
   local function changed()
     if not ready or not ownsPopup(widget, session, picker) then return end
@@ -60,7 +62,10 @@ local function openPicker(frame)
     extraInfo = session,
     swatchFunc = changed,
     opacityFunc = changed,
-    cancelFunc = function() publish(r, g, b, a) end,
+    cancelFunc = function()
+      session.cancelled = true
+      publish(r, g, b, a)
+    end,
   })
   -- Setup changes RGB before OnShow initializes alpha; neither is a user edit.
   ready = true
@@ -74,8 +79,12 @@ local function Constructor()
   widget.type = Type
   local baseAcquire, baseRelease = widget.OnAcquire, widget.OnRelease
   local baseUpdate = widget.frame:GetScript("OnUpdate")
+  widget.SetCustomData = function(self, data)
+    self.confirmOnly = type(data) == "table" and data.confirmOnly == true
+  end
   widget.OnAcquire = function(self)
     closeSession(self)
+    self.confirmOnly = false
     if baseAcquire then baseAcquire(self) end
   end
   widget.OnRelease = function(self)
@@ -95,7 +104,9 @@ local function Constructor()
       -- Outside cancellation hides on mouse-down, but swatches open on mouse-up.
       -- Wait out held clicks, rechecking ownership each frame before confirming.
       self.pickerSession = nil
-      self:Fire("OnValueConfirmed", self.r, self.g, self.b, self.a)
+      if not session.confirmOnly or (session.changed and not session.cancelled) then
+        self:Fire("OnValueConfirmed", self.r, self.g, self.b, self.a)
+      end
     end
   end)
   return widget

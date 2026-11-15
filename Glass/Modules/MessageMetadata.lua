@@ -60,12 +60,17 @@ function Metadata:RefreshChannels()
           local category = integer(info.zoneChannelID) and info.zoneChannelID or nil
           local key = Formatting:ResolveIdentity("CHANNEL", category, info.name, kind)
           if key then
-            local displayName = info.name
-            if kind == "builtin" and public(info.shortcut, "string") and info.shortcut ~= "" then
-              displayName = info.shortcut
+            local displayName = name
+            local chatFrameUtil = _G.ChatFrameUtil
+            local resolveName = public(chatFrameUtil, "table") and chatFrameUtil.ResolveChannelName
+              or _G.ChatFrame_ResolveChannelName
+            if public(resolveName, "function") then
+              local ok, resolved = pcall(resolveName, name)
+              if ok and public(resolved, "string") then displayName = resolved end
             end
             descriptors[#descriptors + 1] = {
-              key = key, name = displayName, chatType = "CHANNEL", channelName = info.name,
+              key = key, name = tostring(info.localID) .. "." .. displayName,
+              chatType = "CHANNEL", channelName = info.name,
               channelNumber = info.localID, channelKind = kind, hasHeader = true, available = true,
             }
           end
@@ -95,7 +100,22 @@ local function nativeType(infoID)
   return resolved
 end
 
-local function decode(entry, origin)
+local CHANNEL_NOTICES = {
+  CHANNEL_JOIN = true, CHANNEL_LEAVE = true, CHANNEL_LIST = true,
+  CHANNEL_NOTICE = true, CHANNEL_NOTICE_USER = true,
+}
+
+local function matchesNotice(extra, chatType, notice)
+  if not public(notice, "table") or not public(notice.chatType, "string")
+    or not CHANNEL_NOTICES[notice.chatType] then return false end
+  if chatType then return chatType == notice.chatType end
+  if not packed(extra, 1) or not public(extra[1], "number") or not integer(notice.channelNumber) then return false end
+  local colors = _G.ChatTypeInfo
+  local info = public(colors, "table") and colors["CHANNEL" .. notice.channelNumber]
+  return public(info, "table") and public(info.id, "number") and info.id == extra[1]
+end
+
+local function decode(entry, origin, liveNotice)
   local result = {origin = origin}
   local extra = entry.extraData
   local hasEvent = false
@@ -113,7 +133,12 @@ local function decode(entry, origin)
         result.nativeEvent, result.chatType = event, chatType
         hasEvent = true
         local args = extra[5]
-        if chatType == "CHANNEL" and packed(args, 9) then
+        if chatType == "COMMUNITIES_CHANNEL" and packed(args, 9) then
+          result.channelKind = "community"
+          if integer(args[8]) then result.channelNumber = args[8] end
+          if public(args[9], "string") then result.channelName = args[9] end
+          result.identity = Formatting:ResolveIdentity("CHANNEL", nil, result.channelName, "community")
+        elseif chatType == "CHANNEL" and packed(args, 9) then
           local category, slot, name = args[7], args[8], args[9]
           if integer(slot) then result.channelNumber = slot end
           if public(name, "string") then result.channelName = name end
@@ -129,6 +154,12 @@ local function decode(entry, origin)
         end
       end
     end
+  end
+  if not hasEvent and origin == "live" and matchesNotice(extra, result.chatType, liveNotice) then
+    result.chatType = liveNotice.chatType
+    result.nativeEvent = "CHAT_MSG_" .. liveNotice.chatType
+    result.identity = Formatting:ResolveIdentity(liveNotice.chatType)
+    hasEvent = true
   end
   if not result.identity then result.identity = Formatting:ResolveIdentity(result.chatType) end
   if positive(entry.serverTime) then result.arrivedAt = entry.serverTime
@@ -158,7 +189,7 @@ local function sender(entry)
     nativeEvent = extra[4], chatType = chatType }
 end
 
-function Metadata:GetRecord(entry, origin)
+function Metadata:GetRecord(entry, origin, liveNotice)
   if not public(entry, "table") then return end
   local cached = self.records[entry]
   if cached then return cached end
@@ -169,7 +200,7 @@ function Metadata:GetRecord(entry, origin)
   end
   local record = {text = text, r = component(entry.r), g = component(entry.g), b = component(entry.b)}
   -- Optional metadata must never suppress an accepted native message.
-  local ok, metadata = pcall(decode, entry, origin)
+  local ok, metadata = pcall(decode, entry, origin, liveNotice)
   if ok then for key, value in pairs(metadata) do record[key] = value end end
   local senderOK, fields = pcall(sender, entry)
   if senderOK and fields then for key, value in pairs(fields) do record[key] = value end end

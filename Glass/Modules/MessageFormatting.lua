@@ -7,15 +7,6 @@ local DEFAULT_ALIASES = {
   GUILD = "G", OFFICER = "O",
   INSTANCE_CHAT = "I", INSTANCE_CHAT_LEADER = "IL",
 }
-local COMMON_TYPES = {
-  "SAY", "YELL", "WHISPER", "WHISPER_INFORM", "PARTY", "PARTY_LEADER",
-  "RAID", "RAID_LEADER", "RAID_WARNING", "GUILD", "OFFICER",
-  "INSTANCE_CHAT", "INSTANCE_CHAT_LEADER", "EMOTE", "SYSTEM",
-}
-local TYPE_NAMES = {
-  WHISPER = "Whisper (receiving)",
-  WHISPER_INFORM = "Whisper (sending)",
-}
 local PRESETS = { ["24h"] = true, ["24h-seconds"] = true, ["12h"] = true, ["12h-seconds"] = true }
 local PLAYER_FIELDS = { raceIcon = true, classIcon = true, classColor = true }
 local RULE_FIELDS = { aliasEnabled = true, alias = true, background = true, textColor = true, labelColor = true }
@@ -78,7 +69,8 @@ local function equal(a, b)
 end
 local function supported(chatType)
   return text(chatType) and chatType:match("^[A-Z_]+$") ~= nil
-    and not chatType:match("^CHANNEL") and chatType ~= "ADDON" and chatType ~= "NONE"
+    and chatType ~= "CHANNEL" and not chatType:match("^CHANNEL%d+$")
+    and chatType ~= "ADDON" and chatType ~= "NONE"
     and public((_G.ChatTypeInfo or {})[chatType], "table")
 end
 local function validIdentity(identity)
@@ -86,7 +78,7 @@ local function validIdentity(identity)
   if identity:match("^type:[A-Z_]+$") then return true end
   local id = identity:match("^channel:builtin:([1-9]%d*)$")
   if id then return positiveInteger(tonumber(id)) end
-  local name = identity:match("^channel:custom:(.+)$")
+  local name = identity:match("^channel:custom:(.+)$") or identity:match("^channel:community:(.+)$")
   return name ~= nil and name == (_G.strlower or string.lower)(name)
 end
 local function savedSettings()
@@ -158,8 +150,9 @@ function F:ResolveIdentity(chatType, zoneChannelID, channelName, channelKind)
   if public(channelKind, "string") and channelKind == "builtin" and positiveInteger(zoneChannelID) then
     return "channel:builtin:" .. string.format("%.0f", zoneChannelID)
   end
-  if public(channelKind, "string") and channelKind == "custom" and text(channelName) then
-    return "channel:custom:" .. (_G.strlower or string.lower)(channelName)
+  if public(channelKind, "string") and (channelKind == "custom" or channelKind == "community")
+    and text(channelName) then
+    return "channel:" .. channelKind .. ":" .. (_G.strlower or string.lower)(channelName)
   end
 end
 
@@ -181,7 +174,7 @@ function F:GetRule(identity)
 end
 
 function F:GetDefaultAlias(context)
-  if context.channelKind == "builtin" or context.channelKind == "custom" then
+  if context.channelKind == "builtin" or context.channelKind == "custom" or context.channelKind == "community" then
     if context.channelNumber then return tostring(context.channelNumber) end
     return nil
   end
@@ -274,8 +267,9 @@ local function sortedChannels(snapshot)
   local result = {}
   for _, descriptor in pairs(snapshot) do result[#result + 1] = copyDescriptor(descriptor) end
   table.sort(result, function(a, b)
-    if a.name == b.name then return a.key < b.key end
-    return a.name < b.name
+    local aNumber, bNumber = a.channelNumber or math.huge, b.channelNumber or math.huge
+    if aNumber == bNumber then return a.key < b.key end
+    return aNumber < bNumber
   end)
   return result
 end
@@ -312,38 +306,36 @@ function F:ReplaceChannels(descriptors)
   if changed then Core:Dispatch(Constants.EVENTS.MESSAGE_CHANNELS_CHANGED) end
 end
 
-function F:GetEntries()
-  local result, seen = {}, {}
-  local function add(chatType)
-    if supported(chatType) and not seen[chatType] then
-      seen[chatType] = true
-      result[#result + 1] = {
-        key = "type:" .. chatType,
-        name = TYPE_NAMES[chatType] or (text(_G[chatType]) and _G[chatType] or chatType),
-        chatType = chatType, hasHeader = DEFAULT_ALIASES[chatType] ~= nil, available = true,
-      }
+function F:GetChannels()
+  return sortedChannels(channels)
+end
+
+local HEADER_FIELDS = { alias = true, aliasEnabled = true, labelColor = true }
+local function applicable(member, field)
+  return not HEADER_FIELDS[field] or member.hasHeader == true
+end
+
+function F:GetEntryValue(entry, field)
+  if not RULE_FIELDS[field] then return nil, false end
+  local representative, found = nil, false
+  for _, member in ipairs(entry.members) do
+    if applicable(member, field) then
+      local value = self:GetRule(member.key)[field]
+      if field == "aliasEnabled" and value == nil then value = true end
+      if field == "alias" and value == nil then value = self:GetDefaultAlias(member) or "" end
+      if found and not equal(representative, value) then return representative, true end
+      representative, found = value, true
     end
   end
-  for _, chatType in ipairs(COMMON_TYPES) do add(chatType) end
-  local remaining = {}
-  for chatType in pairs(self:GetChatTypes()) do
-    if supported(chatType) and not seen[chatType] then remaining[#remaining + 1] = chatType end
+  return representative, false
+end
+
+function F:SetEntryValue(entry, field, value)
+  for _, member in ipairs(entry.members) do
+    if applicable(member, field) then self:SetRuleValue(member.key, field, value, entry.name) end
   end
-  table.sort(remaining)
-  for _, chatType in ipairs(remaining) do add(chatType) end
-  local snapshot = {}
-  for key, descriptor in pairs(channels) do snapshot[key] = descriptor end
-  for key in pairs(container(savedSettings().rules)) do
-    if validIdentity(key) and key:match("^channel:") and not snapshot[key] then
-      local rule = self:GetRule(key)
-      if rule ~= EMPTY then
-        snapshot[key] = {
-          key = key, name = rule.displayName or key, chatType = "CHANNEL",
-          channelKind = key:match("^channel:([^:]+):"), hasHeader = true, available = false,
-        }
-      end
-    end
-  end
-  for _, descriptor in ipairs(sortedChannels(snapshot)) do result[#result + 1] = descriptor end
-  return result
+end
+
+function F:ResetEntry(entry)
+  for _, member in ipairs(entry.members) do self:ResetRule(member.key) end
 end

@@ -103,7 +103,8 @@ local FAMILIES = { PARTY_LEADER = "PARTY", RAID_LEADER = "RAID", RAID_WARNING = 
 local function agrees(target, message)
   local number = target:match("^channel:channel:([1-9]%d*)$")
   if number then
-    return (message.chatType == "CHANNEL" or message.chatType:match("^CHANNEL%d+$"))
+    return (message.chatType == "CHANNEL" or message.chatType == "COMMUNITIES_CHANNEL"
+      or message.chatType:match("^CHANNEL%d+$"))
       and finite(message.channelNumber) and tonumber(number) == message.channelNumber
   end
   local family = target:match("^channel:([A-Z_]+)$")
