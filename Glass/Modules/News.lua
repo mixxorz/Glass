@@ -8,7 +8,7 @@ local OPEN_NEWS = Constants.EVENTS.OPEN_NEWS
 -- luacheck: push ignore 631
 local CHANGELOG = {
   {
-    name = "Unreleased",
+    name = "2.2.0 (2026-11-16)",
     items = {[[
 New features
 
@@ -19,6 +19,11 @@ Changes
 - Move Glass settings to Settings → AddOns → Glass. /glass opens the same panel.
 - Move timestamps and player-name settings to Chat options.
 - Match Message formatting categories and entries to WoW's native chat settings, with shared controls for grouped message types.
+- Expand the unlocked Social mover to cover the icon and Battle.net notification area.
+
+Bug fixes
+
+- Make Battle.net notifications follow the Social icon, with the toast's bottom-left corner aligned to the icon's bottom-right corner.
     ]]}
   },
   {
@@ -44,8 +49,6 @@ Bug fixes
   {
     name = "2.0.0 (2026-11-05)",
     items = {[[
-Glass 2.0 brings the changes from the 1.9 and 2.0 alphas to the stable release.
-
 New features
 
 - Add extra chat windows with independent source tabs, styles, layout, scrollback, and mouse-interaction settings.
@@ -56,7 +59,7 @@ New features
 - Add configurable Alt-arrow editing and grouped chat-input settings under Edit box.
 - Restore Blizzard's chat menu, Chat Channels button, and movable Social/Friends widget with independent visibility settings.
 
-Improvements
+Changes
 
 - Update client compatibility for Retail (Midnight), WoW Forever, Classic Era/Hardcore, Burning Crusade Anniversary, and Mists of Pandaria Classic.
 - Reorganize settings around Home and individual windows.
@@ -75,77 +78,9 @@ Bug fixes
     ]]}
   },
   {
-    name = "2.0.0-alpha5 (2026-10-14)",
-    items = {[[
-Changes
-
-- Mouse wheel now scrolls per message; use Shift+Scroll to move within long messages.
-- Secret messages retain Glass's styling and fades; incoming batches containing secret text skip sliding.
-- Secret text skips Glass's icon-offset adjustment and Glass-added Prat timestamps.
-
-Bug fixes
-
-- Fix Lua errors caused by secret chat text during boss encounters and other restricted content (#166).
-- Preserve ordinary-message slide animations when secret messages remain in history.
-    ]]}
-  },
-  {
-    name = "2.0.0-alpha4 (2026-10-11)",
-    items = {[[
-New features
-
-- Add configurable Alt-arrow editing (#128).
-- Add separate Transitions controls for messages, tab bars, and the edit box, including zero-duration support.
-- Add Never fade out options for messages and tab bars (#125).
-
-Improvements
-
-- Move chat input settings to Edit box and remove redundant per-window unlock actions.
-
-Bug fixes
-
-- Support multilingual text with native font families; custom fonts apply to Latin text (#146).
-    ]]}
-  },
-  {
-    name = "2.0.0-alpha1 (2026-10-10)",
-    items = {[[
-New features
-
-- Add extra chat windows with independent source tabs, styles, layout, scrollback, and mouse-interaction settings.
-- Add drag-to-resize controls while windows are unlocked with /glass lock.
-- Add configurable top and bottom fades to transparent for messages.
-- Add global demo mode on Home and /glass demo to preview styles and animations with sample chat without changing real history.
-
-Improvements
-
-- Add separate message and tab gradient controls, left/right message padding, and chat-input padding.
-- Add configurable tab fonts, padding, and spacing.
-- Reorganize settings around Home and individual windows, with grouped controls and practical slider drag ranges.
-- Redesign the jump-to-latest button with an unread glow.
-
-Bug fixes
-
-- Fixed custom chat tabs appearing empty despite having message history.
-- Fixed Combat Log's filter toolbar overlapping the chat tabs.
-- Fixed existing messages not rewrapping when changing wrapped-line indentation.
-- Fixed settings sliders stopping mid-drag while applying changes.
-- Fixed messages briefly appearing below the window when jumping to the latest message.
-    ]]}
-  },
-  {
-    name = "1.9.0-alpha1 (2026-09-26)",
-    items = {[[
-What's new
-
-- Updated Glass for WoW Forever (1.60) and Midnight (12.1).
-- Adapted chat tabs, gradients, fonts, mover controls, and hover behavior to current UI APIs.
-    ]]}
-  },
-  {
     name = "1.8.0 (2020-10-14)",
     items = {[[
-What's new
+Changes
 
 - New: Updated for Shadowlands!
     ]]}
@@ -153,7 +88,7 @@ What's new
   {
     name = "1.7.0 (2020-09-29)",
     items = {[[
-What's new
+New features
 
 - New: Glass now indents lines that wrap past the first line. Super helpful for visually distinguishing lines that belong to a single message. Note: If you don't like this new behavior, you can turn it off in the settings.
     ]]}
@@ -161,7 +96,7 @@ What's new
   {
     name = "1.6.0 (2020-09-23)",
     items = {[[
-What's new
+New features
 
 - New: Glass now supports Prat's History module! As long as it's enabled, Glass now restores your chat message history.
 
@@ -173,7 +108,7 @@ Bug fixes
   {
     name = "1.5.0 (2020-09-14)",
     items = {[[
-What's new
+New features
 
 - New: You can now stick the edit box to the top of the chat window! Very useful if you like chat flush to a bottom corner.
 - New: You no longer need a 16,000 DPI gaming mouse to move Glass to the perfect spot. Now you can use sliders for window positioning.
@@ -207,7 +142,7 @@ Bug fixes
   {
     name = "1.4.0 (2020-09-07)",
     items = {[[
-What's new
+New features
 
 - New: World of Waracraft Classic is now officially supported!
     ]]}
@@ -215,7 +150,7 @@ What's new
   {
     name = "1.3.0 (2020-09-06)",
     items = {[[
-What's new
+New features
 
 - New: Glass now supports Prat 3.0 URL links! This will now allow you click URL links in chat as long as you have Prat's UrlCopy module enabled.
 - New: Much better scrolling experience. The chat no longer snaps to the bottom when a new message arrives while you're scrolling through history. In addition, we've added a little arrow you can click to go back to your most recent messages. It even tells you when you have unread messages!
@@ -236,7 +171,7 @@ Bug fixes
   {
     name = "1.2.0 (2020-08-31)",
     items = {[[
-What's new
+New features
 
 - New: Glass now supports the "New tab" whisper mode! Other "temporary" chat windows are also now supported, including the Pet Battle tab.
 - New: Major architecture changes for Glass. You won't see any changes while using the addon, but rest well in knowing that we've given the engine a massive tune up.
@@ -245,7 +180,7 @@ What's new
   {
     name = "1.1.1 (2020-08-26)",
     items = {[[
-Bug fixes:
+Bug fixes
 
 - Fixed: You will find that animations are now 99% less jittery!
 - Fixed: Some players were experiencing issues when using Glass with other addons. These issues have been addressed and should no longer happen.
@@ -254,7 +189,7 @@ Bug fixes:
   {
     name = "1.1.0 (2020-08-24)",
     items = {[[
-What's new
+New features
 
 - New: Players have been having a hard time figuring out how to move Glass around. So we've added a new "Unlock Window" option when right-clicking the "General" tab. This is how the default chat UI unlocked its windows so hopefully this will be more obvious.
 - New: Glass now supports Prat Timestamps! If you're using Prat, you should find that timestamps are now displayed.
@@ -272,7 +207,7 @@ Bug fixes
   {
     name = "1.0.0 (2020-08-22)",
     items = {[[
-What's new
+New features
 
 - New: Glass exists!
     ]]}
