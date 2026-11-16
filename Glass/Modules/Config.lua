@@ -341,7 +341,7 @@ function C:RefreshOptions()
   local windows = {
     name = "Windows", type = "group", order = 1, childGroups = "tree", args = { main = windowOptions() },
   }
-  local function unlock() Core:Dispatch(Actions.UnlockMover()) end
+  local function unlock() self:UnlockWindows() end
   windows.args.unlock = { name = "Unlock all windows", type = "execute", order = 0, func = unlock }
   local module = extra()
   if module then
@@ -368,10 +368,37 @@ function C:RefreshOptions()
   _G.LibStub("AceConfigRegistry-3.0"):NotifyChange("Glass")
 end
 
+function C:OpenSettings(...)
+  if _G.InCombatLockdown() then
+    self:Print(_G.ERR_NOT_IN_COMBAT)
+    return
+  end
+  Dialog:SelectGroup("Glass", ...)
+  local panel = _G.SettingsPanel
+  if panel and panel:IsShown() then
+    -- Reopening the panel would clear its pending native settings changes.
+    panel:SelectCategory(_G.Settings.GetCategory(self.settingsCategory))
+  else
+    _G.Settings.OpenToCategory(self.settingsCategory)
+  end
+end
+
 function C:OpenWindow(id)
   self:RefreshOptions()
-  Dialog:Open("Glass")
-  Dialog:SelectGroup("Glass", "windows", "extra_" .. tostring(id))
+  self:OpenSettings("windows", "extra_" .. tostring(id))
+end
+
+function C:UnlockWindows()
+  local panel = _G.SettingsPanel
+  if self.settingsPanel and self.settingsPanel:IsVisible() and panel then
+    if _G.InCombatLockdown() then
+      self:Print(_G.ERR_NOT_IN_COMBAT)
+      return
+    end
+    panel:Close(true)
+    if panel:IsShown() then return end
+  end
+  Core:Dispatch(Actions.UnlockMover())
 end
 
 local function homeOptions()
@@ -397,7 +424,7 @@ local function homeOptions()
   info.args.unlock = {
     name = "Unlock", type = "execute", order = 4,
     desc = "Move and resize your Glass windows. Click Lock when you are finished.",
-    func = function() Core:Dispatch(Actions.UnlockMover()) end,
+    func = function() C:UnlockWindows() end,
   }
   home.args.demo = {
     name = "Demo mode", type = "toggle", order = 2, width = "full",
@@ -424,7 +451,9 @@ function C:OnEnable()
   options.args.profile.order = 5
   Core.Libs.AceConfig:RegisterOptionsTable("Glass", options)
   self:RefreshOptions()
-  Dialog:SetDefaultSize("Glass", 780, 500)
+  if not self.settingsPanel then
+    self.settingsPanel, self.settingsCategory = Dialog:AddToBlizOptions("Glass", "Glass")
+  end
   self:RegisterChatCommand("glass", "OnSlashCommand")
   Core.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
   Core.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
@@ -439,12 +468,11 @@ end
 
 function C:OnSlashCommand(input)
   if input == "lock" or input == "unlock" then
-    Core:Dispatch(Actions.UnlockMover())
+    self:UnlockWindows()
   elseif input == "demo" then
     Demo:SetActive(not Demo:IsActive())
   else
-    Dialog:SelectGroup("Glass", "home")
-    Dialog:Open("Glass")
+    self:OpenSettings("home")
   end
 end
 
