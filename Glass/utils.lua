@@ -16,6 +16,10 @@ Utils.canAccessValue = function (value)
   return not _G.issecretvalue or not _G.issecretvalue(value)
 end
 
+Utils.hasSecretValueAPI = function ()
+  return type(_G.canaccessvalue) == "function" or type(_G.issecretvalue) == "function"
+end
+
 Utils.clearFontStringText = function (fontString)
   if fontString.ClearText then fontString:ClearText() else fontString:SetText(nil) end
 end

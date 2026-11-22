@@ -74,24 +74,13 @@ function Router:HookNativeNotices(chatFrame)
   -- Calling the native handler through an addon wrapper taints its execution,
   -- including secret values that Blizzard can only inspect while untainted.
   -- Prefer missing optional notice metadata to breaking native chat processing.
-  if _G.canaccessvalue or _G.issecretvalue then return end
+  if Utils.hasSecretValueAPI() then return end
+  if self.noticeHandlers[chatFrame] or type(chatFrame.MessageEventHandler) ~= "function" then return end
 
-  if type(chatFrame.MessageEventHandler) == "function" then
-    if self.noticeHandlers[chatFrame] then return end
-    self:RawHook(chatFrame, "MessageEventHandler", function(frame, event, ...)
-      return callNativeHandler(self, self.hooks[frame].MessageEventHandler, frame, event, ...)
-    end, true)
-    self.noticeHandlers[chatFrame] = true
-  elseif type(_G.ChatFrame_MessageEventHandler) == "function" and not self.globalNoticeHandler then
-    self:RawHook("ChatFrame_MessageEventHandler", function(frame, event, ...)
-      local handler = self.hooks.ChatFrame_MessageEventHandler
-      if not self.chatSources[frame] and not self.noticeContext then
-        return handler(frame, event, ...)
-      end
-      return callNativeHandler(self, handler, frame, event, ...)
-    end, true)
-    self.globalNoticeHandler = true
-  end
+  self:RawHook(chatFrame, "MessageEventHandler", function(frame, event, ...)
+    return callNativeHandler(self, self.hooks[frame].MessageEventHandler, frame, event, ...)
+  end, true)
+  self.noticeHandlers[chatFrame] = true
 end
 
 -- History readers return unprocessed messages, oldest first. Renderers must not mutate them.

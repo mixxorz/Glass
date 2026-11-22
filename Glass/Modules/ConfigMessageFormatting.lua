@@ -72,6 +72,11 @@ local function typeOptions(descriptor, order)
   local chatType, channelNumber = descriptor.chatType, descriptor.channelNumber
   local context = { chatType = chatType, channelKind = descriptor.channelKind, channelNumber = channelNumber }
   local page = { name = descriptor.name, type = "group", order = order, args = {} }
+  if descriptor.key == "group:CHANNEL" and Utils.hasSecretValueAPI() then
+    page.args.noticeLimit = { type = "description", width = "full", order = -1,
+      name = "These overrides apply only to notifications WoW identifies as channel notices. " ..
+        "Other notices keep WoW's text color and your window's default background." }
+  end
   local function get(field)
     return Formatting:GetEntryValue(descriptor, field)
   end
