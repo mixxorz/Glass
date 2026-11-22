@@ -71,6 +71,11 @@ function Router:OnInitialize()
 end
 
 function Router:HookNativeNotices(chatFrame)
+  -- Calling the native handler through an addon wrapper taints its execution,
+  -- including secret values that Blizzard can only inspect while untainted.
+  -- Prefer missing optional notice metadata to breaking native chat processing.
+  if _G.canaccessvalue or _G.issecretvalue then return end
+
   if type(chatFrame.MessageEventHandler) == "function" then
     if self.noticeHandlers[chatFrame] then return end
     self:RawHook(chatFrame, "MessageEventHandler", function(frame, event, ...)
