@@ -72,6 +72,10 @@ local function typeOptions(descriptor, order)
   local chatType, channelNumber = descriptor.chatType, descriptor.channelNumber
   local context = { chatType = chatType, channelKind = descriptor.channelKind, channelNumber = channelNumber }
   local page = { name = descriptor.name, type = "group", order = order, args = {} }
+  if descriptor.key == "group:CHANNEL" and Utils.hasSecretValueAPI() then
+    page.args.noticeLimit = { type = "description", width = "full", order = -1,
+      name = "Some channel notices can’t be customized on this version of WoW." }
+  end
   local function get(field)
     return Formatting:GetEntryValue(descriptor, field)
   end
